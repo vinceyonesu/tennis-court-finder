@@ -35,11 +35,10 @@
     <div class="results-grid" id="resultsGrid"></div>
   </section>
 
-  <!-- MAP — visible this time so PlacesService works -->
+  <!-- MAP -->
   <div id="map"></div>
 
   <script>
-    // THIS RUNS WHEN GOOGLE MAPS IS READY
     function initMap() {
       console.log('✅ Google Maps loaded!');
 
@@ -48,7 +47,6 @@
         zoom: 12
       });
 
-      const service = new google.maps.places.PlacesService(map);
       const resultsGrid = document.getElementById('resultsGrid');
       const searchBtn = document.getElementById('searchBtn');
       const cityInput = document.getElementById('cityInput');
@@ -66,15 +64,15 @@
         geocoder.geocode({ address: city }, (results, status) => {
           console.log('Geocode status:', status);
           if (status !== 'OK') {
-            resultsGrid.innerHTML = `<div class="error-msg">City not found. Try another city.</div>`;
+            resultsGrid.innerHTML = `<div class="error-msg">City not found.</div>`;
             return;
           }
 
           const location = results[0].geometry.location;
-          console.log('Location found:', location.lat(), location.lng());
-
+          console.log('Location:', location.lat(), location.lng());
           map.setCenter(location);
 
+          const service = new google.maps.places.PlacesService(map);
           const request = {
             location: location,
             radius: 5000,
@@ -83,10 +81,10 @@
 
           service.nearbySearch(request, (places, status) => {
             console.log('Places status:', status);
-            console.log('Places found:', places);
+            console.log('Places result:', places);
 
-            if (status !== google.maps.places.PlacesServiceStatus.OK || !places.length) {
-              resultsGrid.innerHTML = `<div class="error-msg">No courts found near ${city}.</div>`;
+            if (status !== 'OK' || !places || !places.length) {
+              resultsGrid.innerHTML = `<div class="error-msg">No courts found near ${city}. Status: ${status}</div>`;
               return;
             }
 
@@ -101,9 +99,11 @@
                 : '☆☆☆☆☆';
 
               const isOpen = court.opening_hours?.open_now;
-              const openBadge = isOpen
+              const openBadge = isOpen === true
                 ? `<span class="badge-open">Open Now</span>`
-                : `<span class="badge-closed">Closed</span>`;
+                : isOpen === false
+                ? `<span class="badge-closed">Closed</span>`
+                : `<span class="surface-tag">Hours N/A</span>`;
 
               resultsGrid.innerHTML += `
                 <div class="court-card">
