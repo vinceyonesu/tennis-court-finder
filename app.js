@@ -6,45 +6,47 @@ const searchBtn = document.getElementById('searchBtn');
 const cityInput = document.getElementById('cityInput');
 const resultsGrid = document.getElementById('resultsGrid');
 
-// PLACESSERVICE NEEDS A MAP TO WORK (HIDDEN FOR NOW)
 let map;
 let service;
 
-window.onload = function () {
+// THIS RUNS AUTOMATICALLY WHEN GOOGLE MAPS LOADS
+function initMap() {
+  console.log('Google Maps loaded successfully!');
   const mapDiv = document.getElementById('map');
   map = new google.maps.Map(mapDiv, {
     center: { lat: 34.0522, lng: -118.2437 },
     zoom: 12
   });
   service = new google.maps.places.PlacesService(map);
-};
 
-// WHEN SEARCH BUTTON IS CLICKED
-searchBtn.addEventListener('click', () => {
-  const city = cityInput.value.trim();
+  // WIRE UP SEARCH BUTTON AFTER MAP IS READY
+  searchBtn.addEventListener('click', () => {
+    const city = cityInput.value.trim();
 
-  if (!city) {
-    cityInput.style.border = '2px solid red';
-    cityInput.placeholder = 'Please enter a city first!';
-    return;
-  }
+    if (!city) {
+      cityInput.style.border = '2px solid red';
+      cityInput.placeholder = 'Please enter a city first!';
+      return;
+    }
 
-  cityInput.style.border = 'none';
-  cityInput.placeholder = 'Enter a city, e.g. Los Angeles...';
+    cityInput.style.border = 'none';
+    cityInput.placeholder = 'Enter a city, e.g. Los Angeles...';
 
-  resultsGrid.innerHTML = `
-    <div class="loading-msg">
-      Searching for courts in <strong>${city}</strong>...
-    </div>
-  `;
+    resultsGrid.innerHTML = `
+      <div class="loading-msg">
+        Searching for courts in <strong>${city}</strong>...
+      </div>
+    `;
 
-  geocodeCity(city);
-});
+    geocodeCity(city);
+  });
+}
 
 // STEP 1 — GEOCODE CITY TO LAT/LNG
 function geocodeCity(city) {
   const geocoder = new google.maps.Geocoder();
   geocoder.geocode({ address: city }, (results, status) => {
+    console.log('Geocode status:', status);
     if (status !== 'OK' || !results[0]) {
       showError('City not found. Please try another city.');
       return;
@@ -52,12 +54,12 @@ function geocodeCity(city) {
 
     const location = results[0].geometry.location;
     console.log(`Found ${city} at: ${location.lat()}, ${location.lng()}`);
-    searchCourts(location);
+    searchCourts(location, city);
   });
 }
 
 // STEP 2 — SEARCH FOR TENNIS COURTS
-function searchCourts(location) {
+function searchCourts(location, city) {
   const request = {
     location: location,
     radius: 5000,
@@ -65,8 +67,9 @@ function searchCourts(location) {
   };
 
   service.nearbySearch(request, (results, status) => {
+    console.log('Places status:', status);
     if (status !== google.maps.places.PlacesServiceStatus.OK || !results.length) {
-      showError('No tennis courts found here. Try a bigger city.');
+      showError(`No tennis courts found near ${city}. Try a bigger city.`);
       return;
     }
 
