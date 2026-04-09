@@ -36,7 +36,9 @@
   </section>
 
   <!-- MAP -->
-  <div id="map"></div>
+  <div class="map-section">
+    <div id="map"></div>
+  </div>
 
   <script>
     function initMap() {
@@ -89,6 +91,8 @@
             }
 
             resultsGrid.innerHTML = '';
+            const bounds = new google.maps.LatLngBounds();
+
             places.forEach(court => {
               const photo = court.photos
                 ? court.photos[0].getUrl({ maxWidth: 400 })
@@ -125,7 +129,17 @@
                   </div>
                 </div>
               `;
+
+              const marker = new google.maps.Marker({
+                position: court.geometry.location,
+                map: map,
+                title: court.name
+              });
+
+              bounds.extend(court.geometry.location);
             });
+
+            map.fitBounds(bounds);
           });
         });
       });
