@@ -63,7 +63,7 @@ function searchCourts(location, city) {
   const request = {
     location: location,
     radius: 5000,
-    type: 'tennis_court'
+    keyword: 'tennis court'
   };
 
   service.nearbySearch(request, (results, status) => {
@@ -76,6 +76,7 @@ function searchCourts(location, city) {
     console.log(`Found ${results.length} courts!`);
     displayCourts(results);
   });
+
 }
 
 // STEP 3 — DISPLAY COURT CARDS
