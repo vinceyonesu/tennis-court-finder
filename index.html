@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tennis Court Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="navbar">
+    <div class="nav-logo">🎾 CourtFinder</div>
+    <div class="nav-links">
+      <a href="#">Saved Courts</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Find Tennis Courts <span class="highlight">Near You</span></h1>
+      <p class="hero-sub">Search free and paid courts, check opening hours, photos, and ratings — all in one place.</p>
+      <div class="search-bar">
+        <input type="text" id="cityInput" placeholder="Enter a city, e.g. Los Angeles..."/>
+        <button id="searchBtn">Find Courts</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS SECTION (empty for now) -->
+  <section class="results-section">
+    <div class="results-grid" id="resultsGrid"></div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
