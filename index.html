@@ -30,29 +30,38 @@
     </div>
   </section>
 
-  <!-- RESULTS SECTION (empty for now) -->
+  <!-- RESULTS SECTION -->
   <section class="results-section">
-  <div class="results-grid" id="resultsGrid">
+    <div class="results-grid" id="resultsGrid">
 
-  <!-- SAMPLE CARD (we'll make these dynamic later) -->
-  <div class="court-card">
-    <div class="card-image">
-      <img src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400" alt="Tennis Court"/>
-      <span class="badge-free">Free</span>
-    </div>
-    <div class="card-body">
-      <h3 class="court-name">Griffith Park Tennis Courts</h3>
-      <p class="court-address">Los Angeles, CA</p>
-      <div class="card-row">
-        <div class="stars">★★★★☆</div>
-        <span class="rating-count">(124 reviews)</span>
+      <!-- SAMPLE CARD -->
+      <div class="court-card">
+        <div class="card-image">
+          <img src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400" alt="Tennis Court"/>
+          <span class="badge-free">Free</span>
+        </div>
+        <div class="card-body">
+          <h3 class="court-name">Griffith Park Tennis Courts</h3>
+          <p class="court-address">Los Angeles, CA</p>
+          <div class="card-row">
+            <div class="stars">★★★★☆</div>
+            <span class="rating-count">(124 reviews)</span>
+          </div>
+          <div class="card-row">
+            <span class="badge-open">Open Now</span>
+            <span class="surface-tag">Hard Court</span>
+          </div>
+          <div class="card-hours">Mon–Sun: 7:00 AM – 9:00 PM</div>
+        </div>
       </div>
-      <div class="card-row">
-        <span class="badge-open">Open Now</span>
-        <span class="surface-tag">Hard Court</span>
-      </div>
-      <div class="card-hours">Mon–Sun: 7:00 AM – 9:00 PM</div>
-    </div>
-  </div>
 
-</div>
+    </div>
+  </section>
+
+  <!-- MAP -->
+  <div id="map"></div>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHq7QJIROeH2ZphtL07WQKLWK2Z9ELmZU&libraries=places"></script>
+  <script src="app.js"></script>
+</body>
+</html>
