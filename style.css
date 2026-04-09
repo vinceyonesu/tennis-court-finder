@@ -302,3 +302,16 @@ body {
   max-width: 1200px;
   margin: 0 auto;
 }
+/* ── MAP ── */
+.map-section {
+  padding: 0 24px 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+#map {
+  width: 100%;
+  height: 450px;
+  border-radius: 16px;
+  display: block;
+}
