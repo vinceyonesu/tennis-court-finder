@@ -32,36 +32,106 @@
 
   <!-- RESULTS SECTION -->
   <section class="results-section">
-    <div class="results-grid" id="resultsGrid">
-
-      <!-- SAMPLE CARD -->
-      <div class="court-card">
-        <div class="card-image">
-          <img src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400" alt="Tennis Court"/>
-          <span class="badge-free">Free</span>
-        </div>
-        <div class="card-body">
-          <h3 class="court-name">Griffith Park Tennis Courts</h3>
-          <p class="court-address">Los Angeles, CA</p>
-          <div class="card-row">
-            <div class="stars">★★★★☆</div>
-            <span class="rating-count">(124 reviews)</span>
-          </div>
-          <div class="card-row">
-            <span class="badge-open">Open Now</span>
-            <span class="surface-tag">Hard Court</span>
-          </div>
-          <div class="card-hours">Mon–Sun: 7:00 AM – 9:00 PM</div>
-        </div>
-      </div>
-
-    </div>
+    <div class="results-grid" id="resultsGrid"></div>
   </section>
 
-  <!-- MAP -->
+  <!-- MAP — visible this time so PlacesService works -->
   <div id="map"></div>
 
- <script src="app.js"></script>
+  <script>
+    // THIS RUNS WHEN GOOGLE MAPS IS READY
+    function initMap() {
+      console.log('✅ Google Maps loaded!');
+
+      const map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 34.0522, lng: -118.2437 },
+        zoom: 12
+      });
+
+      const service = new google.maps.places.PlacesService(map);
+      const resultsGrid = document.getElementById('resultsGrid');
+      const searchBtn = document.getElementById('searchBtn');
+      const cityInput = document.getElementById('cityInput');
+
+      searchBtn.addEventListener('click', () => {
+        const city = cityInput.value.trim();
+        if (!city) {
+          cityInput.style.border = '2px solid red';
+          return;
+        }
+        cityInput.style.border = 'none';
+        resultsGrid.innerHTML = `<div class="loading-msg">Searching for courts in <strong>${city}</strong>...</div>`;
+
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: city }, (results, status) => {
+          console.log('Geocode status:', status);
+          if (status !== 'OK') {
+            resultsGrid.innerHTML = `<div class="error-msg">City not found. Try another city.</div>`;
+            return;
+          }
+
+          const location = results[0].geometry.location;
+          console.log('Location found:', location.lat(), location.lng());
+
+          map.setCenter(location);
+
+          const request = {
+            location: location,
+            radius: 5000,
+            keyword: 'tennis court'
+          };
+
+          service.nearbySearch(request, (places, status) => {
+            console.log('Places status:', status);
+            console.log('Places found:', places);
+
+            if (status !== google.maps.places.PlacesServiceStatus.OK || !places.length) {
+              resultsGrid.innerHTML = `<div class="error-msg">No courts found near ${city}.</div>`;
+              return;
+            }
+
+            resultsGrid.innerHTML = '';
+            places.forEach(court => {
+              const photo = court.photos
+                ? court.photos[0].getUrl({ maxWidth: 400 })
+                : 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400';
+
+              const stars = court.rating
+                ? '★'.repeat(Math.round(court.rating)) + '☆'.repeat(5 - Math.round(court.rating))
+                : '☆☆☆☆☆';
+
+              const isOpen = court.opening_hours?.open_now;
+              const openBadge = isOpen
+                ? `<span class="badge-open">Open Now</span>`
+                : `<span class="badge-closed">Closed</span>`;
+
+              resultsGrid.innerHTML += `
+                <div class="court-card">
+                  <div class="card-image">
+                    <img src="${photo}" alt="${court.name}"/>
+                    <span class="badge-free">Public</span>
+                  </div>
+                  <div class="card-body">
+                    <h3 class="court-name">${court.name}</h3>
+                    <p class="court-address">${court.vicinity}</p>
+                    <div class="card-row">
+                      <div class="stars">${stars}</div>
+                      <span class="rating-count">(${court.user_ratings_total || 0} reviews)</span>
+                    </div>
+                    <div class="card-row">
+                      ${openBadge}
+                      <span class="surface-tag">Tennis Court</span>
+                    </div>
+                  </div>
+                </div>
+              `;
+            });
+          });
+        });
+      });
+    }
+  </script>
+
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHq7QJIROeH2ZphtL07WQKLWK2Z9ELmZU&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>
