@@ -256,3 +256,21 @@ body {
   color: #999;
   margin-top: 2px;
 }
+/* ── MESSAGES ── */
+.loading-msg {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: #888;
+}
+
+.error-msg {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: #c0392b;
+  background: #fdecea;
+  border-radius: 12px;
+}
