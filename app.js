@@ -6,85 +6,80 @@ const searchBtn = document.getElementById('searchBtn');
 const cityInput = document.getElementById('cityInput');
 const resultsGrid = document.getElementById('resultsGrid');
 
+// PLACESSERVICE NEEDS A MAP TO WORK (HIDDEN FOR NOW)
+let map;
+let service;
+
+window.onload = function () {
+  const mapDiv = document.getElementById('map');
+  map = new google.maps.Map(mapDiv, {
+    center: { lat: 34.0522, lng: -118.2437 },
+    zoom: 12
+  });
+  service = new google.maps.places.PlacesService(map);
+};
+
 // WHEN SEARCH BUTTON IS CLICKED
 searchBtn.addEventListener('click', () => {
   const city = cityInput.value.trim();
 
-  // IF INPUT IS EMPTY SHOW ERROR
   if (!city) {
     cityInput.style.border = '2px solid red';
     cityInput.placeholder = 'Please enter a city first!';
     return;
   }
 
-  // RESET INPUT STYLE
   cityInput.style.border = 'none';
   cityInput.placeholder = 'Enter a city, e.g. Los Angeles...';
 
-  // SHOW LOADING STATE
   resultsGrid.innerHTML = `
     <div class="loading-msg">
       Searching for courts in <strong>${city}</strong>...
     </div>
   `;
 
-  // STEP 1 — CONVERT CITY NAME TO LAT/LNG
   geocodeCity(city);
 });
 
-// GEOCODE FUNCTION — TURNS CITY NAME INTO LAT/LNG
-async function geocodeCity(city) {
-  try {
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city)}&key=${GOOGLE_API_KEY}`
-    );
-    const data = await response.json();
-
-    if (data.status !== 'OK') {
+// STEP 1 — GEOCODE CITY TO LAT/LNG
+function geocodeCity(city) {
+  const geocoder = new google.maps.Geocoder();
+  geocoder.geocode({ address: city }, (results, status) => {
+    if (status !== 'OK' || !results[0]) {
       showError('City not found. Please try another city.');
       return;
     }
 
-    const lat = data.results[0].geometry.location.lat;
-    const lng = data.results[0].geometry.location.lng;
-
-    console.log(`Found ${city} at: ${lat}, ${lng}`);
-
-    // STEP 2 — SEARCH FOR TENNIS COURTS NEAR THAT LOCATION
-    searchCourts(lat, lng, city);
-
-  } catch (error) {
-    showError('Something went wrong. Please try again.');
-  }
+    const location = results[0].geometry.location;
+    console.log(`Found ${city} at: ${location.lat()}, ${location.lng()}`);
+    searchCourts(location);
+  });
 }
 
-// SEARCH COURTS FUNCTION
-async function searchCourts(lat, lng, city) {
-  try {
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=5000&type=tennis_court&key=${GOOGLE_API_KEY}`
-    );
-    const data = await response.json();
+// STEP 2 — SEARCH FOR TENNIS COURTS
+function searchCourts(location) {
+  const request = {
+    location: location,
+    radius: 5000,
+    type: 'tennis_court'
+  };
 
-    if (data.results.length === 0) {
-      showError(`No tennis courts found near ${city}. Try a bigger city.`);
+  service.nearbySearch(request, (results, status) => {
+    if (status !== google.maps.places.PlacesServiceStatus.OK || !results.length) {
+      showError('No tennis courts found here. Try a bigger city.');
       return;
     }
 
-    console.log(`Found ${data.results.length} courts!`);
-    displayCourts(data.results);
-
-  } catch (error) {
-    showError('Something went wrong. Please try again.');
-  }
+    console.log(`Found ${results.length} courts!`);
+    displayCourts(results);
+  });
 }
 
-// DISPLAY COURTS FUNCTION
+// STEP 3 — DISPLAY COURT CARDS
 function displayCourts(courts) {
   resultsGrid.innerHTML = '';
 
   courts.forEach(court => {
-    const rating = court.rating || 'N/A';
     const reviewCount = court.user_ratings_total || 0;
     const isOpen = court.opening_hours?.open_now;
     const openBadge = isOpen
@@ -92,7 +87,7 @@ function displayCourts(courts) {
       : `<span class="badge-closed">Closed</span>`;
 
     const photo = court.photos
-      ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${court.photos[0].photo_reference}&key=${GOOGLE_API_KEY}`
+      ? court.photos[0].getUrl({ maxWidth: 400 })
       : 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400';
 
     const stars = getStars(court.rating);
