@@ -1322,11 +1322,41 @@
         else if (code <= 82) { bg1='#373b44'; bg2='#4286f4'; }
         else { bg1='#0f0c29'; bg2='#302b63'; }
         var rec, recBg, recIcon;
-        if (precip > 0.1) { rec='Rain expected — stay off the courts'; recBg='rgba(255,80,80,0.25)'; recIcon='🚫'; }
-        else if (wind > 20) { rec='Very windy — tough serving conditions'; recBg='rgba(255,200,0,0.25)'; recIcon='💨'; }
-        else if (temp > 95) { rec='Too hot — play early morning or evening'; recBg='rgba(255,150,0,0.25)'; recIcon='🥵'; }
-        else if (temp < 45) { rec='Too cold — bundle up or skip today'; recBg='rgba(100,150,255,0.25)'; recIcon='🥶'; }
-        else { rec='Perfect day to play tennis!'; recBg='rgba(255,255,255,0.25)'; recIcon='✅'; }
+        if (code === 95 || code === 96 || code === 99) {
+          rec = 'Thunderstorm — do not play today!'; recBg = 'rgba(255,50,50,0.3)'; recIcon = '⛈️';
+        } else if (code >= 71 && code <= 77) {
+          rec = 'Snowing — courts are unplayable'; recBg = 'rgba(100,150,255,0.25)'; recIcon = '❄️';
+        } else if (precip > 0.3) {
+          rec = 'Heavy rain — stay off the courts'; recBg = 'rgba(255,80,80,0.25)'; recIcon = '🌧️';
+        } else if (precip > 0.1) {
+          rec = 'Light rain — courts may be wet'; recBg = 'rgba(255,120,80,0.25)'; recIcon = '🌦️';
+        } else if (wind > 30) {
+          rec = 'Extremely windy — very tough conditions'; recBg = 'rgba(255,180,0,0.3)'; recIcon = '💨';
+        } else if (wind > 20) {
+          rec = 'Windy — serving will be difficult'; recBg = 'rgba(255,200,0,0.25)'; recIcon = '💨';
+        } else if (wind > 15) {
+          rec = 'Breezy — playable but tricky serves'; recBg = 'rgba(255,220,0,0.2)'; recIcon = '🌬️';
+        } else if (temp > 100) {
+          rec = 'Extreme heat — avoid playing outside'; recBg = 'rgba(255,100,0,0.3)'; recIcon = '🔥';
+        } else if (temp > 95) {
+          rec = 'Too hot — play early morning only'; recBg = 'rgba(255,150,0,0.25)'; recIcon = '🥵';
+        } else if (temp > 88) {
+          rec = 'Hot — bring lots of water'; recBg = 'rgba(255,180,0,0.2)'; recIcon = '☀️';
+        } else if (temp < 32) {
+          rec = 'Freezing — courts may be icy'; recBg = 'rgba(100,150,255,0.3)'; recIcon = '🥶';
+        } else if (temp < 45) {
+          rec = 'Too cold — bundle up or skip today'; recBg = 'rgba(100,150,255,0.25)'; recIcon = '🧊';
+        } else if (temp < 55) {
+          rec = 'Cool — dress warm for outdoor play'; recBg = 'rgba(150,200,255,0.2)'; recIcon = '🧥';
+        } else if (code === 45 || code === 48) {
+          rec = 'Foggy — reduced visibility on courts'; recBg = 'rgba(180,180,180,0.25)'; recIcon = '🌫️';
+        } else if (temp >= 65 && temp <= 85 && wind <= 10 && precip === 0) {
+          rec = 'Perfect conditions — ideal day to play!'; recBg = 'rgba(255,255,255,0.25)'; recIcon = '🎾';
+        } else if (temp >= 55 && temp <= 88 && wind <= 15 && precip === 0) {
+          rec = 'Good conditions — great day to play!'; recBg = 'rgba(255,255,255,0.2)'; recIcon = '✅';
+        } else {
+          rec = 'Decent conditions — playable today'; recBg = 'rgba(255,255,255,0.15)'; recIcon = '👍';
+        }
         var uvLabel = uv<=2?'Low':uv<=5?'Moderate':uv<=7?'High':'Very High';
         var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
         var todayIndex = new Date().getDay();
