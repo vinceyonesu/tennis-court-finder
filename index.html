@@ -229,6 +229,33 @@
     var favorites = JSON.parse(localStorage.getItem('courtFavorites') || '{}');
     var activeInfoWindow = null;
 
+    function loadCourtNotes(placeId) {
+      var section = document.getElementById('courtNotesSection');
+      if (!section) return;
+      var notes = JSON.parse(localStorage.getItem('courtNotes') || '{}');
+      var existingNote = notes[placeId] || '';
+      section.innerHTML =
+        '<div class="notes-section">' +
+          '<div class="notes-title">📝 My Notes</div>' +
+          '<div class="notes-subtitle">Private notes only you can see — saved on this device</div>' +
+          '<textarea class="notes-textarea" id="courtNoteInput" placeholder="e.g. Great morning court, bring your own net, parking on 5th St...">' + existingNote + '</textarea>' +
+          '<div style="display:flex;align-items:center;gap:10px">' +
+            '<button class="notes-save-btn" onclick="saveCourtNote(\'' + placeId + '\')">Save Note</button>' +
+            '<span class="notes-saved-tag" id="notesSavedTag">✅ Saved!</span>' +
+          '</div>' +
+          (existingNote ? '<div style="margin-top:10px;padding:8px 12px;background:#fff8dc;border-radius:8px;font-size:12px;color:#666;line-height:1.5"><strong>Current note:</strong> ' + existingNote + '</div>' : '') +
+        '</div>';
+    }
+
+    window.saveCourtNote = function(placeId) {
+      var note = document.getElementById('courtNoteInput').value.trim();
+      var notes = JSON.parse(localStorage.getItem('courtNotes') || '{}');
+      if (note) { notes[placeId] = note; } else { delete notes[placeId]; }
+      localStorage.setItem('courtNotes', JSON.stringify(notes));
+      var savedTag = document.getElementById('notesSavedTag');
+      savedTag.style.display = 'inline';
+      setTimeout(function() { savedTag.style.display = 'none'; }, 2000);
+    };
     window.openModal = function(id) {
       var data = courtDataStore[id] || favorites[id];
       if (!data) return;
