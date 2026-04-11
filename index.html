@@ -53,7 +53,6 @@
   <div class="filter-bar" id="filterBar" style="display:none">
     <button class="filter-btn active" id="filterAll" onclick="applyFilter('all')">All Courts</button>
     <button class="filter-btn" id="filterOpen" onclick="applyFilter('open')">Open Now</button>
-    <button class="filter-btn" id="filterLights" onclick="applyFilter('lights')">Lights Available</button>
     <div class="filter-divider"></div>
     <select class="filter-select" id="sortSelect" onchange="applySort()">
       <option value="default">Sort: Default</option>
@@ -317,9 +316,6 @@
       modalHeart.textContent = isFav ? '♥' : '♡';
       modalHeart.style.color = isFav ? '#e74c3c' : '#fff';
       var stars = data.rating ? '★'.repeat(Math.round(data.rating)) + '☆'.repeat(5 - Math.round(data.rating)) : '☆☆☆☆☆';
-      document.getElementById('modalRating').innerHTML =
-        '<span style="color:#f4a800;font-size:16px">' + stars + '</span>' +
-        '<span style="font-size:13px;color:#999;margin-left:6px">(' + data.reviews + ' reviews)</span>';
       var statusEl = document.getElementById('modalStatus');
       if (data.isOpen === true) { statusEl.innerHTML = '<span class="badge-open">Open Now</span>'; }
       else if (data.isOpen === false) { statusEl.innerHTML = '<span class="badge-closed">Closed</span>'; }
@@ -330,6 +326,12 @@
       document.getElementById('courtNotesSection').innerHTML = '';
       document.getElementById('modalDirections').href =
         'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(data.address) + '&destination_place_id=' + data.placeId;
+        var reviewsLink = 'https://search.google.com/local/reviews?placeid=' + data.placeId;
+      document.getElementById('modalRating').innerHTML =
+        '<a href="' + reviewsLink + '" target="_blank" style="text-decoration:none;display:flex;align-items:center;gap:6px">' +
+        '<span style="color:#f4a800;font-size:16px">' + stars + '</span>' +
+        '<span style="font-size:13px;color:#1a6b3c;text-decoration:underline;cursor:pointer">(' + data.reviews + ' reviews)</span>' +
+        '</a>';
       document.getElementById('courtModal').classList.add('active');
       document.body.style.overflow = 'hidden';
       getCourtWeather(data);
@@ -344,8 +346,6 @@
           function(place, status) {
             var hoursDiv = document.getElementById('modalHours');
             var html = '';
-            var lightsTag = data.lights ? '<span class="lights-badge">Lights available</span>' : '<span class="no-lights-badge">No lights info</span>';
-            html += '<div style="margin-bottom:10px">' + lightsTag + '</div>';
             if (status !== 'OK' || !place || !place.opening_hours) {
               html += '<p style="color:#888;font-size:13px">Hours not available.</p>';
               hoursDiv.innerHTML = html; return;
@@ -1182,7 +1182,7 @@
       resultsGrid.innerHTML = '';
       filtered.forEach(function(court) {
         var openBadge = court.isOpen===true?'<span class="badge-open">Open Now</span>':court.isOpen===false?'<span class="badge-closed">Closed</span>':'<span class="surface-tag">Hours N/A</span>';
-        var lightsBadge = court.lights ? '<span class="lights-badge">Lights</span>' : '';
+        var lightsBadge = '';
         var isFav = !!favorites[court.id];
         var stars = court.rating ? '★'.repeat(Math.round(court.rating))+'☆'.repeat(5-Math.round(court.rating)) : '☆☆☆☆☆';
         var distanceBadge = '';
