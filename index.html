@@ -124,7 +124,13 @@
       document.getElementById('courtModal').classList.add('active');
       document.body.style.overflow = 'hidden';
       getCourtWeather(data);
-       setTimeout(function() { loadHittingPartnerSection(data.placeId); }, 500);
+       var fbWait = setInterval(function() {
+  if (window._db) {
+    clearInterval(fbWait);
+    loadHittingPartnerSection(data.placeId);
+  }
+}, 200);
+setTimeout(function() { clearInterval(fbWait); }, 5000);
       if (gService && data.placeId) {
         gService.getDetails(
           { placeId: data.placeId, fields: ['opening_hours', 'formatted_phone_number', 'website'] },
@@ -259,6 +265,10 @@ async function loadSessions(placeId) {
 function loadHittingPartnerSection(placeId) {
   var section = document.getElementById('hittingPartnerSection');
   if (!section) return;
+  if (!window._db) {
+    section.innerHTML = '<p style="font-size:12px;color:#888;padding:10px">Connecting to database...</p>';
+    return;
+  }
 
   var today = new Date().toISOString().split('T')[0];
 
