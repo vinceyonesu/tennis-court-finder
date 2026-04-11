@@ -213,7 +213,56 @@
   <div id="photoModal" onclick="closePhotoModal()" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);z-index:9999;justify-content:center;align-items:center;cursor:pointer">
     <img id="photoModalImg" src="" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain"/>
   </div>
+<!-- VIEW PROFILE PAGE -->
+  <div id="viewProfilePage" style="display:none;max-width:600px;margin:40px auto;padding:0 24px 60px">
+    <div style="background:#ffffff;border-radius:20px;border:1px solid #ebebeb;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#1a6b3c,#25a05a);padding:30px 24px;text-align:center;position:relative">
+        <button onclick="closeViewProfile()" style="position:absolute;top:14px;left:14px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:32px;height:32px;color:#fff;font-size:16px;cursor:pointer">←</button>
+        <div id="vpPhotoWrap" style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.3);margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;font-weight:700;border:3px solid rgba(255,255,255,0.5)">
+          <span id="vpInitials">?</span>
+          <img id="vpPhoto" src="" style="display:none;width:100%;height:100%;object-fit:cover"/>
+        </div>
+        <div id="vpName" style="font-size:20px;font-weight:700;color:#ffffff;margin-bottom:4px"></div>
+        <div id="vpEmail" style="font-size:13px;color:rgba(255,255,255,0.75);margin-bottom:8px"></div>
+        <div id="vpVerifiedBadge" style="display:none;background:rgba(255,255,255,0.2);color:#ffffff;font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px;display:inline-block;margin-bottom:8px">✅ Verified</div>
+        <div style="display:flex;justify-content:center;gap:24px;margin-top:12px">
+          <div style="text-align:center;cursor:pointer" onclick="showFollowList('followers')">
+            <div id="vpFollowerCount" style="font-size:20px;font-weight:800;color:#ffffff">0</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.75)">Followers</div>
+          </div>
+          <div style="text-align:center;cursor:pointer" onclick="showFollowList('following')">
+            <div id="vpFollowingCount" style="font-size:20px;font-weight:800;color:#ffffff">0</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.75)">Following</div>
+          </div>
+          <div style="text-align:center">
+            <div id="vpMutualCount" style="font-size:20px;font-weight:800;color:#ffffff">0</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.75)">Mutual</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:20px 24px">
+        <div id="vpFollowBtn" style="margin-bottom:16px"></div>
+        <div id="vpSkill" style="font-size:13px;color:#555;margin-bottom:8px"></div>
+        <div id="vpUTR" style="font-size:13px;color:#555;margin-bottom:8px"></div>
+        <div id="vpBio" style="font-size:13px;color:#666;margin-bottom:16px;line-height:1.6"></div>
+        <div id="vpSocial" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px"></div>
+        <div id="vpGallery" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
+        <div style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Recent Sessions</div>
+        <div id="vpSessions"></div>
+      </div>
+    </div>
+  </div>
 
+  <!-- FOLLOW LIST MODAL -->
+  <div id="followListModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:9000;justify-content:center;align-items:center">
+    <div style="background:#fff;border-radius:20px;width:90%;max-width:400px;max-height:70vh;overflow:hidden;display:flex;flex-direction:column">
+      <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between">
+        <div id="followListTitle" style="font-size:16px;font-weight:700;color:#1a1a1a"></div>
+        <button onclick="closeFollowList()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#888">✕</button>
+      </div>
+      <div id="followListContent" style="overflow-y:auto;padding:12px 20px"></div>
+    </div>
+  </div>
   <!-- MAP -->
   <div class="map-section">
     <div id="map"></div>
@@ -644,7 +693,7 @@
               '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
                 avatarHtml +
                 '<div>' +
-                  '<div class="session-name">' + s.name + verifiedBadge + '</div>' +
+                  '<div class="session-name" style="cursor:pointer;text-decoration:underline" onclick="viewProfile(\'' + s.uid + '\')">' + s.name + verifiedBadge + '</div>' +
                   '<div style="font-size:11px;color:#888">' + s.skill + (s.utr ? ' · <span style="background:#fff3e0;color:#e65100;font-size:10px;font-weight:600;padding:1px 6px;border-radius:999px">UTR ' + s.utr + '</span>' : '') + ' · ' + s.type + '</div>' +
                   (s.gallery && s.gallery.length > 0 ? '<div style="display:flex;gap:6px;margin-top:8px;margin-bottom:4px">' + s.gallery.map(function(url) { return '<img src="' + url + '" style="width:60px;height:60px;border-radius:8px;object-fit:cover;border:1px solid #e8e8e8;cursor:pointer" onclick="showPhotoModal(\'' + url + '\')">'; }).join('') + '</div>' : '') +
                 '</div>' +
@@ -949,7 +998,7 @@
               '<div style="display:flex;align-items:flex-start;gap:12px">' +
                 avatarHtml +
                 '<div style="flex:1;min-width:0">' +
-                  '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px"><span style="font-size:14px;font-weight:700;color:#1a1a1a">' + s.name + '</span>' + verifiedBadge + '</div>' +
+                  '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px"><span style="font-size:14px;font-weight:700;color:#1a1a1a;cursor:pointer;text-decoration:underline" onclick="viewProfile(\'' + s.uid + '\')">' + s.name + '</span>' + verifiedBadge + '</div>' +
                   '<div style="font-size:12px;color:#888;margin-bottom:6px"><span style="background:' + (isToday ? '#e6f9ee' : '#f0f0f0') + ';color:' + (isToday ? '#1a6b3c' : '#555') + ';font-weight:600;padding:2px 8px;border-radius:999px;font-size:11px">' + (isToday ? 'Today' : dateStr) + '</span> at <strong>' + timeStr + '</strong>' + distanceBadge + '</div>' +
                   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><span style="background:#f0f0f0;color:#555;font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px">' + s.type + '</span><span style="background:#f0f0f0;color:#555;font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px">' + s.skill + '</span>' + (s.courtName ? '<span style="background:#e6f9ee;color:#1a6b3c;font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px">📍 ' + s.courtName + '</span>' : '') + '</div>' +
                   (s.gallery && s.gallery.length > 0 ? '<div style="display:flex;gap:6px;margin-bottom:8px">' + s.gallery.map(function(url) { return '<img src="' + url + '" style="width:60px;height:60px;border-radius:8px;object-fit:cover;border:1px solid #e8e8e8;cursor:pointer" onclick="showPhotoModal(\'' + url + '\')">'; }).join('') + '</div>' : '') +
@@ -999,7 +1048,250 @@
         goToSlide(courtId, current);
       }, 3000);
     }
+var currentViewProfileUid = null;
 
+    window.viewProfile = async function(uid) {
+      if (!uid || !window._db) return;
+      currentViewProfileUid = uid;
+
+      document.getElementById('heroSection').style.display = 'none';
+      document.getElementById('filterBar').style.display = 'none';
+      document.getElementById('resultsGrid').parentElement.style.display = 'none';
+      document.getElementById('savedSection').style.display = 'none';
+      document.getElementById('profilePage').style.display = 'none';
+      document.getElementById('nearbyPage').style.display = 'none';
+      document.getElementById('viewProfilePage').style.display = 'block';
+
+      document.getElementById('vpName').textContent = 'Loading...';
+      document.getElementById('vpPhoto').style.display = 'none';
+      document.getElementById('vpInitials').style.display = 'block';
+      document.getElementById('vpInitials').textContent = '?';
+      document.getElementById('vpFollowBtn').innerHTML = '';
+      document.getElementById('vpSessions').innerHTML = '<p style="font-size:13px;color:#aaa">Loading sessions...</p>';
+
+      try {
+        var profileRef = window._fbDoc(window._db, 'profiles', uid);
+        var profileSnap = await window._fbGetDoc(profileRef);
+
+        if (!profileSnap.exists()) {
+          document.getElementById('vpName').textContent = 'User not found';
+          return;
+        }
+
+        var p = profileSnap.data();
+
+        document.getElementById('vpName').textContent = p.name || 'No name';
+        document.getElementById('vpEmail').textContent = p.email || '';
+
+        if (p.photo) {
+          document.getElementById('vpPhoto').src = p.photo;
+          document.getElementById('vpPhoto').style.display = 'block';
+          document.getElementById('vpInitials').style.display = 'none';
+        } else {
+          document.getElementById('vpInitials').textContent = p.name ? p.name[0].toUpperCase() : '?';
+        }
+
+        if (p.phoneVerified) {
+          document.getElementById('vpVerifiedBadge').style.display = 'inline-block';
+        }
+
+        document.getElementById('vpSkill').innerHTML = p.skill ? '🎾 ' + p.skill : '';
+        document.getElementById('vpUTR').innerHTML = p.utr ? '📊 UTR ' + p.utr : '';
+        document.getElementById('vpBio').textContent = p.bio || '';
+
+        var socialHtml = '';
+        if (p.instagram) socialHtml += '<a href="https://instagram.com/' + p.instagram.replace('@','') + '" target="_blank" style="text-decoration:none;font-size:12px;color:#833ab4;background:#f8f0ff;padding:5px 12px;border-radius:999px">📸 Instagram</a>';
+        if (p.facebook) socialHtml += '<a href="https://facebook.com/' + p.facebook + '" target="_blank" style="text-decoration:none;font-size:12px;color:#1877f2;background:#f0f5ff;padding:5px 12px;border-radius:999px">📘 Facebook</a>';
+        if (p.whatsapp) socialHtml += '<a href="https://wa.me/' + p.whatsapp.replace(/[^0-9]/g,'') + '" target="_blank" style="text-decoration:none;font-size:12px;color:#25d366;background:#f0fff5;padding:5px 12px;border-radius:999px">💬 WhatsApp</a>';
+        document.getElementById('vpSocial').innerHTML = socialHtml;
+
+        if (p.gallery && p.gallery.length > 0) {
+          document.getElementById('vpGallery').innerHTML = p.gallery.map(function(url) {
+            return '<img src="' + url + '" style="width:80px;height:80px;border-radius:10px;object-fit:cover;cursor:pointer" onclick="showPhotoModal(\'' + url + '\')">';
+          }).join('');
+        }
+
+        await loadFollowCounts(uid);
+        await renderFollowButton(uid);
+        await loadUserSessionsForProfile(uid);
+
+      } catch (err) {
+        console.log('View profile error:', err);
+      }
+    };
+
+    async function loadFollowCounts(uid) {
+      try {
+        var followersQ = window._fbQuery(window._fbCollection(window._db, 'follows'), window._fbWhere('followingId', '==', uid));
+        var followingQ = window._fbQuery(window._fbCollection(window._db, 'follows'), window._fbWhere('followerId', '==', uid));
+        var followersSnap = await window._fbGetDocs(followersQ);
+        var followingSnap = await window._fbGetDocs(followingQ);
+        var followerCount = followersSnap.size;
+        var followingCount = followingSnap.size;
+
+        document.getElementById('vpFollowerCount').textContent = followerCount;
+        document.getElementById('vpFollowingCount').textContent = followingCount;
+
+        if (window._currentUser) {
+          var followerIds = [];
+          followersSnap.forEach(function(d) { followerIds.push(d.data().followerId); });
+          var followingIds = [];
+          followingSnap.forEach(function(d) { followingIds.push(d.data().followingId); });
+          var mutualCount = followerIds.filter(function(id) { return followingIds.includes(id); }).length;
+          document.getElementById('vpMutualCount').textContent = mutualCount;
+        }
+      } catch (err) { console.log('Follow counts error:', err); }
+    }
+
+    async function renderFollowButton(uid) {
+      var btn = document.getElementById('vpFollowBtn');
+      if (!window._currentUser || window._currentUser.uid === uid) {
+        btn.innerHTML = '';
+        return;
+      }
+      try {
+        var followId = window._currentUser.uid + '_' + uid;
+        var followRef = window._fbDoc(window._db, 'follows', followId);
+        var followSnap = await window._fbGetDoc(followRef);
+        var isFollowing = followSnap.exists();
+
+        var reverseFollowId = uid + '_' + window._currentUser.uid;
+        var reverseRef = window._fbDoc(window._db, 'follows', reverseFollowId);
+        var reverseSnap = await window._fbGetDoc(reverseRef);
+        var isMutual = isFollowing && reverseSnap.exists();
+
+        btn.innerHTML =
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+            '<button onclick="toggleFollow(\'' + uid + '\')" style="flex:1;background:' + (isFollowing ? '#f0f0f0' : '#1a6b3c') + ';color:' + (isFollowing ? '#555' : '#fff') + ';border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:pointer">' +
+              (isMutual ? '👥 Mutual Friends' : isFollowing ? '✓ Following' : '+ Follow') +
+            '</button>' +
+            (isMutual ? '<button onclick="openMessage(\'' + uid + '\')" style="flex:1;background:#e6f9ee;color:#1a6b3c;border:1px solid #1a6b3c;border-radius:10px;padding:10px;font-size:14px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:pointer">💬 Message</button>' : '') +
+          '</div>' +
+          (isMutual ? '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f8f9fa;border-radius:10px"><span style="font-size:13px;color:#555">🔔 Notify when playing</span><label style="position:relative;display:inline-block;width:40px;height:22px;margin-left:auto"><input type="checkbox" id="notifyToggle_' + uid + '" onchange="toggleNotifyFriend(\'' + uid + '\')" style="opacity:0;width:0;height:0"><span onclick="document.getElementById(\'notifyToggle_' + uid + '\').click()" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;border-radius:22px;transition:0.3s"></span></label></div>' : '');
+
+        if (isMutual) {
+          var notifyKey = 'notify_' + window._currentUser.uid + '_' + uid;
+          var isNotifying = localStorage.getItem(notifyKey) === 'true';
+          setTimeout(function() {
+            var toggle = document.getElementById('notifyToggle_' + uid);
+            var span = toggle ? toggle.nextElementSibling : null;
+            if (toggle) toggle.checked = isNotifying;
+            if (span) span.style.background = isNotifying ? '#1a6b3c' : '#ccc';
+          }, 100);
+        }
+      } catch (err) { console.log('Follow button error:', err); }
+    }
+
+    window.toggleFollow = async function(uid) {
+      if (!window._currentUser) { alert('Please sign in to follow players!'); handleAuthClick(); return; }
+      try {
+        var followId = window._currentUser.uid + '_' + uid;
+        var followRef = window._fbDoc(window._db, 'follows', followId);
+        var followSnap = await window._fbGetDoc(followRef);
+        if (followSnap.exists()) {
+          await window._fbDeleteDoc(followRef);
+        } else {
+          await window._fbSetDoc(followRef, {
+            followerId: window._currentUser.uid,
+            followerName: window._currentUser.displayName || '',
+            followerPhoto: window._currentUser.photoURL || '',
+            followingId: uid,
+            createdAt: window._fbTimestamp.now()
+          });
+        }
+        await loadFollowCounts(uid);
+        await renderFollowButton(uid);
+      } catch (err) { console.log('Toggle follow error:', err); alert('Could not follow. Try again.'); }
+    };
+
+    window.toggleNotifyFriend = function(uid) {
+      var notifyKey = 'notify_' + window._currentUser.uid + '_' + uid;
+      var toggle = document.getElementById('notifyToggle_' + uid);
+      var span = toggle ? toggle.nextElementSibling : null;
+      var isNowNotifying = toggle ? toggle.checked : false;
+      localStorage.setItem(notifyKey, isNowNotifying.toString());
+      if (span) span.style.background = isNowNotifying ? '#1a6b3c' : '#ccc';
+    };
+
+    window.closeViewProfile = function() {
+      document.getElementById('viewProfilePage').style.display = 'none';
+      document.getElementById('heroSection').style.display = 'block';
+      document.getElementById('resultsGrid').parentElement.style.display = 'block';
+      if (allCourts.length > 0) document.getElementById('filterBar').style.display = 'flex';
+    };
+
+    window.showFollowList = async function(type) {
+      if (!currentViewProfileUid || !window._db) return;
+      var modal = document.getElementById('followListModal');
+      var title = document.getElementById('followListTitle');
+      var content = document.getElementById('followListContent');
+      title.textContent = type === 'followers' ? 'Followers' : 'Following';
+      content.innerHTML = '<p style="color:#aaa;font-size:13px">Loading...</p>';
+      modal.style.display = 'flex';
+      try {
+        var field = type === 'followers' ? 'followingId' : 'followerId';
+        var returnField = type === 'followers' ? 'followerId' : 'followingId';
+        var q = window._fbQuery(window._fbCollection(window._db, 'follows'), window._fbWhere(field, '==', currentViewProfileUid));
+        var snap = await window._fbGetDocs(q);
+        if (snap.empty) { content.innerHTML = '<p style="color:#aaa;font-size:13px;padding:12px 0">No ' + type + ' yet.</p>'; return; }
+        var html = '';
+        var promises = [];
+        snap.forEach(function(d) {
+          var uid = d.data()[returnField];
+          promises.push(window._fbGetDoc(window._fbDoc(window._db, 'profiles', uid)).then(function(profileSnap) {
+            if (!profileSnap.exists()) return;
+            var p = profileSnap.data();
+            html +=
+              '<div onclick="closeFollowList();viewProfile(\'' + uid + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;cursor:pointer">' +
+                (p.photo ? '<img src="' + p.photo + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover"/>' : '<div style="width:40px;height:40px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>') +
+                '<div>' +
+                  '<div style="font-size:14px;font-weight:600;color:#1a1a1a">' + (p.name || 'Unknown') + '</div>' +
+                  '<div style="font-size:12px;color:#888">' + (p.skill || '') + '</div>' +
+                '</div>' +
+              '</div>';
+          }));
+        });
+        await Promise.all(promises);
+        content.innerHTML = html || '<p style="color:#aaa;font-size:13px">No ' + type + ' yet.</p>';
+      } catch (err) { console.log('Follow list error:', err); content.innerHTML = '<p style="color:#e74c3c;font-size:13px">Could not load.</p>'; }
+    };
+
+    window.closeFollowList = function() {
+      document.getElementById('followListModal').style.display = 'none';
+    };
+
+    async function loadUserSessionsForProfile(uid) {
+      var sessionsDiv = document.getElementById('vpSessions');
+      if (!sessionsDiv || !window._db) return;
+      try {
+        var today = new Date().toISOString().split('T')[0];
+        var q = window._fbQuery(
+          window._fbCollection(window._db, 'sessions'),
+          window._fbWhere('uid', '==', uid),
+          window._fbWhere('date', '>=', today),
+          window._fbOrderBy('date', 'asc')
+        );
+        var snap = await window._fbGetDocs(q);
+        if (snap.empty) { sessionsDiv.innerHTML = '<p style="font-size:13px;color:#aaa">No upcoming sessions.</p>'; return; }
+        var html = '';
+        snap.forEach(function(d) {
+          var s = d.data();
+          if (s.deleted) return;
+          var dateStr = new Date(s.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          var timeStr = new Date('2000-01-01T' + s.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          html +=
+            '<div style="background:#f8f9fa;border-radius:10px;padding:10px 14px;margin-bottom:8px">' +
+              '<div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px">' + (s.courtName || 'Tennis Court') + '</div>' +
+              '<div style="font-size:12px;color:#888">📅 ' + dateStr + ' at ' + timeStr + ' · ' + s.skill + ' · ' + s.type + '</div>' +
+            '</div>';
+        });
+        sessionsDiv.innerHTML = html || '<p style="font-size:13px;color:#aaa">No upcoming sessions.</p>';
+      } catch (err) { console.log('Profile sessions error:', err); }
+    }
+
+    window.openMessage = function(uid) {
+      alert('Messaging coming in Hour 21! 💬');
+    };
     window.toggleHourly = function(id) {
       var el = document.getElementById(id);
       if (!el) return;
@@ -1200,6 +1492,7 @@
       document.getElementById('savedSection').style.display = 'none';
       document.getElementById('profilePage').style.display = 'none';
       document.getElementById('nearbyPage').style.display = 'none';
+      document.getElementById('viewProfilePage').style.display = 'none';
       document.getElementById('navSaved').style.color = '#555';
       document.getElementById('navSearch').style.color = '#1a6b3c';
       document.getElementById('navProfile').style.color = '#555';
@@ -1575,7 +1868,7 @@
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc, arrayUnion, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc, arrayUnion, setDoc, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, PhoneAuthProvider, RecaptchaVerifier, signInWithCredential } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
@@ -1599,6 +1892,7 @@
     window._fbQuery = query; window._fbWhere = where; window._fbOrderBy = orderBy;
     window._fbTimestamp = Timestamp; window._fbUpdateDoc = updateDoc; window._fbDoc = doc;
     window._fbArrayUnion = arrayUnion; window._fbSetDoc = setDoc; window._fbGetDoc = getDoc;
+    window._fbDeleteDoc = deleteDoc;
     window._GoogleAuthProvider = GoogleAuthProvider; window._signInWithPopup = signInWithPopup;
     window._signOut = signOut; window._PhoneAuthProvider = PhoneAuthProvider;
     window._RecaptchaVerifier = RecaptchaVerifier; window._signInWithCredential = signInWithCredential;
