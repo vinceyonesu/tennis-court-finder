@@ -392,11 +392,10 @@ body {
   position: relative;
   margin-bottom: 60px;
 }
-
 .modal-close {
   position: absolute;
   top: 14px;
-  right: 14px;
+  right: 56px;
   background: rgba(0,0,0,0.5);
   color: #fff;
   border: none;
