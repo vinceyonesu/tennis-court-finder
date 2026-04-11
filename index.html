@@ -900,6 +900,27 @@ window.joinSessionFromNearby = async function(sessionId) {
     alert('Could not join session. Try again.');
   }
 };
+window.goToSlide = function(courtId, index) {
+  var container = document.getElementById('slide_' + courtId);
+  if (!container) return;
+  var imgs = container.querySelectorAll('.slide-img');
+  imgs.forEach(function(img, i) {
+    img.style.opacity = i === index ? '1' : '0';
+  });
+  var dots = document.querySelectorAll('[id^="dot_' + courtId + '_"]');
+  dots.forEach(function(dot, i) {
+    dot.style.background = i === index ? '#ffffff' : 'rgba(255,255,255,0.5)';
+  });
+};
+
+function autoSlide(courtId, photoCount) {
+  if (photoCount <= 1) return;
+  var current = 0;
+  setInterval(function() {
+    current = (current + 1) % photoCount;
+    goToSlide(courtId, current);
+  }, 3000);
+}
     window.toggleHourly = function(id) {
       var el = document.getElementById(id);
       if (!el) return;
@@ -948,7 +969,7 @@ window.joinSessionFromNearby = async function(sessionId) {
               var photo = court.photos ? court.photos[0].getUrl({ maxWidth: 400 }) : 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400';
               var id = 'court_' + index;
               var courtObj = {
-                id: id, name: court.name, address: court.vicinity, photo: photo,
+  id: id, name: court.name, address: court.vicinity, photo: photo, photos: photos,
                 rating: court.rating || 0, reviews: court.user_ratings_total || 0,
                 isOpen: court.opening_hours ? court.opening_hours.open_now : undefined,
                 lights: hasLights(court), placeId: court.place_id,
@@ -1079,10 +1100,22 @@ window.joinSessionFromNearby = async function(sessionId) {
         var stars = court.rating ? '★'.repeat(Math.round(court.rating)) + '☆'.repeat(5 - Math.round(court.rating)) : '☆☆☆☆☆';
         savedGrid.innerHTML +=
           '<div class="court-card" onclick="openModal(\'' + id + '\')" style="cursor:pointer">' +
-            '<div class="card-image">' +
-              '<img src="' + court.photo + '" alt="' + court.name + '"/>' +
-              '<button class="heart-btn" id="heart_' + id + '" onclick="event.stopPropagation();toggleFavorite(\'' + id + '\')" style="color:#e74c3c">♥</button>' +
-            '</div>' +
+            '<div class="card-image" style="position:relative">' +
+  '<div id="slide_'+court.id+'" style="width:100%;height:190px;overflow:hidden;position:relative">' +
+    court.photos.map(function(photo, idx) {
+      return '<img src="'+photo+'" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:'+(idx===0?'1':'0')+';transition:opacity 0.4s ease" class="slide-img"/>';
+    }).join('') +
+  '</div>' +
+  (court.photos.length > 1
+    ? '<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:4">' +
+        court.photos.map(function(_, idx) {
+          return '<div class="slide-dot" id="dot_'+court.id+'_'+idx+'" onclick="event.stopPropagation();goToSlide(\''+court.id+'\','+idx+')" style="width:6px;height:6px;border-radius:50%;background:'+(idx===0?'#ffffff':'rgba(255,255,255,0.5)')+';cursor:pointer;transition:background 0.2s"></div>';
+        }).join('') +
+      '</div>'
+    : '') +
+  '<span class="badge-free">Public</span>' +
+  '<button class="heart-btn" id="heart_'+court.id+'" onclick="event.stopPropagation();toggleFavorite(\''+court.id+'\')" style="color:'+(isFav?'#e74c3c':'#fff')+'">'+(isFav?'♥':'♡')+'</button>' +
+'</div>' +
             '<div class="card-body">' +
               '<h3 class="court-name">' + court.name + '</h3>' +
               '<p class="court-address">' + court.address + '</p>' +
@@ -1298,23 +1331,64 @@ window.joinSessionFromNearby = async function(sessionId) {
           var dist = getDistance(window._userLat, window._userLng, court.lat, court.lng);
           distanceBadge = '<span class="surface-tag">📍 ' + dist + ' mi</span>';
         }
+     function renderCourts() {
+      var sortVal = document.getElementById('sortSelect').value;
+      var filtered = allCourts.filter(function(c) {
+        if (currentFilter === 'open') return c.isOpen === true;
+        if (currentFilter === 'lights') return c.lights === true;
+        return true;
+      });
+      if (sortVal === 'rating') filtered.sort(function(a, b) { return (b.rating||0)-(a.rating||0); });
+      else if (sortVal === 'reviews') filtered.sort(function(a, b) { return (b.reviews||0)-(a.reviews||0); });
+      var resultsGrid = document.getElementById('resultsGrid');
+      if (filtered.length === 0) { resultsGrid.innerHTML = '<div class="error-msg">No courts match this filter.</div>'; return; }
+      resultsGrid.innerHTML = '';
+      filtered.forEach(function(court) {
+        var openBadge = court.isOpen===true?'<span class="badge-open">Open Now</span>':court.isOpen===false?'<span class="badge-closed">Closed</span>':'<span class="surface-tag">Hours N/A</span>';
+        var lightsBadge = court.lights ? '<span class="lights-badge">Lights</span>' : '';
+        var isFav = !!favorites[court.id];
+        var stars = court.rating ? '★'.repeat(Math.round(court.rating))+'☆'.repeat(5-Math.round(court.rating)) : '☆☆☆☆☆';
+        var distanceBadge = '';
+        if (window._userLat && court.lat) {
+          var dist = getDistance(window._userLat, window._userLng, court.lat, court.lng);
+          distanceBadge = '<span class="surface-tag">📍 ' + dist + ' mi</span>';
+        }
+        var photos = court.photos || [court.photo];
+        var slidesHtml = photos.map(function(p, idx) {
+          return '<img src="'+p+'" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:'+(idx===0?'1':'0')+';transition:opacity 0.4s ease" class="slide-img"/>';
+        }).join('');
+        var dotsHtml = photos.length > 1
+          ? '<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:4">' +
+              photos.map(function(_, idx) {
+                return '<div id="dot_'+court.id+'_'+idx+'" onclick="event.stopPropagation();goToSlide(\''+court.id+'\','+idx+')" style="width:6px;height:6px;border-radius:50%;background:'+(idx===0?'#ffffff':'rgba(255,255,255,0.5)')+';cursor:pointer;transition:background 0.2s"></div>';
+              }).join('') +
+            '</div>'
+          : '';
         resultsGrid.innerHTML +=
-          '<div class="court-card" id="court_card_' + court.id + '" onclick="openModal(\'' + court.id + '\')" style="cursor:pointer">' +
-            '<div class="card-image">' +
-              '<img src="' + court.photo + '" alt="' + court.name + '"/>' +
+          '<div class="court-card" id="court_card_'+court.id+'" onclick="openModal(\''+court.id+'\')" style="cursor:pointer">' +
+            '<div class="card-image" style="position:relative">' +
+              '<div id="slide_'+court.id+'" style="width:100%;height:190px;overflow:hidden;position:relative">' +
+                slidesHtml +
+              '</div>' +
+              dotsHtml +
               '<span class="badge-free">Public</span>' +
-              '<button class="heart-btn" id="heart_' + court.id + '" onclick="event.stopPropagation();toggleFavorite(\'' + court.id + '\')" style="color:' + (isFav?'#e74c3c':'#fff') + '">' + (isFav?'♥':'♡') + '</button>' +
+              '<button class="heart-btn" id="heart_'+court.id+'" onclick="event.stopPropagation();toggleFavorite(\''+court.id+'\')" style="color:'+(isFav?'#e74c3c':'#fff')+'">'+(isFav?'♥':'♡')+'</button>' +
             '</div>' +
             '<div class="card-body">' +
-              '<h3 class="court-name">' + court.name + '</h3>' +
-              '<p class="court-address">' + court.address + '</p>' +
-              '<div class="card-row"><div class="stars">' + stars + '</div><span class="rating-count">(' + court.reviews + ' reviews)</span></div>' +
-              '<div class="card-row">' + openBadge + '<span class="surface-tag">Tennis Court</span>' + lightsBadge + distanceBadge + '</div>' +
+              '<h3 class="court-name">'+court.name+'</h3>' +
+              '<p class="court-address">'+court.address+'</p>' +
+              '<div class="card-row"><div class="stars">'+stars+'</div><span class="rating-count">('+court.reviews+' reviews)</span></div>' +
+              '<div class="card-row">'+openBadge+'<span class="surface-tag">Tennis Court</span>'+lightsBadge+distanceBadge+'</div>' +
             '</div>' +
           '</div>';
       });
-    }
 
+      filtered.forEach(function(court) {
+        if (court.photos && court.photos.length > 1) {
+          autoSlide(court.id, court.photos.length);
+        }
+      });
+    }
     function initMap() {
       var map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: 34.0522, lng: -118.2437 }, zoom: 12
@@ -1347,10 +1421,13 @@ window.joinSessionFromNearby = async function(sessionId) {
             allCourts = [];
             var bounds = new google.maps.LatLngBounds();
             places.forEach(function(court, index) {
-              var photo = court.photos ? court.photos[0].getUrl({ maxWidth: 400 }) : 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400';
+              var photos = court.photos
+  ? court.photos.slice(0, 3).map(function(p) { return p.getUrl({ maxWidth: 400 }); })
+  : ['https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400'];
+var photo = photos[0];
               var id = 'court_' + index;
               var courtObj = {
-                id: id, name: court.name, address: court.vicinity, photo: photo,
+  id: id, name: court.name, address: court.vicinity, photo: photo, photos: photos,
                 rating: court.rating||0, reviews: court.user_ratings_total||0,
                 isOpen: court.opening_hours ? court.opening_hours.open_now : undefined,
                 lights: hasLights(court), placeId: court.place_id,
