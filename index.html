@@ -967,6 +967,7 @@
       document.getElementById('profilePage').style.display = 'none';
       document.getElementById('viewProfilePage').style.display = 'none';
       document.getElementById('myProfilePage').style.display = 'block';
+      document.getElementById('map').closest('.map-section').style.display = 'none';
       document.getElementById('navProfile').style.color = '#1a6b3c';
       document.getElementById('navSearch').style.color = '#555';
 
@@ -1680,6 +1681,7 @@ var currentViewProfileUid = null;
     };
 
     window.showSearch = function() {
+      document.getElementById('map').closest('.map-section').style.display = 'block';
       document.getElementById('heroSection').style.display = 'block';
       document.getElementById('resultsGrid').parentElement.style.display = 'block';
       document.getElementById('savedSection').style.display = 'none';
