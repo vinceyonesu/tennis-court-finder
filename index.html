@@ -1297,7 +1297,7 @@
           'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lng +
           '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation,weather_code,uv_index' +
           '&daily=temperature_2m_max,temperature_2m_min,weather_code,wind_speed_10m_max,uv_index_max,precipitation_sum,sunrise,sunset' +
-          '&hourly=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,uv_index' +
+          '&hourly=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,uv_index,precipitation' +
           '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7'
         );
         var data = await res.json();
@@ -1322,14 +1322,55 @@
         else if (code <= 82) { bg1='#373b44'; bg2='#4286f4'; }
         else { bg1='#0f0c29'; bg2='#302b63'; }
         var rec, recBg, recIcon;
+
+        // Check hourly data for recent rain and upcoming rain
+        var currentHourIndex = new Date().getHours();
+        var recentlyRained = false;
+        var willRainSoon = false;
+        var willRainLater = false;
+        var rainStoppedRecently = false;
+
+        // Check last 2 hours for recent rain
+        for (var h = Math.max(0, currentHourIndex - 2); h < currentHourIndex; h++) {
+          if (hourly.precipitation && hourly.precipitation[h] > 0.1) {
+            recentlyRained = true;
+          }
+        }
+
+        // Check if it rained AND stopped (courts may be wet)
+        if (recentlyRained && precip === 0) {
+          rainStoppedRecently = true;
+        }
+
+        // Check next 2 hours for upcoming rain
+        for (var h = currentHourIndex + 1; h <= currentHourIndex + 2; h++) {
+          if (hourly.precipitation && hourly.precipitation[h] > 0.1) {
+            willRainSoon = true;
+          }
+        }
+
+        // Check next 3-6 hours for rain later
+        for (var h = currentHourIndex + 3; h <= currentHourIndex + 6; h++) {
+          if (hourly.precipitation && hourly.precipitation[h] > 0.1) {
+            willRainLater = true;
+          }
+        }
+
+        // Make recommendation based on all conditions
         if (code === 95 || code === 96 || code === 99) {
-          rec = 'Thunderstorm — do not play today!'; recBg = 'rgba(255,50,50,0.3)'; recIcon = '⛈️';
+          rec = 'Thunderstorm active — do not play!'; recBg = 'rgba(255,50,50,0.3)'; recIcon = '⛈️';
         } else if (code >= 71 && code <= 77) {
           rec = 'Snowing — courts are unplayable'; recBg = 'rgba(100,150,255,0.25)'; recIcon = '❄️';
         } else if (precip > 0.3) {
-          rec = 'Heavy rain — stay off the courts'; recBg = 'rgba(255,80,80,0.25)'; recIcon = '🌧️';
+          rec = 'Heavy rain right now — stay off courts'; recBg = 'rgba(255,80,80,0.25)'; recIcon = '🌧️';
         } else if (precip > 0.1) {
-          rec = 'Light rain — courts may be wet'; recBg = 'rgba(255,120,80,0.25)'; recIcon = '🌦️';
+          rec = 'Light rain right now — courts are wet'; recBg = 'rgba(255,120,80,0.25)'; recIcon = '🌦️';
+        } else if (rainStoppedRecently) {
+          rec = 'Just rained — courts may still be wet, be careful'; recBg = 'rgba(255,160,0,0.25)'; recIcon = '⚠️';
+        } else if (willRainSoon) {
+          rec = 'Rain expected in 1-2 hours — finish up soon'; recBg = 'rgba(255,140,0,0.25)'; recIcon = '🌂';
+        } else if (willRainLater) {
+          rec = 'Rain coming in a few hours — plan ahead'; recBg = 'rgba(255,200,0,0.2)'; recIcon = '🌥️';
         } else if (wind > 30) {
           rec = 'Extremely windy — very tough conditions'; recBg = 'rgba(255,180,0,0.3)'; recIcon = '💨';
         } else if (wind > 20) {
