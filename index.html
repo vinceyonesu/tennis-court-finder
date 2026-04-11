@@ -30,6 +30,18 @@
     </div>
   </section>
 
+  <!-- FILTER BAR -->
+  <div class="filter-bar" id="filterBar" style="display:none">
+    <button class="filter-btn active" id="filterAll" onclick="applyFilter('all')">All Courts</button>
+    <button class="filter-btn" id="filterOpen" onclick="applyFilter('open')">Open Now</button>
+    <button class="filter-btn" id="filterLights" onclick="applyFilter('lights')">Lights Available</button>
+    <div class="filter-divider"></div>
+    <select class="filter-select" id="sortSelect" onchange="applySort()">
+      <option value="default">Sort: Default</option>
+      <option value="rating">Sort: Best Rated</option>
+      <option value="reviews">Sort: Most Reviews</option>
+    </select>
+  </div>
   <!-- RESULTS SECTION -->
   <section class="results-section">
     <div class="results-grid" id="resultsGrid"></div>
