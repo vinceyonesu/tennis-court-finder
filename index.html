@@ -17,6 +17,7 @@
       <a href="#" id="navSaved" onclick="showSaved()">Saved Courts <span id="savedCount" class="saved-count">0</span></a>
       <a href="#" id="navSearch" onclick="showSearch()">Search</a>
       <a href="#" id="navProfile" onclick="showProfile()" style="display:none">My Profile</a>
+      <a href="#" id="navNearby" onclick="showNearby()">🎾 Players Near You</a>
       <div id="authBtn" onclick="handleAuthClick()" style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#f0f0f0;border-radius:50px;padding:6px 14px 6px 6px;transition:background 0.2s">
         <div id="authAvatar" style="width:28px;height:28px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;overflow:hidden">
           <span id="authAvatarText">?</span>
@@ -161,7 +162,29 @@
       </div>
     </div>
   </div>
-
+<!-- PLAYERS NEAR YOU -->
+  <div id="nearbyPage" style="display:none;max-width:700px;margin:40px auto;padding:0 24px 60px">
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:22px;font-weight:700;color:#1a1a1a;margin-bottom:4px">🎾 Players Near You</h2>
+      <p style="font-size:14px;color:#888;margin-bottom:16px">Find hitting partners at courts near your location</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <select id="nearbySkillFilter" onchange="loadNearbySessions()" style="border:1.5px solid #e0e0e0;border-radius:999px;padding:7px 16px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#555;background:#fff;outline:none;cursor:pointer">
+          <option value="all">All Skill Levels</option>
+          <option value="Beginner">Beginner</option>
+          <option value="Intermediate">Intermediate</option>
+          <option value="Advanced">Advanced</option>
+        </select>
+        <select id="nearbyTypeFilter" onchange="loadNearbySessions()" style="border:1.5px solid #e0e0e0;border-radius:999px;padding:7px 16px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#555;background:#fff;outline:none;cursor:pointer">
+          <option value="all">All Types</option>
+          <option value="Singles">Singles</option>
+          <option value="Doubles">Doubles</option>
+          <option value="Rally/Practice">Rally/Practice</option>
+        </select>
+        <button onclick="loadNearbySessions()" style="background:#1a6b3c;color:#fff;border:none;border-radius:999px;padding:7px 16px;font-size:13px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">🔄 Refresh</button>
+      </div>
+    </div>
+    <div id="nearbySessionsList"></div>
+  </div>
   <!-- MAP -->
   <div class="map-section">
   <!-- MAP -->
@@ -260,8 +283,12 @@ window.postSession = async function(placeId) {
     var profileRef = window._fbDoc(window._db, 'profiles', window._currentUser.uid);
     var profileSnap = await window._fbGetDoc(profileRef);
     var profile = profileSnap.exists() ? profileSnap.data() : {};
+   var courtData = courtDataStore[currentModalId] || {};
     await window._fbAddDoc(window._fbCollection(window._db, 'sessions'), {
       placeId: placeId,
+      courtName: courtData.name || '',
+      courtLat: courtData.lat || null,
+      courtLng: courtData.lng || null,
       name: name,
       uid: window._currentUser.uid,
       photo: window._currentUser.photoURL || '',
@@ -538,6 +565,190 @@ window.showProfile = function() {
   document.getElementById('navProfile').style.color = '#1a6b3c';
   document.getElementById('navSearch').style.color = '#555';
 };
+window.showNearby = function() {
+  document.getElementById('heroSection').style.display = 'none';
+  document.getElementById('filterBar').style.display = 'none';
+  document.getElementById('resultsGrid').parentElement.style.display = 'none';
+  document.getElementById('savedSection').style.display = 'none';
+  document.getElementById('profilePage').style.display = 'none';
+  document.getElementById('nearbyPage').style.display = 'block';
+  document.getElementById('navNearby').style.color = '#1a6b3c';
+  document.getElementById('navSearch').style.color = '#555';
+  loadNearbySessions();
+};
+
+window.loadNearbySessions = async function() {
+  var list = document.getElementById('nearbySessionsList');
+  if (!list || !window._db) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#888;font-size:14px">Connecting to database...</div>';
+    return;
+  }
+
+  list.innerHTML =
+    '<div style="text-align:center;padding:40px">' +
+      '<div style="font-size:32px;margin-bottom:12px">⏳</div>' +
+      '<div style="font-size:14px;color:#888">Loading sessions...</div>' +
+    '</div>';
+
+  try {
+    var today = new Date().toISOString().split('T')[0];
+    var now = new Date();
+    var skillFilter = document.getElementById('nearbySkillFilter').value;
+    var typeFilter = document.getElementById('nearbyTypeFilter').value;
+
+    var q = window._fbQuery(
+      window._fbCollection(window._db, 'sessions'),
+      window._fbWhere('date', '>=', today),
+      window._fbOrderBy('date', 'asc')
+    );
+
+    var snapshot = await window._fbGetDocs(q);
+
+    if (snapshot.empty) {
+      list.innerHTML =
+        '<div style="text-align:center;padding:60px 20px">' +
+          '<div style="font-size:48px;margin-bottom:16px">🎾</div>' +
+          '<div style="font-size:16px;font-weight:600;color:#1a1a1a;margin-bottom:8px">No sessions yet</div>' +
+          '<div style="font-size:14px;color:#888">Be the first to post a session at a court near you!</div>' +
+        '</div>';
+      return;
+    }
+
+    var sessions = [];
+    snapshot.forEach(function(docSnap) {
+      var s = docSnap.data();
+
+      if (s.deleted) return;
+
+      if (s.date && s.time) {
+        var sessionDateTime = new Date(s.date + 'T' + s.time);
+        sessionDateTime.setMinutes(sessionDateTime.getMinutes() + 5);
+        if (sessionDateTime < now) return;
+      }
+
+      if (skillFilter !== 'all' && s.skill !== skillFilter) return;
+      if (typeFilter !== 'all' && s.type !== typeFilter) return;
+
+      sessions.push({ id: docSnap.id, ...s });
+    });
+
+    if (sessions.length === 0) {
+      list.innerHTML =
+        '<div style="text-align:center;padding:60px 20px">' +
+          '<div style="font-size:48px;margin-bottom:16px">🎾</div>' +
+          '<div style="font-size:16px;font-weight:600;color:#1a1a1a;margin-bottom:8px">No matching sessions</div>' +
+          '<div style="font-size:14px;color:#888">Try changing the filters above</div>' +
+        '</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    sessions.forEach(function(s) {
+      var dateStr = new Date(s.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      var timeStr = new Date('2000-01-01T' + s.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      var isToday = s.date === today;
+      var playersCount = s.players ? s.players.length : 1;
+      var isOwner = window._currentUser && window._currentUser.uid === s.uid;
+
+      var avatarHtml = s.photo
+        ? '<img src="' + s.photo + '" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #e8e8e8"/>'
+        : '<div style="width:44px;height:44px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700">' + (s.name ? s.name[0].toUpperCase() : '?') + '</div>';
+
+      var verifiedBadge = s.phoneVerified
+        ? '<span style="background:#e6f9ee;color:#1a6b3c;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;margin-left:6px">✅ Verified</span>'
+        : '';
+
+      var socialLinks = '';
+      if (s.instagram) socialLinks += '<a href="https://instagram.com/' + s.instagram.replace('@','') + '" target="_blank" style="text-decoration:none;font-size:11px;color:#833ab4;margin-right:8px">📸 Instagram</a>';
+      if (s.facebook) socialLinks += '<a href="https://facebook.com/' + s.facebook + '" target="_blank" style="text-decoration:none;font-size:11px;color:#1877f2;margin-right:8px">📘 Facebook</a>';
+      if (s.whatsapp) socialLinks += '<a href="https://wa.me/' + s.whatsapp.replace(/[^0-9]/g,'') + '" target="_blank" style="text-decoration:none;font-size:11px;color:#25d366">💬 WhatsApp</a>';
+
+      var courtName = courtDataStore[s.courtId] ? courtDataStore[s.courtId].name : 'Tennis Court';
+
+      var distanceBadge = '';
+      if (window._userLat && s.courtLat) {
+        var dist = getDistance(window._userLat, window._userLng, s.courtLat, s.courtLng);
+        distanceBadge = '<span style="background:#f0f0f0;color:#555;font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px;margin-left:6px">📍 ' + dist + ' mi</span>';
+      }
+
+      var playerAvatars = '';
+      if (s.players && s.players.length > 0) {
+        s.players.forEach(function(p) {
+          if (typeof p === 'object' && p.photo) {
+            playerAvatars += '<img src="' + p.photo + '" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-right:-4px"/>';
+          } else {
+            var pName = typeof p === 'string' ? p : p.name || '?';
+            playerAvatars += '<div style="width:22px;height:22px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:700;border:2px solid #fff;margin-right:-4px">' + pName[0].toUpperCase() + '</div>';
+          }
+        });
+      }
+
+      list.innerHTML +=
+        '<div style="background:#ffffff;border:1px solid #ebebeb;border-radius:16px;padding:16px 18px;margin-bottom:12px;transition:box-shadow 0.2s" onmouseover="this.style.boxShadow=\'0 4px 20px rgba(0,0,0,0.08)\'" onmouseout="this.style.boxShadow=\'none\'">' +
+          '<div style="display:flex;align-items:flex-start;gap:12px">' +
+            avatarHtml +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px">' +
+                '<span style="font-size:14px;font-weight:700;color:#1a1a1a">' + s.name + '</span>' +
+                verifiedBadge +
+              '</div>' +
+              '<div style="font-size:12px;color:#888;margin-bottom:6px">' +
+                '<span style="background:' + (isToday ? '#e6f9ee' : '#f0f0f0') + ';color:' + (isToday ? '#1a6b3c' : '#555') + ';font-weight:600;padding:2px 8px;border-radius:999px;font-size:11px">' + (isToday ? 'Today' : dateStr) + '</span>' +
+                ' at <strong>' + timeStr + '</strong>' +
+                distanceBadge +
+              '</div>' +
+              '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' +
+                '<span style="background:#f0f0f0;color:#555;font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px">' + s.type + '</span>' +
+                '<span style="background:#f0f0f0;color:#555;font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px">' + s.skill + '</span>' +
+                (s.courtName ? '<span style="background:#e6f9ee;color:#1a6b3c;font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px">📍 ' + s.courtName + '</span>' : '') +
+              '</div>' +
+              (socialLinks ? '<div style="margin-bottom:8px">' + socialLinks + '</div>' : '') +
+              '<div style="display:flex;align-items:center;justify-content:space-between">' +
+                '<div style="display:flex;align-items:center;gap:4px">' +
+                  playerAvatars +
+                  '<span style="font-size:11px;color:#888;margin-left:10px">' + playersCount + ' player' + (playersCount !== 1 ? 's' : '') + ' going</span>' +
+                '</div>' +
+                (isOwner
+                  ? '<div style="display:flex;gap:6px">' +
+                      '<span style="font-size:11px;color:#1a6b3c;font-weight:600;align-self:center">Your session</span>' +
+                      '<button onclick="deleteSession(\'' + s.id + '\', null)" style="background:#fdecea;color:#c0392b;border:1px solid #f5c6c6;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:pointer">Cancel</button>' +
+                    '</div>'
+                  : '<button onclick="joinSessionFromNearby(\'' + s.id + '\')" style="background:#e6f9ee;color:#1a6b3c;border:1px solid #1a6b3c;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:pointer">I\'m In!</button>') +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    });
+
+  } catch (err) {
+    console.log('Error loading nearby sessions:', err);
+    list.innerHTML =
+      '<div style="text-align:center;padding:40px;color:#888;font-size:14px">Could not load sessions. Try again.</div>';
+  }
+};
+
+window.joinSessionFromNearby = async function(sessionId) {
+  if (!window._currentUser) {
+    alert('Please sign in to join a session!');
+    handleAuthClick();
+    return;
+  }
+  var name = window._currentUser.displayName || 'Player';
+  try {
+    var sessionRef = window._fbDoc(window._db, 'sessions', sessionId);
+    await window._fbUpdateDoc(sessionRef, {
+      players: window._fbArrayUnion({
+        name: name,
+        uid: window._currentUser.uid,
+        photo: window._currentUser.photoURL || ''
+      })
+    });
+    loadNearbySessions();
+  } catch (err) {
+    console.log('Error joining session:', err);
+    alert('Could not join session. Try again.');
+  }
+};
     window.toggleHourly = function(id) {
       var el = document.getElementById(id);
       if (!el) return;
@@ -730,14 +941,16 @@ window.showProfile = function() {
       });
     };
 
-    window.showSearch = function() {
+   window.showSearch = function() {
   document.getElementById('heroSection').style.display = 'block';
   document.getElementById('resultsGrid').parentElement.style.display = 'block';
   document.getElementById('savedSection').style.display = 'none';
   document.getElementById('profilePage').style.display = 'none';
+  document.getElementById('nearbyPage').style.display = 'none';
   document.getElementById('navSaved').style.color = '#555';
   document.getElementById('navSearch').style.color = '#1a6b3c';
   document.getElementById('navProfile').style.color = '#555';
+  document.getElementById('navNearby').style.color = '#555';
   if (allCourts.length > 0) document.getElementById('filterBar').style.display = 'flex';
 };
 
