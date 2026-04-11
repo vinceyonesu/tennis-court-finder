@@ -100,19 +100,10 @@
       document.body.style.overflow = 'hidden';
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('modalClose').addEventListener('click', () => {
-        document.getElementById('courtModal').classList.remove('active');
-        document.body.style.overflow = '';
-      });
-
-      document.getElementById('courtModal').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('courtModal')) {
-          document.getElementById('courtModal').classList.remove('active');
-          document.body.style.overflow = '';
-        }
-      });
-    });
+    function closeModal() {
+      document.getElementById('courtModal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
 
     function initMap() {
       console.log('✅ Google Maps loaded!');
@@ -125,6 +116,11 @@
       const resultsGrid = document.getElementById('resultsGrid');
       const searchBtn = document.getElementById('searchBtn');
       const cityInput = document.getElementById('cityInput');
+
+      document.getElementById('modalClose').addEventListener('click', closeModal);
+      document.getElementById('courtModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('courtModal')) closeModal();
+      });
 
       searchBtn.addEventListener('click', () => {
         const city = cityInput.value.trim();
