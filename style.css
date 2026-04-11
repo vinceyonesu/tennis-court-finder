@@ -377,7 +377,7 @@ body {
   display: flex;
   pointer-events: all;
 }
-}
+
 
 .modal-overlay.active {
   display: flex;
