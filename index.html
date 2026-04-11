@@ -34,7 +34,8 @@
   <section class="results-section">
     <div class="results-grid" id="resultsGrid"></div>
   </section>
-<!-- MODAL -->
+
+  <!-- MODAL -->
   <div id="courtModal" class="modal-overlay">
     <div class="modal-card">
       <button class="modal-close" id="modalClose">✕</button>
@@ -53,6 +54,7 @@
       </div>
     </div>
   </div>
+
   <!-- MAP -->
   <div class="map-section">
     <div id="map"></div>
@@ -89,7 +91,6 @@
           }
 
           const location = results[0].geometry.location;
-          console.log('Location:', location.lat(), location.lng());
           map.setCenter(location);
 
           const service = new google.maps.places.PlacesService(map);
@@ -101,7 +102,6 @@
 
           service.nearbySearch(request, (places, status) => {
             console.log('Places status:', status);
-            console.log('Places result:', places);
 
             if (status !== 'OK' || !places || !places.length) {
               resultsGrid.innerHTML = `<div class="error-msg">No courts found near ${city}. Status: ${status}</div>`;
@@ -127,8 +127,26 @@
                 ? `<span class="badge-closed">Closed</span>`
                 : `<span class="surface-tag">Hours N/A</span>`;
 
+              const courtData = JSON.stringify({
+                name: court.name,
+                address: court.vicinity,
+                photo: photo,
+                rating: court.rating || null,
+                reviews: court.user_ratings_total || 0,
+                isOpen: isOpen,
+                placeId: court.place_id
+              }).replace(/"/g, '&quot;');
+
               resultsGrid.innerHTML += `
-                <div class="court-card">
+                <div class="court-card" onclick='openModal(${JSON.stringify({
+                  name: court.name,
+                  address: court.vicinity,
+                  photo: photo,
+                  rating: court.rating || null,
+                  reviews: court.user_ratings_total || 0,
+                  isOpen: isOpen,
+                  placeId: court.place_id
+                })})'>
                   <div class="card-image">
                     <img src="${photo}" alt="${court.name}"/>
                     <span class="badge-free">Public</span>
@@ -160,6 +178,51 @@
             map.fitBounds(bounds);
           });
         });
+      });
+
+      window.openModal = function(data) {
+        document.getElementById('modalPhoto').src = data.photo;
+        document.getElementById('modalName').textContent = data.name;
+        document.getElementById('modalAddress').textContent = data.address;
+
+        const stars = data.rating
+          ? '★'.repeat(Math.round(data.rating)) + '☆'.repeat(5 - Math.round(data.rating))
+          : '☆☆☆☆☆';
+
+        document.getElementById('modalRating').innerHTML =
+          `<span style="color:#f4a800">${stars}</span>
+           <span style="font-size:13px;color:#999">(${data.reviews} reviews)</span>`;
+
+        const statusEl = document.getElementById('modalStatus');
+        if (data.isOpen === true) {
+          statusEl.innerHTML = '<span class="badge-open">Open Now</span>';
+        } else if (data.isOpen === false) {
+          statusEl.innerHTML = '<span class="badge-closed">Closed</span>';
+        } else {
+          statusEl.innerHTML = '<span class="surface-tag">Hours N/A</span>';
+        }
+
+        document.getElementById('modalHours').innerHTML =
+          '<strong>Address:</strong> ' + data.address + '<br>' +
+          '<strong>Place ID:</strong> ' + data.placeId;
+
+        document.getElementById('modalDirections').href =
+          `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(data.address)}&destination_place_id=${data.placeId}`;
+
+        document.getElementById('courtModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+      };
+
+      document.getElementById('modalClose').addEventListener('click', () => {
+        document.getElementById('courtModal').classList.remove('active');
+        document.body.style.overflow = '';
+      });
+
+      document.getElementById('courtModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('courtModal')) {
+          document.getElementById('courtModal').classList.remove('active');
+          document.body.style.overflow = '';
+        }
       });
     }
   </script>
