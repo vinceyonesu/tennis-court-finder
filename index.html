@@ -16,7 +16,7 @@
     <div class="nav-links">
       <a href="#" id="navSaved" onclick="showSaved()">Saved Courts <span id="savedCount" class="saved-count">0</span></a>
       <a href="#" id="navSearch" onclick="showSearch()">Search</a>
-      <a href="#" id="navProfile" onclick="showProfile()" style="display:none">My Profile</a>
+      <a href="#" id="navProfile" onclick="showMyProfile()" style="display:none">My Profile</a>
       <a href="#" id="navNearby" onclick="showNearby()">🎾 Players Near You</a>
       <div id="authBtn" onclick="handleAuthClick()" style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#f0f0f0;border-radius:50px;padding:6px 14px 6px 6px;transition:background 0.2s">
         <div id="authAvatar" style="width:28px;height:28px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;overflow:hidden">
@@ -98,22 +98,60 @@
       </div>
     </div>
   </div>
-
+<!-- MY PROFILE PAGE -->
+  <div id="myProfilePage" style="display:none;max-width:600px;margin:40px auto;padding:0 24px 60px">
+    <div style="background:#ffffff;border-radius:20px;border:1px solid #ebebeb;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#1a6b3c,#25a05a);padding:30px 24px;text-align:center;position:relative">
+        <button onclick="showEditProfile()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.2);border:none;border-radius:20px;padding:6px 14px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">✏️ Edit Profile</button>
+        <div style="position:relative;width:80px;margin:0 auto 12px">
+          <div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.3);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;font-weight:700;border:3px solid rgba(255,255,255,0.5)">
+            <span id="mpInitials">?</span>
+            <img id="mpPhoto" src="" style="display:none;width:100%;height:100%;object-fit:cover"/>
+          </div>
+        </div>
+        <div id="mpName" style="font-size:20px;font-weight:700;color:#ffffff;margin-bottom:4px"></div>
+        <div id="mpEmail" style="font-size:13px;color:rgba(255,255,255,0.75);margin-bottom:8px"></div>
+        <div id="mpVerifiedBadge" style="display:none;background:rgba(255,255,255,0.2);color:#ffffff;font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px;margin-bottom:8px">✅ Phone Verified</div>
+        <div style="display:flex;justify-content:center;gap:24px;margin-top:12px">
+          <div style="text-align:center;cursor:pointer" onclick="showMyFollowList('followers')">
+            <div id="mpFollowerCount" style="font-size:20px;font-weight:800;color:#ffffff">0</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.75)">Followers</div>
+          </div>
+          <div style="text-align:center;cursor:pointer" onclick="showMyFollowList('following')">
+            <div id="mpFollowingCount" style="font-size:20px;font-weight:800;color:#ffffff">0</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.75)">Following</div>
+          </div>
+          <div style="text-align:center">
+            <div id="mpMutualCount" style="font-size:20px;font-weight:800;color:#ffffff">0</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.75)">Mutual</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:20px 24px">
+        <div id="mpSkill" style="font-size:14px;font-weight:600;color:#1a6b3c;margin-bottom:6px"></div>
+        <div id="mpUTR" style="font-size:13px;color:#555;margin-bottom:6px"></div>
+        <div id="mpBio" style="font-size:14px;color:#666;margin-bottom:16px;line-height:1.6"></div>
+        <div id="mpSocial" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px"></div>
+        <div id="mpGalleryWrap" style="margin-bottom:20px">
+          <div style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Action Photos</div>
+          <div id="mpGallery" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">My Upcoming Sessions</div>
+        <div id="mpSessions"></div>
+        <div style="margin-top:20px">
+          <button onclick="showEditProfile()" style="width:100%;background:#f8f9fa;color:#1a1a1a;border:1.5px solid #e0e0e0;border-radius:10px;padding:12px;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;margin-bottom:8px">✏️ Edit Profile</button>
+          <button onclick="signOutUser()" style="width:100%;background:#fdecea;color:#c0392b;border:1px solid #f5c6c6;border-radius:10px;padding:12px;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- PROFILE PAGE -->
   <div id="profilePage" style="display:none;max-width:600px;margin:40px auto;padding:0 24px 60px">
     <div style="background:#ffffff;border-radius:20px;border:1px solid #ebebeb;overflow:hidden">
-      <div style="background:linear-gradient(135deg,#1a6b3c,#25a05a);padding:30px 24px;text-align:center">
-        <div style="position:relative;width:80px;margin:0 auto 12px">
-          <div id="profilePhotoWrap" style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.3);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;font-weight:700;border:3px solid rgba(255,255,255,0.5)">
-            <span id="profileInitials">?</span>
-            <img id="profilePhoto" src="" style="display:none;width:100%;height:100%;object-fit:cover"/>
-          </div>
-          <label for="photoUpload" style="position:absolute;bottom:0;right:0;background:#ffffff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.2)">📷</label>
-          <input type="file" id="photoUpload" accept="image/*" style="display:none" onchange="uploadProfilePhoto(this)"/>
-        </div>
-        <div id="profileName" style="font-size:20px;font-weight:700;color:#ffffff;margin-bottom:4px">Not signed in</div>
-        <div id="profileEmail" style="font-size:13px;color:rgba(255,255,255,0.75)"></div>
-        <div id="profileVerifiedBadge" style="display:none;margin-top:8px;background:rgba(255,255,255,0.2);color:#ffffff;font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px">✅ Phone Verified</div>
+      <div style="background:linear-gradient(135deg,#1a6b3c,#25a05a);padding:20px 24px;text-align:center;position:relative">
+        <button onclick="showMyProfile()" style="position:absolute;top:14px;left:14px;background:rgba(255,255,255,0.2);border:none;border-radius:20px;padding:6px 14px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">← My Profile</button>
+        <div style="font-size:18px;font-weight:700;color:#ffffff;margin-top:8px">Edit Profile</div>
+        
       </div>
       <div style="padding:20px 24px">
         <div style="font-size:13px;font-weight:600;color:#555;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">Your Details</div>
@@ -176,7 +214,6 @@
         </div>
         <div id="verifyStatus" style="font-size:12px;color:#888;margin-bottom:20px"></div>
         <div id="recaptcha-container"></div>
-        <button onclick="signOutUser()" style="width:100%;background:#fdecea;color:#c0392b;border:1px solid #f5c6c6;border-radius:10px;padding:12px;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">Sign Out</button>
       </div>
     </div>
   </div>
