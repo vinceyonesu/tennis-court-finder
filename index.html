@@ -344,7 +344,10 @@
 
     async function loadUserReviews(placeId) {
       var section = document.getElementById('userReviewsSection');
-      if (!section || !window._db) return;
+      if (!section || !window._db) {
+        setTimeout(function() { loadUserReviews(placeId); }, 500);
+        return;
+      }
       try {
         var q = window._fbQuery(
           window._fbCollection(window._db, 'reviews'),
@@ -357,7 +360,7 @@
           '<div style="background:#f8f9fa;border-radius:12px;padding:14px;margin-bottom:12px">' +
             '<div style="font-size:12px;font-weight:700;color:#1a1a1a;margin-bottom:10px">⭐ Write a Review</div>' +
             (isSignedIn
-              ? '<div style="display:flex;gap:4px;margin-bottom:8px" id="starPicker">' +
+              ? '<div style="display:flex;gap:4px;margin-bottom:8px">' +
                   [1,2,3,4,5].map(function(n) {
                     return '<span onclick="setReviewRating(' + n + ')" style="font-size:24px;cursor:pointer;color:#e0e0e0" id="star_' + n + '">★</span>';
                   }).join('') +
@@ -369,37 +372,45 @@
           '</div>';
 
         if (!snapshot.empty) {
-          html += '<div style="font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Community Reviews</div>';
+          var hasReviews = false;
           snapshot.forEach(function(docSnap) {
             var r = docSnap.data();
             if (r.deleted) return;
-            var rStars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
-            var isOwner = window._currentUser && window._currentUser.uid === r.uid;
-            var date = r.createdAt ? new Date(r.createdAt.toDate()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
-            html +=
-              '<div style="padding:12px 0;border-bottom:1px solid #f0f0f0">' +
-                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
-                  '<div style="display:flex;align-items:center;gap:8px">' +
-                    (r.photo ? '<img src="' + r.photo + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/>' : '<div style="width:32px;height:32px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700">' + r.name[0].toUpperCase() + '</div>') +
-                    '<div>' +
-                      '<div style="font-size:13px;font-weight:600;color:#1a1a1a">' + r.name + '</div>' +
-                      '<div style="display:flex;align-items:center;gap:6px">' +
-                        '<span style="color:#f4a800;font-size:12px">' + rStars + '</span>' +
-                        '<span style="font-size:11px;color:#aaa">' + date + '</span>' +
+            hasReviews = true;
+          });
+          if (hasReviews) {
+            html += '<div style="font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Community Reviews</div>';
+            snapshot.forEach(function(docSnap) {
+              var r = docSnap.data();
+              if (r.deleted) return;
+              var rStars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+              var isOwner = window._currentUser && window._currentUser.uid === r.uid;
+              var date = r.createdAt ? new Date(r.createdAt.toDate()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+              html +=
+                '<div style="padding:12px 0;border-bottom:1px solid #f0f0f0">' +
+                  '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+                    '<div style="display:flex;align-items:center;gap:8px">' +
+                      (r.photo ? '<img src="' + r.photo + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/>' : '<div style="width:32px;height:32px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700">' + r.name[0].toUpperCase() + '</div>') +
+                      '<div>' +
+                        '<div style="font-size:13px;font-weight:600;color:#1a1a1a">' + r.name + '</div>' +
+                        '<div style="display:flex;align-items:center;gap:6px">' +
+                          '<span style="color:#f4a800;font-size:12px">' + rStars + '</span>' +
+                          '<span style="font-size:11px;color:#aaa">' + date + '</span>' +
+                        '</div>' +
                       '</div>' +
                     '</div>' +
+                    (isOwner ? '<button onclick="deleteReview(\'' + docSnap.id + '\', \'' + placeId + '\')" style="background:none;border:none;color:#e74c3c;font-size:11px;cursor:pointer;font-family:\'Plus Jakarta Sans\',sans-serif">Delete</button>' : '') +
                   '</div>' +
-                  (isOwner ? '<button onclick="deleteReview(\'' + docSnap.id + '\', \'' + placeId + '\')" style="background:none;border:none;color:#e74c3c;font-size:11px;cursor:pointer;font-family:\'Plus Jakarta Sans\',sans-serif">Delete</button>' : '') +
-                '</div>' +
-                '<p style="font-size:13px;color:#555;line-height:1.5;margin:0">' + r.text + '</p>' +
-              '</div>';
-          });
+                  '<p style="font-size:13px;color:#555;line-height:1.5;margin:0">' + r.text + '</p>' +
+                '</div>';
+            });
+          }
         }
 
         section.innerHTML = html;
       } catch (err) {
         console.log('Load reviews error:', err);
-        section.innerHTML = '';
+        section.innerHTML = '<p style="font-size:12px;color:#aaa;padding:8px">Could not load reviews.</p>';
       }
     }
 
@@ -507,13 +518,13 @@
                     '<p style="font-size:13px;color:#555;line-height:1.5;margin:0">' + review.text + '</p>' +
                   '</div>';
               });
-              document.getElementById('reviewsSection').innerHTML =
+              document.getElementById('googleReviewsSection').innerHTML =
                 '<div style="background:#f8f9fa;border-radius:12px;padding:4px 14px 14px">' +
                   '<div style="font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.8px;padding:10px 0 6px">Google Reviews</div>' +
                   reviewsHtml +
                 '</div>';
             } else {
-              document.getElementById('reviewsSection').innerHTML =
+              document.getElementById('googleReviewsSection').innerHTML =
                 '<div style="font-size:13px;color:#aaa;padding:8px 0">No reviews available.</div>';
             }
           }
