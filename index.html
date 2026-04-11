@@ -232,10 +232,7 @@
       );
     });
 
-    if (placeResult.status !== 'OK') {
-      weatherDiv.innerHTML = '';
-      return;
-    }
+    if (placeResult.status !== 'OK') { weatherDiv.innerHTML = ''; return; }
 
     var lat = placeResult.place.geometry.location.lat();
     var lng = placeResult.place.geometry.location.lng();
@@ -244,15 +241,15 @@
       'https://api.open-meteo.com/v1/forecast?latitude=' + lat +
       '&longitude=' + lng +
       '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation,weather_code,uv_index' +
-      '&daily=temperature_2m_max,temperature_2m_min,weather_code,wind_speed_10m_max,uv_index_max,precipitation_sum' +
+      '&daily=temperature_2m_max,temperature_2m_min,weather_code,wind_speed_10m_max,uv_index_max,precipitation_sum,sunrise,sunset' +
+      '&hourly=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,uv_index' +
       '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7'
     );
     var data = await res.json();
 
-    console.log('Weather API response:', data);
-
     var cu = data.current;
     var daily = data.daily;
+    var hourly = data.hourly;
 
     var temp = Math.round(cu.temperature_2m);
     var wind = Math.round(cu.wind_speed_10m);
@@ -262,40 +259,87 @@
     var code = cu.weather_code;
 
     var icon, condition, bg1, bg2;
-    if (code === 0 && temp > 85) {
-      icon = '☀️'; condition = 'Hot & sunny'; bg1 = '#f7971e'; bg2 = '#ffd200';
-    } else if (code === 0) {
-      icon = '☀️'; condition = 'Clear sky'; bg1 = '#56CCF2'; bg2 = '#2F80ED';
-    } else if (code <= 3) {
-      icon = '⛅'; condition = 'Partly cloudy'; bg1 = '#4facfe'; bg2 = '#00f2fe';
-    } else if (code <= 49) {
-      icon = '🌫️'; condition = 'Foggy'; bg1 = '#8e9eab'; bg2 = '#c8d6df';
-    } else if (code <= 69) {
-      icon = '🌧️'; condition = 'Rainy'; bg1 = '#1e3c72'; bg2 = '#2a5298';
-    } else if (code <= 79) {
-      icon = '❄️'; condition = 'Snowy'; bg1 = '#e0eafc'; bg2 = '#cfdef3';
-    } else if (code <= 82) {
-      icon = '🌦️'; condition = 'Rain showers'; bg1 = '#373b44'; bg2 = '#4286f4';
-    } else {
-      icon = '⛈️'; condition = 'Thunderstorm'; bg1 = '#0f0c29'; bg2 = '#302b63';
-    }
+    if (code === 0 && temp > 85) { icon = '☀️'; condition = 'Hot & sunny'; bg1 = '#f7971e'; bg2 = '#ffd200'; }
+    else if (code === 0) { icon = '☀️'; condition = 'Clear sky'; bg1 = '#56CCF2'; bg2 = '#2F80ED'; }
+    else if (code <= 3) { icon = '⛅'; condition = 'Partly cloudy'; bg1 = '#4facfe'; bg2 = '#00f2fe'; }
+    else if (code <= 49) { icon = '🌫️'; condition = 'Foggy'; bg1 = '#8e9eab'; bg2 = '#c8d6df'; }
+    else if (code <= 69) { icon = '🌧️'; condition = 'Rainy'; bg1 = '#1e3c72'; bg2 = '#2a5298'; }
+    else if (code <= 79) { icon = '❄️'; condition = 'Snowy'; bg1 = '#e0eafc'; bg2 = '#cfdef3'; }
+    else if (code <= 82) { icon = '🌦️'; condition = 'Rain showers'; bg1 = '#373b44'; bg2 = '#4286f4'; }
+    else { icon = '⛈️'; condition = 'Thunderstorm'; bg1 = '#0f0c29'; bg2 = '#302b63'; }
 
     var rec, recBg, recIcon;
-    if (precip > 0.1) {
-      rec = 'Rain expected — stay off the courts'; recBg = 'rgba(255,80,80,0.25)'; recIcon = '🚫';
-    } else if (wind > 20) {
-      rec = 'Very windy — tough serving conditions'; recBg = 'rgba(255,200,0,0.25)'; recIcon = '💨';
-    } else if (temp > 95) {
-      rec = 'Too hot — play early morning or evening'; recBg = 'rgba(255,150,0,0.25)'; recIcon = '🥵';
-    } else if (temp < 45) {
-      rec = 'Too cold — bundle up or skip today'; recBg = 'rgba(100,150,255,0.25)'; recIcon = '🥶';
-    } else {
-      rec = 'Perfect day to play tennis!'; recBg = 'rgba(255,255,255,0.25)'; recIcon = '✅';
-    }
+    if (precip > 0.1) { rec = 'Rain expected — stay off the courts'; recBg = 'rgba(255,80,80,0.25)'; recIcon = '🚫'; }
+    else if (wind > 20) { rec = 'Very windy — tough serving conditions'; recBg = 'rgba(255,200,0,0.25)'; recIcon = '💨'; }
+    else if (temp > 95) { rec = 'Too hot — play early morning or evening'; recBg = 'rgba(255,150,0,0.25)'; recIcon = '🥵'; }
+    else if (temp < 45) { rec = 'Too cold — bundle up or skip today'; recBg = 'rgba(100,150,255,0.25)'; recIcon = '🥶'; }
+    else { rec = 'Perfect day to play tennis!'; recBg = 'rgba(255,255,255,0.25)'; recIcon = '✅'; }
 
     var uvLabel = uv <= 2 ? 'Low' : uv <= 5 ? 'Moderate' : uv <= 7 ? 'High' : 'Very High';
     var dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     var todayIndex = new Date().getDay();
+
+    function formatTime(isoString) {
+      if (!isoString) return 'N/A';
+      var d = new Date(isoString);
+      var h = d.getHours();
+      var m = d.getMinutes();
+      var ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return h + ':' + (m < 10 ? '0' + m : m) + ' ' + ampm;
+    }
+
+    function buildHourlyHtml(dayIndex) {
+      var startHour = dayIndex * 24;
+      var endHour = startHour + 24;
+      var rows = '';
+      var playHours = [];
+
+      for (var h = startHour; h < endHour; h++) {
+        var hTime = hourly.time[h];
+        if (!hTime) continue;
+        var hDate = new Date(hTime);
+        var hHour = hDate.getHours();
+        var hLabel = hHour === 0 ? '12 AM' : hHour < 12 ? hHour + ' AM' : hHour === 12 ? '12 PM' : (hHour - 12) + ' PM';
+        var hTemp = Math.round(hourly.temperature_2m[h]);
+        var hWind = Math.round(hourly.wind_speed_10m[h]);
+        var hHumidity = Math.round(hourly.relative_humidity_2m[h]);
+        var hUV = Math.round(hourly.uv_index[h] || 0);
+        var hCode = hourly.weather_code[h];
+        var hIcon = getWeatherIcon(hCode);
+        var isPlayable = hTemp > 45 && hTemp < 98 && hWind < 20;
+
+        if (isPlayable && hHour >= 6 && hHour <= 21) playHours.push(hLabel);
+
+        rows +=
+          '<div style="display:grid;grid-template-columns:52px 22px 1fr 1fr 1fr 1fr;align-items:center;gap:4px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,' + (isPlayable ? '0.15' : '0.07') + ');margin-bottom:4px">' +
+            '<div style="font-size:11px;font-weight:600;color:#ffffff">' + hLabel + '</div>' +
+            '<div style="font-size:14px">' + hIcon + '</div>' +
+            '<div style="text-align:center">' +
+              '<div style="font-size:9px;color:rgba(255,255,255,0.5)">Temp</div>' +
+              '<div style="font-size:11px;font-weight:700;color:#ffffff">' + hTemp + '°F</div>' +
+            '</div>' +
+            '<div style="text-align:center">' +
+              '<div style="font-size:9px;color:rgba(255,255,255,0.5)">Wind</div>' +
+              '<div style="font-size:11px;font-weight:700;color:#ffffff">' + hWind + ' mph</div>' +
+            '</div>' +
+            '<div style="text-align:center">' +
+              '<div style="font-size:9px;color:rgba(255,255,255,0.5)">Humidity</div>' +
+              '<div style="font-size:11px;font-weight:700;color:#ffffff">' + hHumidity + '%</div>' +
+            '</div>' +
+            '<div style="text-align:center">' +
+              '<div style="font-size:9px;color:rgba(255,255,255,0.5)">UV</div>' +
+              '<div style="font-size:11px;font-weight:700;color:#ffffff">' + hUV + '</div>' +
+            '</div>' +
+          '</div>';
+      }
+
+      var bestTimeHtml = playHours.length > 0
+        ? '<div style="background:rgba(74,222,128,0.2);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#ffffff"><strong>Best times to play:</strong> ' + playHours.slice(0, 4).join(', ') + (playHours.length > 4 ? '...' : '') + '</div>'
+        : '<div style="background:rgba(248,113,113,0.2);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#ffffff">No ideal play times today.</div>';
+
+      return bestTimeHtml + rows;
+    }
 
     var forecastRows = '';
     for (var i = 0; i < 7; i++) {
@@ -307,45 +351,58 @@
       var dayWind = Math.round(daily.wind_speed_10m_max[i]);
       var dayUV = Math.round(daily.uv_index_max[i] || 0);
       var dayPrecip = (daily.precipitation_sum[i] || 0).toFixed(1);
-      var isToday = i === 0;
-
+      var sunrise = formatTime(daily.sunrise[i]);
+      var sunset = formatTime(daily.sunset[i]);
       var playable = daily.precipitation_sum[i] < 0.1 && daily.wind_speed_10m_max[i] < 20 && daily.temperature_2m_max[i] < 100 && daily.temperature_2m_min[i] > 40;
-      var playDot = playable
-        ? '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#4ade80;margin-left:4px;vertical-align:middle"></span>'
-        : '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#f87171;margin-left:4px;vertical-align:middle"></span>';
+      var hourlyHtml = buildHourlyHtml(i);
+      var expandId = 'hourly_' + i;
 
       forecastRows +=
-        '<div style="display:grid;grid-template-columns:70px 24px 1fr 1fr 1fr 1fr 1fr;align-items:center;gap:4px;padding:9px 10px;border-radius:12px;background:' + (isToday ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.1)') + ';margin-bottom:5px">' +
-          '<div style="font-size:12px;font-weight:' + (isToday ? '700' : '500') + ';color:#ffffff;display:flex;align-items:center">' + dayLabel + playDot + '</div>' +
-          '<div style="font-size:18px;line-height:1">' + dayIcon + '</div>' +
-          '<div style="text-align:center">' +
-            '<div style="font-size:9px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Temp</div>' +
-            '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayMax + '°<span style="opacity:0.6;font-weight:400">/' + dayMin + '°</span></div>' +
+        '<div style="margin-bottom:6px">' +
+          '<div onclick="toggleHourly(\'' + expandId + '\')" style="display:grid;grid-template-columns:70px 24px 1fr 1fr 1fr 1fr 1fr;align-items:center;gap:4px;padding:9px 10px;border-radius:12px;background:' + (i === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.1)') + ';cursor:pointer;transition:background 0.2s" onmouseover="this.style.background=\'rgba(255,255,255,0.22)\'" onmouseout="this.style.background=\'' + (i === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.1)') + '\'">' +
+            '<div style="font-size:12px;font-weight:' + (i === 0 ? '700' : '500') + ';color:#ffffff">' + dayLabel + '</div>' +
+            '<div style="font-size:18px;line-height:1">' + dayIcon + '</div>' +
+            '<div style="text-align:center">' +
+              '<div style="font-size:9px;color:rgba(255,255,255,0.55);margin-bottom:2px">Temp</div>' +
+              '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayMax + '°<span style="opacity:0.6;font-weight:400">/' + dayMin + '°</span></div>' +
+            '</div>' +
+            '<div style="text-align:center">' +
+              '<div style="font-size:9px;color:rgba(255,255,255,0.55);margin-bottom:2px">Wind</div>' +
+              '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayWind + ' mph</div>' +
+            '</div>' +
+            '<div style="text-align:center">' +
+              '<div style="font-size:9px;color:rgba(255,255,255,0.55);margin-bottom:2px">UV</div>' +
+              '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayUV + '</div>' +
+            '</div>' +
+            '<div style="text-align:center">' +
+              '<div style="font-size:9px;color:rgba(255,255,255,0.55);margin-bottom:2px">Rain</div>' +
+              '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayPrecip + 'in</div>' +
+            '</div>' +
+            '<div style="text-align:center">' +
+              '<div style="font-size:9px;color:rgba(255,255,255,0.55);margin-bottom:2px">Play?</div>' +
+              '<div style="font-size:13px">' + (playable ? '✅' : '❌') + '</div>' +
+            '</div>' +
           '</div>' +
-          '<div style="text-align:center">' +
-            '<div style="font-size:9px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Wind</div>' +
-            '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayWind + ' <span style="opacity:0.6;font-weight:400;font-size:10px">mph</span></div>' +
-          '</div>' +
-          '<div style="text-align:center">' +
-            '<div style="font-size:9px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">UV</div>' +
-            '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayUV + '</div>' +
-          '</div>' +
-          '<div style="text-align:center">' +
-            '<div style="font-size:9px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Rain</div>' +
-            '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayPrecip + '<span style="opacity:0.6;font-weight:400;font-size:10px">in</span></div>' +
-          '</div>' +
-          '<div style="text-align:center">' +
-            '<div style="font-size:9px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Play?</div>' +
-            '<div style="font-size:11px;font-weight:700;color:#ffffff">' + (playable ? '✅' : '❌') + '</div>' +
+          '<div id="' + expandId + '" style="display:none;background:rgba(0,0,0,0.2);border-radius:12px;padding:12px;margin-top:4px">' +
+            '<div style="display:flex;gap:16px;margin-bottom:10px;padding:8px 12px;background:rgba(255,255,255,0.1);border-radius:10px">' +
+              '<div style="display:flex;align-items:center;gap:6px">' +
+                '<span style="font-size:18px">🌅</span>' +
+                '<div><div style="font-size:9px;color:rgba(255,255,255,0.6);text-transform:uppercase">Sunrise</div><div style="font-size:13px;font-weight:700;color:#ffffff">' + sunrise + '</div></div>' +
+              '</div>' +
+              '<div style="display:flex;align-items:center;gap:6px">' +
+                '<span style="font-size:18px">🌇</span>' +
+                '<div><div style="font-size:9px;color:rgba(255,255,255,0.6);text-transform:uppercase">Sunset</div><div style="font-size:13px;font-weight:700;color:#ffffff">' + sunset + '</div></div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="font-size:9px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:6px">Hourly Breakdown</div>' +
+            hourlyHtml +
           '</div>' +
         '</div>';
     }
 
     weatherDiv.innerHTML =
       '<div style="background:linear-gradient(135deg,' + bg1 + ',' + bg2 + ');border-radius:20px;padding:20px;margin-bottom:20px;overflow:hidden">' +
-
         '<div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.7);margin-bottom:14px">Court Weather</div>' +
-
         '<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">' +
           '<div style="font-size:52px;line-height:1">' + icon + '</div>' +
           '<div>' +
@@ -354,12 +411,10 @@
             '<div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px">' + court.name + '</div>' +
           '</div>' +
         '</div>' +
-
         '<div style="display:flex;align-items:center;gap:8px;background:' + recBg + ';padding:10px 14px;border-radius:12px;margin-bottom:16px">' +
           '<span style="font-size:16px">' + recIcon + '</span>' +
           '<span style="font-size:13px;font-weight:600;color:#ffffff">' + rec + '</span>' +
         '</div>' +
-
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">' +
           '<div style="background:rgba(255,255,255,0.18);border-radius:14px;padding:12px 8px;text-align:center">' +
             '<div style="font-size:9px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:rgba(255,255,255,0.65);margin-bottom:6px">Wind</div>' +
@@ -377,18 +432,22 @@
             '<div style="font-size:10px;color:rgba(255,255,255,0.6)">' + uvLabel + '</div>' +
           '</div>' +
         '</div>' +
-
         '<div style="background:rgba(0,0,0,0.15);border-radius:16px;padding:14px">' +
-          '<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.65);margin-bottom:10px">7-Day Forecast — <span style="font-weight:400">🟢 Good to play &nbsp; 🔴 Skip today</span></div>' +
+          '<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.65);margin-bottom:10px">7-Day Forecast — tap a day for hourly details</div>' +
           forecastRows +
         '</div>' +
-
       '</div>';
 
   } catch (err) {
     weatherDiv.innerHTML = '<p style="color:#888;font-size:13px;padding:10px">Weather unavailable.</p>';
     console.log('Weather error:', err);
   }
+}
+
+function toggleHourly(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
     function openModal(id) {
