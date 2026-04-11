@@ -94,6 +94,7 @@
         <div id="weatherSection"></div>
         <div id="modalHours" class="modal-hours"></div>
         <div id="hittingPartnerSection"></div>
+        <div id="courtNotesSection"></div>
         <a id="modalDirections" href="#" target="_blank" class="directions-btn">Get Directions</a>
       </div>
     </div>
@@ -259,6 +260,7 @@
         if (window._db) { clearInterval(fbWait); loadHittingPartnerSection(data.placeId); }
       }, 200);
       setTimeout(function() { clearInterval(fbWait); }, 5000);
+      loadCourtNotes(data.placeId);
       if (gService && data.placeId) {
         gService.getDetails(
           { placeId: data.placeId, fields: ['opening_hours', 'formatted_phone_number', 'website'] },
@@ -1159,6 +1161,11 @@ window.removeSearchHistory = function(city) {
           var dist = getDistance(window._userLat, window._userLng, court.lat, court.lng);
           distanceBadge = '<span class="surface-tag">📍 ' + dist + ' mi</span>';
         }
+        var notesBadge = '';
+        var courtNotes = JSON.parse(localStorage.getItem('courtNotes') || '{}');
+        if (courtNotes[court.placeId]) {
+          notesBadge = '<span class="surface-tag" style="background:#fff8dc;color:#d4920a;border:1px solid #f4e566">📝 Note</span>';
+        }
         var photos = court.photos || [court.photo];
         var slidesHtml = photos.map(function(p, idx) {
           return '<img src="'+p+'" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:'+(idx===0?'1':'0')+';transition:opacity 0.4s ease" class="slide-img"/>';
@@ -1181,7 +1188,7 @@ window.removeSearchHistory = function(city) {
               '<h3 class="court-name">'+court.name+'</h3>' +
               '<p class="court-address">'+court.address+'</p>' +
               '<div class="card-row"><div class="stars">'+stars+'</div><span class="rating-count">('+court.reviews+' reviews)</span></div>' +
-              '<div class="card-row">'+openBadge+'<span class="surface-tag">Tennis Court</span>'+lightsBadge+distanceBadge+'</div>' +
+'<div class="card-row">'+openBadge+'<span class="surface-tag">Tennis Court</span>'+lightsBadge+distanceBadge+notesBadge+'</div>' +              
             '</div>' +
           '</div>';
       });
