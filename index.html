@@ -61,6 +61,59 @@
   </div>
 
   <script>
+    const courtDataStore = {};
+
+    function openModal(id) {
+      const data = courtDataStore[id];
+      if (!data) return;
+
+      document.getElementById('modalPhoto').src = data.photo;
+      document.getElementById('modalName').textContent = data.name;
+      document.getElementById('modalAddress').textContent = data.address;
+
+      const stars = data.rating
+        ? '★'.repeat(Math.round(data.rating)) + '☆'.repeat(5 - Math.round(data.rating))
+        : '☆☆☆☆☆';
+
+      document.getElementById('modalRating').innerHTML =
+        `<span style="color:#f4a800;font-size:16px">${stars}</span>
+         <span style="font-size:13px;color:#999;margin-left:6px">(${data.reviews} reviews)</span>`;
+
+      const statusEl = document.getElementById('modalStatus');
+      if (data.isOpen === true) {
+        statusEl.innerHTML = '<span class="badge-open">Open Now</span>';
+      } else if (data.isOpen === false) {
+        statusEl.innerHTML = '<span class="badge-closed">Closed</span>';
+      } else {
+        statusEl.innerHTML = '<span class="surface-tag">Hours N/A</span>';
+      }
+
+      document.getElementById('modalHours').innerHTML =
+        '<strong>Address:</strong> ' + data.address;
+
+      document.getElementById('modalDirections').href =
+        'https://www.google.com/maps/dir/?api=1&destination=' +
+        encodeURIComponent(data.address) +
+        '&destination_place_id=' + data.placeId;
+
+      document.getElementById('courtModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('modalClose').addEventListener('click', () => {
+        document.getElementById('courtModal').classList.remove('active');
+        document.body.style.overflow = '';
+      });
+
+      document.getElementById('courtModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('courtModal')) {
+          document.getElementById('courtModal').classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      });
+    });
+
     function initMap() {
       console.log('✅ Google Maps loaded!');
 
@@ -84,7 +137,6 @@
 
         const geocoder = new google.maps.Geocoder();
         geocoder.geocode({ address: city }, (results, status) => {
-          console.log('Geocode status:', status);
           if (status !== 'OK') {
             resultsGrid.innerHTML = `<div class="error-msg">City not found.</div>`;
             return;
@@ -94,24 +146,18 @@
           map.setCenter(location);
 
           const service = new google.maps.places.PlacesService(map);
-          const request = {
-            location: location,
-            radius: 5000,
-            keyword: 'tennis court'
-          };
+          const request = { location, radius: 5000, keyword: 'tennis court' };
 
           service.nearbySearch(request, (places, status) => {
-            console.log('Places status:', status);
-
             if (status !== 'OK' || !places || !places.length) {
-              resultsGrid.innerHTML = `<div class="error-msg">No courts found near ${city}. Status: ${status}</div>`;
+              resultsGrid.innerHTML = `<div class="error-msg">No courts found near ${city}.</div>`;
               return;
             }
 
             resultsGrid.innerHTML = '';
             const bounds = new google.maps.LatLngBounds();
 
-            places.forEach(court => {
+            places.forEach((court, index) => {
               const photo = court.photos
                 ? court.photos[0].getUrl({ maxWidth: 400 })
                 : 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400';
@@ -127,7 +173,8 @@
                 ? `<span class="badge-closed">Closed</span>`
                 : `<span class="surface-tag">Hours N/A</span>`;
 
-              const courtData = JSON.stringify({
+              const id = 'court_' + index;
+              courtDataStore[id] = {
                 name: court.name,
                 address: court.vicinity,
                 photo: photo,
@@ -135,18 +182,10 @@
                 reviews: court.user_ratings_total || 0,
                 isOpen: isOpen,
                 placeId: court.place_id
-              }).replace(/"/g, '&quot;');
+              };
 
               resultsGrid.innerHTML += `
-                <div class="court-card" onclick='openModal(${JSON.stringify({
-                  name: court.name,
-                  address: court.vicinity,
-                  photo: photo,
-                  rating: court.rating || null,
-                  reviews: court.user_ratings_total || 0,
-                  isOpen: isOpen,
-                  placeId: court.place_id
-                })})'>
+                <div class="court-card" onclick="openModal('${id}')" style="cursor:pointer">
                   <div class="card-image">
                     <img src="${photo}" alt="${court.name}"/>
                     <span class="badge-free">Public</span>
@@ -166,7 +205,7 @@
                 </div>
               `;
 
-              const marker = new google.maps.Marker({
+              new google.maps.Marker({
                 position: court.geometry.location,
                 map: map,
                 title: court.name
@@ -178,51 +217,6 @@
             map.fitBounds(bounds);
           });
         });
-      });
-
-      window.openModal = function(data) {
-        document.getElementById('modalPhoto').src = data.photo;
-        document.getElementById('modalName').textContent = data.name;
-        document.getElementById('modalAddress').textContent = data.address;
-
-        const stars = data.rating
-          ? '★'.repeat(Math.round(data.rating)) + '☆'.repeat(5 - Math.round(data.rating))
-          : '☆☆☆☆☆';
-
-        document.getElementById('modalRating').innerHTML =
-          `<span style="color:#f4a800">${stars}</span>
-           <span style="font-size:13px;color:#999">(${data.reviews} reviews)</span>`;
-
-        const statusEl = document.getElementById('modalStatus');
-        if (data.isOpen === true) {
-          statusEl.innerHTML = '<span class="badge-open">Open Now</span>';
-        } else if (data.isOpen === false) {
-          statusEl.innerHTML = '<span class="badge-closed">Closed</span>';
-        } else {
-          statusEl.innerHTML = '<span class="surface-tag">Hours N/A</span>';
-        }
-
-        document.getElementById('modalHours').innerHTML =
-          '<strong>Address:</strong> ' + data.address + '<br>' +
-          '<strong>Place ID:</strong> ' + data.placeId;
-
-        document.getElementById('modalDirections').href =
-          `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(data.address)}&destination_place_id=${data.placeId}`;
-
-        document.getElementById('courtModal').classList.add('active');
-        document.body.style.overflow = 'hidden';
-      };
-
-      document.getElementById('modalClose').addEventListener('click', () => {
-        document.getElementById('courtModal').classList.remove('active');
-        document.body.style.overflow = '';
-      });
-
-      document.getElementById('courtModal').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('courtModal')) {
-          document.getElementById('courtModal').classList.remove('active');
-          document.body.style.overflow = '';
-        }
       });
     }
   </script>
