@@ -2010,14 +2010,13 @@ var currentViewProfileUid = null;
             createdAt: window._fbTimestamp.now()
           });
         }
-        document.getElementById('profileName').textContent = user.displayName || 'No name';
-        document.getElementById('profileEmail').textContent = user.email || '';
+        if (document.getElementById('profileName')) document.getElementById('profileName').textContent = user.displayName || 'No name';
+        if (document.getElementById('profileEmail')) document.getElementById('profileEmail').textContent = user.email || '';
         if (user.photoURL) {
-          document.getElementById('profilePhoto').src = user.photoURL;
-          document.getElementById('profilePhoto').style.display = 'block';
-          document.getElementById('profileInitials').style.display = 'none';
+          if (document.getElementById('profilePhoto')) { document.getElementById('profilePhoto').src = user.photoURL; document.getElementById('profilePhoto').style.display = 'block'; }
+          if (document.getElementById('profileInitials')) document.getElementById('profileInitials').style.display = 'none';
         } else {
-          document.getElementById('profileInitials').textContent = user.displayName ? user.displayName[0].toUpperCase() : '?';
+          if (document.getElementById('profileInitials')) document.getElementById('profileInitials').textContent = user.displayName ? user.displayName[0].toUpperCase() : '?';
         }
         if (profileSnap.exists()) {
           var pd = profileSnap.data();
@@ -2028,13 +2027,12 @@ var currentViewProfileUid = null;
           document.getElementById('profileFacebook').value = pd.facebook || '';
           document.getElementById('profileWhatsapp').value = pd.whatsapp || '';
           document.getElementById('profilePhone').value = pd.phone || '';
-          if (pd.phoneVerified) document.getElementById('profileVerifiedBadge').style.display = 'inline-block';
+          if (pd.phoneVerified && document.getElementById('profileVerifiedBadge')) document.getElementById('profileVerifiedBadge').style.display = 'inline-block';
           if (pd.gallery && pd.gallery.length > 0) { window._userGallery = pd.gallery; renderGalleryPreview(pd.gallery); }
           else { window._userGallery = []; }
           if (pd.photo && pd.photo !== user.photoURL) {
-            document.getElementById('profilePhoto').src = pd.photo;
-            document.getElementById('profilePhoto').style.display = 'block';
-            document.getElementById('profileInitials').style.display = 'none';
+            if (document.getElementById('profilePhoto')) { document.getElementById('profilePhoto').src = pd.photo; document.getElementById('profilePhoto').style.display = 'block'; }
+            if (document.getElementById('profileInitials')) document.getElementById('profileInitials').style.display = 'none';
             document.getElementById('authAvatarImg').src = pd.photo;
             document.getElementById('authAvatarImg').style.display = 'block';
             document.getElementById('authAvatarText').style.display = 'none';
