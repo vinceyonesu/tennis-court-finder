@@ -303,6 +303,113 @@
       showSearchHistory();
       if (history.length === 0) document.getElementById('searchHistoryDropdown').style.display = 'none';
     };
+    window.submitReview = async function(placeId) {
+      if (!window._currentUser) { alert('Please sign in to write a review!'); handleAuthClick(); return; }
+      var rating = document.getElementById('reviewRatingInput').value;
+      var text = document.getElementById('reviewTextInput').value.trim();
+      if (!rating || !text) { alert('Please select a rating and write a review.'); return; }
+      var btn = document.getElementById('submitReviewBtn');
+      btn.textContent = 'Posting...'; btn.disabled = true;
+      try {
+        await window._fbAddDoc(window._fbCollection(window._db, 'reviews'), {
+          placeId: placeId,
+          uid: window._currentUser.uid,
+          name: window._currentUser.displayName || 'Anonymous',
+          photo: window._currentUser.photoURL || '',
+          rating: parseInt(rating),
+          text: text,
+          createdAt: window._fbTimestamp.now()
+        });
+        document.getElementById('reviewTextInput').value = '';
+        document.getElementById('reviewRatingInput').value = '';
+        btn.textContent = 'Post Review'; btn.disabled = false;
+        loadUserReviews(placeId);
+      } catch (err) {
+        console.log('Review error:', err);
+        btn.textContent = 'Post Review'; btn.disabled = false;
+        alert('Could not post review. Try again.');
+      }
+    };
+
+    window.deleteReview = async function(reviewId, placeId) {
+      if (!window._currentUser) return;
+      if (!window.confirm('Delete your review?')) return;
+      try {
+        await window._fbUpdateDoc(window._fbDoc(window._db, 'reviews', reviewId), {
+          deleted: true
+        });
+        loadUserReviews(placeId);
+      } catch (err) { console.log('Delete review error:', err); }
+    };
+
+    async function loadUserReviews(placeId) {
+      var section = document.getElementById('userReviewsSection');
+      if (!section || !window._db) return;
+      try {
+        var q = window._fbQuery(
+          window._fbCollection(window._db, 'reviews'),
+          window._fbWhere('placeId', '==', placeId),
+          window._fbOrderBy('createdAt', 'desc')
+        );
+        var snapshot = await window._fbGetDocs(q);
+        var isSignedIn = !!window._currentUser;
+        var html =
+          '<div style="background:#f8f9fa;border-radius:12px;padding:14px;margin-bottom:12px">' +
+            '<div style="font-size:12px;font-weight:700;color:#1a1a1a;margin-bottom:10px">⭐ Write a Review</div>' +
+            (isSignedIn
+              ? '<div style="display:flex;gap:4px;margin-bottom:8px" id="starPicker">' +
+                  [1,2,3,4,5].map(function(n) {
+                    return '<span onclick="setReviewRating(' + n + ')" style="font-size:24px;cursor:pointer;color:#e0e0e0" id="star_' + n + '">★</span>';
+                  }).join('') +
+                  '<input type="hidden" id="reviewRatingInput"/>' +
+                '</div>' +
+                '<textarea id="reviewTextInput" placeholder="Share your experience at this court..." style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:\'Plus Jakarta Sans\',sans-serif;color:#1a1a1a;outline:none;resize:none;height:70px;box-sizing:border-box;margin-bottom:8px"></textarea>' +
+                '<button id="submitReviewBtn" onclick="submitReview(\'' + placeId + '\')" style="background:#1a6b3c;color:#fff;border:none;border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:pointer">Post Review</button>'
+              : '<div style="font-size:13px;color:#888">⚠️ <span style="color:#1a6b3c;cursor:pointer;text-decoration:underline" onclick="handleAuthClick()">Sign in</span> to write a review</div>') +
+          '</div>';
+
+        if (!snapshot.empty) {
+          html += '<div style="font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Community Reviews</div>';
+          snapshot.forEach(function(docSnap) {
+            var r = docSnap.data();
+            if (r.deleted) return;
+            var rStars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+            var isOwner = window._currentUser && window._currentUser.uid === r.uid;
+            var date = r.createdAt ? new Date(r.createdAt.toDate()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+            html +=
+              '<div style="padding:12px 0;border-bottom:1px solid #f0f0f0">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+                  '<div style="display:flex;align-items:center;gap:8px">' +
+                    (r.photo ? '<img src="' + r.photo + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/>' : '<div style="width:32px;height:32px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700">' + r.name[0].toUpperCase() + '</div>') +
+                    '<div>' +
+                      '<div style="font-size:13px;font-weight:600;color:#1a1a1a">' + r.name + '</div>' +
+                      '<div style="display:flex;align-items:center;gap:6px">' +
+                        '<span style="color:#f4a800;font-size:12px">' + rStars + '</span>' +
+                        '<span style="font-size:11px;color:#aaa">' + date + '</span>' +
+                      '</div>' +
+                    '</div>' +
+                  '</div>' +
+                  (isOwner ? '<button onclick="deleteReview(\'' + docSnap.id + '\', \'' + placeId + '\')" style="background:none;border:none;color:#e74c3c;font-size:11px;cursor:pointer;font-family:\'Plus Jakarta Sans\',sans-serif">Delete</button>' : '') +
+                '</div>' +
+                '<p style="font-size:13px;color:#555;line-height:1.5;margin:0">' + r.text + '</p>' +
+              '</div>';
+          });
+        }
+
+        section.innerHTML = html;
+      } catch (err) {
+        console.log('Load reviews error:', err);
+        section.innerHTML = '';
+      }
+    }
+
+    window.setReviewRating = function(rating) {
+      document.getElementById('reviewRatingInput').value = rating;
+      for (var i = 1; i <= 5; i++) {
+        var star = document.getElementById('star_' + i);
+        if (star) star.style.color = i <= rating ? '#f4a800' : '#e0e0e0';
+      }
+    };
     window.toggleReviews = function() {
       var section = document.getElementById('reviewsSection');
       if (!section) return;
@@ -339,7 +446,10 @@
           '<span style="color:#f4a800;font-size:16px">' + stars + '</span>' +
           '<span style="font-size:13px;color:#1a6b3c;text-decoration:underline">(' + data.reviews + ' reviews) ▾</span>' +
         '</div>' +
-        '<div id="reviewsSection" style="display:none;margin-top:10px"></div>';
+        '<div id="reviewsSection" style="display:none;margin-top:10px">' +
+          '<div id="userReviewsSection"></div>' +
+          '<div id="googleReviewsSection"></div>' +
+        '</div>';
       document.getElementById('courtModal').classList.add('active');
       document.body.style.overflow = 'hidden';
       getCourtWeather(data);
@@ -347,6 +457,10 @@
         if (window._db) { clearInterval(fbWait); loadHittingPartnerSection(data.placeId); }
       }, 200);
       setTimeout(function() { clearInterval(fbWait); }, 5000);
+      var reviewWait = setInterval(function() {
+        if (window._db) { clearInterval(reviewWait); loadUserReviews(data.placeId); }
+      }, 200);
+      setTimeout(function() { clearInterval(reviewWait); }, 5000);
       loadCourtNotes(data.placeId);
       if (gService && data.placeId) {
         gService.getDetails(
