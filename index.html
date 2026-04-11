@@ -1221,15 +1221,58 @@
       return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1);
     }
 
-    function getWeatherIcon(code) {
-      if (code === 0) return '☀️';
-      if (code <= 3) return '⛅';
-      if (code <= 49) return '🌫️';
-      if (code <= 69) return '🌧️';
-      if (code <= 79) return '❄️';
-      if (code <= 82) return '🌦️';
-      if (code <= 99) return '⛈️';
-      return '🌤️';
+   function getWeatherIcon(code, hour) {
+      var isNight = hour !== undefined && (hour < 6 || hour >= 20);
+      if (code === 0) return isNight ? '🌙' : '☀️';
+      if (code === 1) return isNight ? '🌙' : '🌤️';
+      if (code === 2) return '⛅';
+      if (code === 3) return '☁️';
+      if (code === 45 || code === 48) return '🌫️';
+      if (code === 51 || code === 53) return '🌦️';
+      if (code === 55) return '🌧️';
+      if (code === 56 || code === 57) return '🌨️';
+      if (code === 61 || code === 63) return '🌧️';
+      if (code === 65) return '⛈️';
+      if (code === 66 || code === 67) return '🌨️';
+      if (code === 71 || code === 73) return '🌨️';
+      if (code === 75 || code === 77) return '❄️';
+      if (code === 80 || code === 81) return '🌦️';
+      if (code === 82) return '⛈️';
+      if (code === 85 || code === 86) return '❄️';
+      if (code === 95) return '⛈️';
+      if (code === 96 || code === 99) return '⛈️';
+      return isNight ? '🌙' : '🌤️';
+    }
+
+    function getWeatherCondition(code) {
+      if (code === 0) return 'Clear sky';
+      if (code === 1) return 'Mainly clear';
+      if (code === 2) return 'Partly cloudy';
+      if (code === 3) return 'Overcast';
+      if (code === 45) return 'Foggy';
+      if (code === 48) return 'Icy fog';
+      if (code === 51) return 'Light drizzle';
+      if (code === 53) return 'Moderate drizzle';
+      if (code === 55) return 'Heavy drizzle';
+      if (code === 56 || code === 57) return 'Freezing drizzle';
+      if (code === 61) return 'Light rain';
+      if (code === 63) return 'Moderate rain';
+      if (code === 65) return 'Heavy rain';
+      if (code === 66 || code === 67) return 'Freezing rain';
+      if (code === 71) return 'Light snow';
+      if (code === 73) return 'Moderate snow';
+      if (code === 75) return 'Heavy snow';
+      if (code === 77) return 'Snow grains';
+      if (code === 80) return 'Light showers';
+      if (code === 81) return 'Moderate showers';
+      if (code === 82) return 'Violent showers';
+      if (code === 85) return 'Light snow showers';
+      if (code === 86) return 'Heavy snow showers';
+      if (code === 95) return 'Thunderstorm';
+      if (code === 96) return 'Thunderstorm with hail';
+      if (code === 99) return 'Heavy thunderstorm';
+      return 'Unknown';
+    }
     }
 
     function formatTime(isoString) {
@@ -1264,14 +1307,21 @@
         var humidity = Math.round(cu.relative_humidity_2m), precip = cu.precipitation;
         var uv = Math.round(cu.uv_index || 0), code = cu.weather_code;
         var icon, condition, bg1, bg2;
-        if (code === 0 && temp > 85) { icon='☀️'; condition='Hot & sunny'; bg1='#f7971e'; bg2='#ffd200'; }
-        else if (code === 0) { icon='☀️'; condition='Clear sky'; bg1='#56CCF2'; bg2='#2F80ED'; }
-        else if (code <= 3) { icon='⛅'; condition='Partly cloudy'; bg1='#4facfe'; bg2='#00f2fe'; }
-        else if (code <= 49) { icon='🌫️'; condition='Foggy'; bg1='#8e9eab'; bg2='#c8d6df'; }
-        else if (code <= 69) { icon='🌧️'; condition='Rainy'; bg1='#1e3c72'; bg2='#2a5298'; }
-        else if (code <= 79) { icon='❄️'; condition='Snowy'; bg1='#e0eafc'; bg2='#cfdef3'; }
-        else if (code <= 82) { icon='🌦️'; condition='Rain showers'; bg1='#373b44'; bg2='#4286f4'; }
-        else { icon='⛈️'; condition='Thunderstorm'; bg1='#0f0c29'; bg2='#302b63'; }
+        var currentHour = new Date().getHours();
+        var isNightNow = currentHour < 6 || currentHour >= 20;
+        condition = getWeatherCondition(code);
+        icon = getWeatherIcon(code, currentHour);
+
+        if (code === 0 && temp > 85) { bg1='#f7971e'; bg2='#ffd200'; condition='Hot & sunny'; }
+        else if (code === 0 && isNightNow) { bg1='#1a1a2e'; bg2='#16213e'; }
+        else if (code === 0) { bg1='#56CCF2'; bg2='#2F80ED'; }
+        else if (code <= 2) { bg1='#4facfe'; bg2='#00f2fe'; }
+        else if (code === 3) { bg1='#636e72'; bg2='#b2bec3'; }
+        else if (code <= 48) { bg1='#8e9eab'; bg2='#c8d6df'; }
+        else if (code <= 67) { bg1='#1e3c72'; bg2='#2a5298'; }
+        else if (code <= 77) { bg1='#e0eafc'; bg2='#cfdef3'; }
+        else if (code <= 82) { bg1='#373b44'; bg2='#4286f4'; }
+        else { bg1='#0f0c29'; bg2='#302b63'; }
         var rec, recBg, recIcon;
         if (precip > 0.1) { rec='Rain expected — stay off the courts'; recBg='rgba(255,80,80,0.25)'; recIcon='🚫'; }
         else if (wind > 20) { rec='Very windy — tough serving conditions'; recBg='rgba(255,200,0,0.25)'; recIcon='💨'; }
@@ -1289,7 +1339,7 @@
             var hLabel = hHour===0?'12 AM':hHour<12?hHour+' AM':hHour===12?'12 PM':(hHour-12)+' PM';
             var hTemp = Math.round(hourly.temperature_2m[h]), hWind = Math.round(hourly.wind_speed_10m[h]);
             var hHumidity = Math.round(hourly.relative_humidity_2m[h]), hUV = Math.round(hourly.uv_index[h]||0);
-            var hIcon = getWeatherIcon(hourly.weather_code[h]);
+            var hIcon = getWeatherIcon(hourly.weather_code[h], hHour);
             var isPlayable = hTemp>45 && hTemp<98 && hWind<20;
             if (isPlayable && hHour>=6 && hHour<=21) playHours.push(hLabel);
             rows += '<div style="display:grid;grid-template-columns:52px 22px 1fr 1fr 1fr 1fr;align-items:center;gap:4px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,'+(isPlayable?'0.15':'0.07')+');margin-bottom:4px"><div style="font-size:11px;font-weight:600;color:#ffffff">'+hLabel+'</div><div style="font-size:14px">'+hIcon+'</div><div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">Temp</div><div style="font-size:11px;font-weight:700;color:#ffffff">'+hTemp+'°F</div></div><div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">Wind</div><div style="font-size:11px;font-weight:700;color:#ffffff">'+hWind+' mph</div></div><div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">Humidity</div><div style="font-size:11px;font-weight:700;color:#ffffff">'+hHumidity+'%</div></div><div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">UV</div><div style="font-size:11px;font-weight:700;color:#ffffff">'+hUV+'</div></div></div>';
@@ -1300,7 +1350,7 @@
         var forecastRows = '';
         for (var i = 0; i < 7; i++) {
           var dayLabel = i===0?'Today':i===1?'Tomorrow':dayNames[(todayIndex+i)%7];
-          var dayCode = daily.weather_code[i], dayIcon = getWeatherIcon(dayCode);
+          var dayCode = daily.weather_code[i], dayIcon = getWeatherIcon(dayCode, 12);
           var dayMax = Math.round(daily.temperature_2m_max[i]), dayMin = Math.round(daily.temperature_2m_min[i]);
           var dayWind = Math.round(daily.wind_speed_10m_max[i]), dayUV = Math.round(daily.uv_index_max[i]||0);
           var dayPrecip = (daily.precipitation_sum[i]||0).toFixed(1);
