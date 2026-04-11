@@ -107,6 +107,8 @@
             <span id="mpInitials">?</span>
             <img id="mpPhoto" src="" style="display:none;width:100%;height:100%;object-fit:cover"/>
           </div>
+          <label for="mpPhotoUpload" style="position:absolute;bottom:0;right:0;background:#ffffff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.2)">📷</label>
+          <input type="file" id="mpPhotoUpload" accept="image/*" style="display:none" onchange="uploadMyProfilePhoto(this)"/>
         </div>
         <div id="mpName" style="font-size:20px;font-weight:700;color:#ffffff;margin-bottom:4px"></div>
         <div id="mpEmail" style="font-size:13px;color:rgba(255,255,255,0.75);margin-bottom:8px"></div>
@@ -1439,7 +1441,27 @@ var currentViewProfileUid = null;
         sessionsDiv.innerHTML = html || '<p style="font-size:13px;color:#aaa">No upcoming sessions.</p>';
       } catch (err) { console.log('Profile sessions error:', err); }
     }
-
+      window.uploadMyProfilePhoto = async function(input) {
+      if (!input.files || !input.files[0]) return;
+      if (!window._currentUser) { alert('Please sign in first.'); return; }
+      var file = input.files[0];
+      if (file.size > 5 * 1024 * 1024) { alert('Photo must be under 5MB.'); return; }
+      try {
+        document.getElementById('mpInitials').textContent = '⏳';
+        var storageRef = window._storageRef(window._storage, 'profiles/' + window._currentUser.uid + '/photo');
+        await window._uploadBytes(storageRef, file);
+        var downloadURL = await window._getDownloadURL(storageRef);
+        var profileRef = window._fbDoc(window._db, 'profiles', window._currentUser.uid);
+        await window._fbSetDoc(profileRef, { photo: downloadURL }, { merge: true });
+        document.getElementById('mpPhoto').src = downloadURL;
+        document.getElementById('mpPhoto').style.display = 'block';
+        document.getElementById('mpInitials').style.display = 'none';
+        var navImg = document.getElementById('authAvatarImg');
+        navImg.src = downloadURL; navImg.style.display = 'block';
+        document.getElementById('authAvatarText').style.display = 'none';
+        alert('Profile photo updated!');
+      } catch (err) { console.log('Photo upload error:', err); alert('Could not upload photo. Try again.'); }
+    };
     window.openMessage = function(uid) {
       alert('Messaging coming in Hour 21! 💬');
     };
