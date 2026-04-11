@@ -223,6 +223,20 @@
     <div style="margin-bottom:20px">
       <h2 style="font-size:22px;font-weight:700;color:#1a1a1a;margin-bottom:4px">🎾 Players Near You</h2>
       <p style="font-size:14px;color:#888;margin-bottom:16px">Find hitting partners at courts near your location</p>
+      <div style="margin-bottom:16px">
+        <div style="display:flex;gap:8px">
+          <input type="text" id="playerSearchInput" placeholder="Search players by name..." onkeydown="if(event.key==='Enter')searchPlayers()" style="flex:1;border:1.5px solid #e0e0e0;border-radius:999px;padding:9px 18px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none"/>
+          <button onclick="searchPlayers()" style="background:#1a6b3c;color:#fff;border:none;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">Search</button>
+        </div>
+        <div id="playerSearchResults" style="margin-top:10px"></div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="display:flex;gap:8px">
+          <input type="text" id="playerSearchInput" placeholder="Search players by name..." style="flex:1;border:1.5px solid #e0e0e0;border-radius:999px;padding:9px 18px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none"/>
+          <button onclick="searchPlayers()" style="background:#1a6b3c;color:#fff;border:none;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">Search</button>
+        </div>
+        <div id="playerSearchResults" style="margin-top:10px"></div>
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
         <select id="nearbySkillFilter" onchange="loadNearbySessions()" style="border:1.5px solid #e0e0e0;border-radius:999px;padding:7px 16px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#555;background:#fff;outline:none;cursor:pointer">
           <option value="all">All Skill Levels</option>
@@ -1351,6 +1365,45 @@ var currentViewProfileUid = null;
 
     window.closeFollowList = function() {
       document.getElementById('followListModal').style.display = 'none';
+    };
+    window.searchPlayers = async function() {
+      var query = document.getElementById('playerSearchInput').value.trim().toLowerCase();
+      var resultsDiv = document.getElementById('playerSearchResults');
+      if (!query) { resultsDiv.innerHTML = ''; return; }
+      if (!window._db) { resultsDiv.innerHTML = '<p style="font-size:13px;color:#aaa">Connecting...</p>'; return; }
+      resultsDiv.innerHTML = '<p style="font-size:13px;color:#aaa">Searching...</p>';
+      try {
+        var snap = await window._fbGetDocs(window._fbCollection(window._db, 'profiles'));
+        var matches = [];
+        snap.forEach(function(d) {
+          var p = d.data();
+          if (!p.name) return;
+          if (window._currentUser && d.id === window._currentUser.uid) return;
+          if (p.name.toLowerCase().includes(query)) matches.push({ uid: d.id, ...p });
+        });
+        if (matches.length === 0) {
+          resultsDiv.innerHTML = '<p style="font-size:13px;color:#aaa;padding:8px 0">No players found for "' + query + '"</p>';
+          return;
+        }
+        var html = '<div style="font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">' + matches.length + ' player' + (matches.length !== 1 ? 's' : '') + ' found</div>';
+        matches.forEach(function(p) {
+          html +=
+            '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#ffffff;border:1px solid #ebebeb;border-radius:14px;margin-bottom:8px">' +
+              '<div style="display:flex;align-items:center;gap:10px;cursor:pointer" onclick="viewProfile(\'' + p.uid + '\')">' +
+                (p.photo ? '<img src="' + p.photo + '" style="width:42px;height:42px;border-radius:50%;object-fit:cover"/>' : '<div style="width:42px;height:42px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700">' + p.name[0].toUpperCase() + '</div>') +
+                '<div>' +
+                  '<div style="font-size:14px;font-weight:600;color:#1a1a1a">' + p.name + '</div>' +
+                  '<div style="font-size:12px;color:#888">' + (p.skill || 'No skill set') + (p.utr ? ' · UTR ' + p.utr : '') + '</div>' +
+                '</div>' +
+              '</div>' +
+              '<button onclick="viewProfile(\'' + p.uid + '\')" style="background:#e6f9ee;color:#1a6b3c;border:1px solid #1a6b3c;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:pointer">View</button>' +
+            '</div>';
+        });
+        resultsDiv.innerHTML = html;
+      } catch (err) {
+        console.log('Player search error:', err);
+        resultsDiv.innerHTML = '<p style="font-size:13px;color:#aaa">Could not search. Try again.</p>';
+      }
     };
 
     async function loadUserSessionsForProfile(uid) {
