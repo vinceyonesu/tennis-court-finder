@@ -97,6 +97,63 @@
     var favorites = JSON.parse(localStorage.getItem('courtFavorites') || '{}');
     var activeInfoWindow = null;
 
+    window.openModal = function(id) {
+      var data = courtDataStore[id] || favorites[id];
+      if (!data) return;
+      currentModalId = id;
+      document.getElementById('modalPhoto').src = data.photo;
+      document.getElementById('modalName').textContent = data.name;
+      document.getElementById('modalAddress').textContent = data.address;
+      var isFav = !!favorites[id];
+      var modalHeart = document.getElementById('modalHeart');
+      modalHeart.textContent = isFav ? '♥' : '♡';
+      modalHeart.style.color = isFav ? '#e74c3c' : '#fff';
+      var stars = data.rating ? '★'.repeat(Math.round(data.rating)) + '☆'.repeat(5 - Math.round(data.rating)) : '☆☆☆☆☆';
+      document.getElementById('modalRating').innerHTML =
+        '<span style="color:#f4a800;font-size:16px">' + stars + '</span>' +
+        '<span style="font-size:13px;color:#999;margin-left:6px">(' + data.reviews + ' reviews)</span>';
+      var statusEl = document.getElementById('modalStatus');
+      if (data.isOpen === true) { statusEl.innerHTML = '<span class="badge-open">Open Now</span>'; }
+      else if (data.isOpen === false) { statusEl.innerHTML = '<span class="badge-closed">Closed</span>'; }
+      else { statusEl.innerHTML = '<span class="surface-tag">Hours N/A</span>'; }
+      document.getElementById('modalHours').innerHTML = '<p style="color:#888;font-size:13px">Loading hours...</p>';
+      document.getElementById('weatherSection').innerHTML = '';
+      document.getElementById('modalDirections').href =
+        'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(data.address) + '&destination_place_id=' + data.placeId;
+      document.getElementById('courtModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+      getCourtWeather(data);
+      if (gService && data.placeId) {
+        gService.getDetails(
+          { placeId: data.placeId, fields: ['opening_hours', 'formatted_phone_number', 'website'] },
+          function(place, status) {
+            var hoursDiv = document.getElementById('modalHours');
+            var html = '';
+            var lightsTag = data.lights ? '<span class="lights-badge">Lights available</span>' : '<span class="no-lights-badge">No lights info</span>';
+            html += '<div style="margin-bottom:10px">' + lightsTag + '</div>';
+            if (status !== 'OK' || !place || !place.opening_hours) {
+              html += '<p style="color:#888;font-size:13px">Hours not available.</p>';
+              hoursDiv.innerHTML = html; return;
+            }
+            var today = new Date().getDay();
+            var weekdayText = place.opening_hours.weekday_text;
+            html += '<table style="width:100%;font-size:13px;border-collapse:collapse">';
+            weekdayText.forEach(function(line, i) {
+              var dayIndex = (i + 1) % 7, isToday = dayIndex === today;
+              var parts = line.split(': '), dayName = parts[0], hours = parts.slice(1).join(': ') || 'Closed';
+              html += '<tr style="background:' + (isToday ? '#e6f9ee' : 'transparent') + '">' +
+                '<td style="padding:5px 8px;font-weight:' + (isToday ? '700' : '400') + ';color:' + (isToday ? '#1a6b3c' : '#444') + '">' + dayName + '</td>' +
+                '<td style="padding:5px 8px;text-align:right;color:' + (isToday ? '#1a6b3c' : '#666') + ';font-weight:' + (isToday ? '700' : '400') + '">' + hours + '</td></tr>';
+            });
+            html += '</table>';
+            if (place.formatted_phone_number) html += '<p style="margin-top:10px;font-size:13px;color:#555">Phone: ' + place.formatted_phone_number + '</p>';
+            if (place.website) html += '<p style="margin-top:4px;font-size:13px"><a href="' + place.website + '" target="_blank" style="color:#1a6b3c">Visit website</a></p>';
+            hoursDiv.innerHTML = html;
+          }
+        );
+      }
+    };
+
     window.toggleHourly = function(id) {
       var el = document.getElementById(id);
       if (!el) return;
@@ -137,8 +194,7 @@
           if (window._courtMap) window._courtMap.setCenter(location);
           gService.nearbySearch({ location: location, radius: 5000, keyword: 'tennis court' }, function(places, status) {
             if (status !== 'OK' || !places || !places.length) {
-              resultsGrid.innerHTML = '<div class="error-msg">No courts found near your location.</div>';
-              return;
+              resultsGrid.innerHTML = '<div class="error-msg">No courts found near your location.</div>'; return;
             }
             allCourts = [];
             var bounds = new google.maps.LatLngBounds();
@@ -160,7 +216,7 @@
             if (window._courtMap) window._courtMap.fitBounds(bounds);
             document.getElementById('filterBar').style.display = 'flex';
             currentFilter = 'all';
-            document.querySelectorAll('.filter-btn').forEach(function(btn) { btn.classList.remove('active'); });
+            document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
             document.getElementById('filterAll').classList.add('active');
             renderCourts();
           });
@@ -197,25 +253,25 @@
         map: map,
         title: court.name
       });
-
       var isOpen = courtObj.isOpen;
-      var statusText = isOpen === true ? '<span style="color:#1a6b3c;font-weight:600;font-size:12px">● Open Now</span>' : isOpen === false ? '<span style="color:#c0392b;font-weight:600;font-size:12px">● Closed</span>' : '<span style="color:#888;font-size:12px">● Hours N/A</span>';
+      var statusText = isOpen === true
+        ? '<span style="color:#1a6b3c;font-weight:600;font-size:12px">● Open Now</span>'
+        : isOpen === false
+        ? '<span style="color:#c0392b;font-weight:600;font-size:12px">● Closed</span>'
+        : '<span style="color:#888;font-size:12px">● Hours N/A</span>';
       var stars = courtObj.rating ? '★'.repeat(Math.round(courtObj.rating)) + '☆'.repeat(5 - Math.round(courtObj.rating)) : '☆☆☆☆☆';
-
       var infoContent =
-        '<div style="width:220px;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:pointer" onclick="openModal(\'' + courtObj.id + '\')">' +
+        '<div style="width:220px;font-family:sans-serif;cursor:pointer" onclick="openModal(\'' + courtObj.id + '\')">' +
           '<img src="' + courtObj.photo + '" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px"/>' +
-          '<div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:4px">' + court.name + '</div>' +
-          '<div style="font-size:11px;color:#888;margin-bottom:6px">' + court.vicinity + '</div>' +
-          '<div style="display:flex;align-items:center;justify-content:space-between">' +
+          '<div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:4px">' + courtObj.name + '</div>' +
+          '<div style="font-size:11px;color:#888;margin-bottom:6px">' + courtObj.address + '</div>' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
             '<span style="color:#f4a800;font-size:13px">' + stars + '</span>' +
             statusText +
           '</div>' +
-          '<div style="margin-top:8px;background:#1a6b3c;color:#fff;text-align:center;padding:6px;border-radius:8px;font-size:12px;font-weight:600">View Details</div>' +
+          '<div style="background:#1a6b3c;color:#fff;text-align:center;padding:7px;border-radius:8px;font-size:12px;font-weight:600">View Details</div>' +
         '</div>';
-
       var infoWindow = new google.maps.InfoWindow({ content: infoContent });
-
       marker.addListener('click', function() {
         if (activeInfoWindow) activeInfoWindow.close();
         infoWindow.open(map, marker);
@@ -329,8 +385,7 @@
     function formatTime(isoString) {
       if (!isoString) return 'N/A';
       var d = new Date(isoString);
-      var h = d.getHours();
-      var m = d.getMinutes();
+      var h = d.getHours(), m = d.getMinutes();
       var ampm = h >= 12 ? 'PM' : 'AM';
       h = h % 12 || 12;
       return h + ':' + (m < 10 ? '0' + m : m) + ' ' + ampm;
@@ -344,7 +399,9 @@
         '</div>';
       try {
         var placeResult = await new Promise(function(resolve) {
-          gService.getDetails({ placeId: court.placeId, fields: ['geometry'] }, function(place, status) { resolve({ place: place, status: status }); });
+          gService.getDetails({ placeId: court.placeId, fields: ['geometry'] }, function(place, status) {
+            resolve({ place: place, status: status });
+          });
         });
         if (placeResult.status !== 'OK') { weatherDiv.innerHTML = ''; return; }
         var lat = placeResult.place.geometry.location.lat();
@@ -357,7 +414,7 @@
           '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7'
         );
         var data = await res.json();
-        var cu = data.current; var daily = data.daily; var hourly = data.hourly;
+        var cu = data.current, daily = data.daily, hourly = data.hourly;
         var temp = Math.round(cu.temperature_2m), wind = Math.round(cu.wind_speed_10m);
         var humidity = Math.round(cu.relative_humidity_2m), precip = cu.precipitation;
         var uv = Math.round(cu.uv_index || 0), code = cu.weather_code;
@@ -391,13 +448,11 @@
             var isPlayable = hTemp>45 && hTemp<98 && hWind<20;
             if (isPlayable && hHour>=6 && hHour<=21) playHours.push(hLabel);
             rows += '<div style="display:grid;grid-template-columns:52px 22px 1fr 1fr 1fr 1fr;align-items:center;gap:4px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,'+(isPlayable?'0.15':'0.07')+');margin-bottom:4px">' +
-              '<div style="font-size:11px;font-weight:600;color:#ffffff">'+hLabel+'</div>' +
-              '<div style="font-size:14px">'+hIcon+'</div>' +
+              '<div style="font-size:11px;font-weight:600;color:#ffffff">'+hLabel+'</div><div style="font-size:14px">'+hIcon+'</div>' +
               '<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">Temp</div><div style="font-size:11px;font-weight:700;color:#ffffff">'+hTemp+'°F</div></div>' +
               '<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">Wind</div><div style="font-size:11px;font-weight:700;color:#ffffff">'+hWind+' mph</div></div>' +
               '<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">Humidity</div><div style="font-size:11px;font-weight:700;color:#ffffff">'+hHumidity+'%</div></div>' +
-              '<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">UV</div><div style="font-size:11px;font-weight:700;color:#ffffff">'+hUV+'</div></div>' +
-            '</div>';
+              '<div style="text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.5)">UV</div><div style="font-size:11px;font-weight:700;color:#ffffff">'+hUV+'</div></div></div>';
           }
           var bestTimeHtml = playHours.length>0
             ? '<div style="background:rgba(74,222,128,0.2);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#ffffff"><strong>Best times to play:</strong> '+playHours.slice(0,4).join(', ')+(playHours.length>4?'...':'')+'</div>'
@@ -465,63 +520,6 @@
       }
     }
 
-    function openModal(id) {
-      var data = courtDataStore[id] || favorites[id];
-      if (!data) return;
-      currentModalId = id;
-      document.getElementById('modalPhoto').src = data.photo;
-      document.getElementById('modalName').textContent = data.name;
-      document.getElementById('modalAddress').textContent = data.address;
-      var isFav = !!favorites[id];
-      var modalHeart = document.getElementById('modalHeart');
-      modalHeart.textContent = isFav ? '♥' : '♡';
-      modalHeart.style.color = isFav ? '#e74c3c' : '#fff';
-      var stars = data.rating ? '★'.repeat(Math.round(data.rating)) + '☆'.repeat(5 - Math.round(data.rating)) : '☆☆☆☆☆';
-      document.getElementById('modalRating').innerHTML =
-        '<span style="color:#f4a800;font-size:16px">'+stars+'</span>' +
-        '<span style="font-size:13px;color:#999;margin-left:6px">('+data.reviews+' reviews)</span>';
-      var statusEl = document.getElementById('modalStatus');
-      if (data.isOpen === true) { statusEl.innerHTML = '<span class="badge-open">Open Now</span>'; }
-      else if (data.isOpen === false) { statusEl.innerHTML = '<span class="badge-closed">Closed</span>'; }
-      else { statusEl.innerHTML = '<span class="surface-tag">Hours N/A</span>'; }
-      document.getElementById('modalHours').innerHTML = '<p style="color:#888;font-size:13px">Loading hours...</p>';
-      document.getElementById('weatherSection').innerHTML = '';
-      document.getElementById('modalDirections').href =
-        'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(data.address) + '&destination_place_id=' + data.placeId;
-      document.getElementById('courtModal').classList.add('active');
-      document.body.style.overflow = 'hidden';
-      getCourtWeather(data);
-      if (gService && data.placeId) {
-        gService.getDetails(
-          { placeId: data.placeId, fields: ['opening_hours', 'formatted_phone_number', 'website'] },
-          function(place, status) {
-            var hoursDiv = document.getElementById('modalHours');
-            var html = '';
-            var lightsTag = data.lights ? '<span class="lights-badge">Lights available</span>' : '<span class="no-lights-badge">No lights info</span>';
-            html += '<div style="margin-bottom:10px">' + lightsTag + '</div>';
-            if (status !== 'OK' || !place || !place.opening_hours) {
-              html += '<p style="color:#888;font-size:13px">Hours not available.</p>';
-              hoursDiv.innerHTML = html; return;
-            }
-            var today = new Date().getDay();
-            var weekdayText = place.opening_hours.weekday_text;
-            html += '<table style="width:100%;font-size:13px;border-collapse:collapse">';
-            weekdayText.forEach(function(line, i) {
-              var dayIndex = (i+1)%7, isToday = dayIndex===today;
-              var parts = line.split(': '), dayName = parts[0], hours = parts.slice(1).join(': ')||'Closed';
-              html += '<tr style="background:'+(isToday?'#e6f9ee':'transparent')+'">' +
-                '<td style="padding:5px 8px;font-weight:'+(isToday?'700':'400')+';color:'+(isToday?'#1a6b3c':'#444')+'">'+dayName+'</td>' +
-                '<td style="padding:5px 8px;text-align:right;color:'+(isToday?'#1a6b3c':'#666')+';font-weight:'+(isToday?'700':'400')+'">'+hours+'</td></tr>';
-            });
-            html += '</table>';
-            if (place.formatted_phone_number) html += '<p style="margin-top:10px;font-size:13px;color:#555">Phone: '+place.formatted_phone_number+'</p>';
-            if (place.website) html += '<p style="margin-top:4px;font-size:13px"><a href="'+place.website+'" target="_blank" style="color:#1a6b3c">Visit website</a></p>';
-            hoursDiv.innerHTML = html;
-          }
-        );
-      }
-    }
-
     function closeModal() {
       document.getElementById('courtModal').classList.remove('active');
       document.body.style.overflow = '';
@@ -548,20 +546,20 @@
         var distanceBadge = '';
         if (window._userLat && court.lat) {
           var dist = getDistance(window._userLat, window._userLng, court.lat, court.lng);
-          distanceBadge = '<span class="surface-tag">📍 '+dist+' mi</span>';
+          distanceBadge = '<span class="surface-tag">📍 ' + dist + ' mi</span>';
         }
         resultsGrid.innerHTML +=
-          '<div class="court-card" id="court_card_'+court.id+'" onclick="openModal(\''+court.id+'\')" style="cursor:pointer">' +
+          '<div class="court-card" id="court_card_' + court.id + '" onclick="openModal(\'' + court.id + '\')" style="cursor:pointer">' +
             '<div class="card-image">' +
-              '<img src="'+court.photo+'" alt="'+court.name+'"/>' +
+              '<img src="' + court.photo + '" alt="' + court.name + '"/>' +
               '<span class="badge-free">Public</span>' +
-              '<button class="heart-btn" id="heart_'+court.id+'" onclick="event.stopPropagation();toggleFavorite(\''+court.id+'\')" style="color:'+(isFav?'#e74c3c':'#fff')+'">'+(isFav?'♥':'♡')+'</button>' +
+              '<button class="heart-btn" id="heart_' + court.id + '" onclick="event.stopPropagation();toggleFavorite(\'' + court.id + '\')" style="color:' + (isFav?'#e74c3c':'#fff') + '">' + (isFav?'♥':'♡') + '</button>' +
             '</div>' +
             '<div class="card-body">' +
-              '<h3 class="court-name">'+court.name+'</h3>' +
-              '<p class="court-address">'+court.address+'</p>' +
-              '<div class="card-row"><div class="stars">'+stars+'</div><span class="rating-count">('+court.reviews+' reviews)</span></div>' +
-              '<div class="card-row">'+openBadge+'<span class="surface-tag">Tennis Court</span>'+lightsBadge+distanceBadge+'</div>' +
+              '<h3 class="court-name">' + court.name + '</h3>' +
+              '<p class="court-address">' + court.address + '</p>' +
+              '<div class="card-row"><div class="stars">' + stars + '</div><span class="rating-count">(' + court.reviews + ' reviews)</span></div>' +
+              '<div class="card-row">' + openBadge + '<span class="surface-tag">Tennis Court</span>' + lightsBadge + distanceBadge + '</div>' +
             '</div>' +
           '</div>';
       });
@@ -585,7 +583,7 @@
         var city = cityInput.value.trim();
         if (!city) { cityInput.style.border = '2px solid red'; return; }
         cityInput.style.border = 'none';
-        resultsGrid.innerHTML = '<div class="loading-msg">Searching for courts in <strong>'+city+'</strong>...</div>';
+        resultsGrid.innerHTML = '<div class="loading-msg">Searching for courts in <strong>' + city + '</strong>...</div>';
         document.getElementById('filterBar').style.display = 'none';
         var geocoder = new google.maps.Geocoder();
         geocoder.geocode({ address: city }, function(results, status) {
@@ -594,7 +592,7 @@
           map.setCenter(location);
           gService.nearbySearch({ location: location, radius: 5000, keyword: 'tennis court' }, function(places, status) {
             if (status !== 'OK' || !places || !places.length) {
-              resultsGrid.innerHTML = '<div class="error-msg">No courts found near '+city+'.</div>'; return;
+              resultsGrid.innerHTML = '<div class="error-msg">No courts found near ' + city + '.</div>'; return;
             }
             allCourts = [];
             var bounds = new google.maps.LatLngBounds();
@@ -616,7 +614,7 @@
             map.fitBounds(bounds);
             document.getElementById('filterBar').style.display = 'flex';
             currentFilter = 'all';
-            document.querySelectorAll('.filter-btn').forEach(function(btn) { btn.classList.remove('active'); });
+            document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
             document.getElementById('filterAll').classList.add('active');
             renderCourts();
           });
