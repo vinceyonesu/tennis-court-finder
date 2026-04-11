@@ -42,6 +42,7 @@
       <option value="reviews">Sort: Most Reviews</option>
     </select>
   </div>
+
   <!-- RESULTS SECTION -->
   <section class="results-section">
     <div class="results-grid" id="resultsGrid"></div>
@@ -74,7 +75,15 @@
 
   <script>
     var courtDataStore = {};
+    var allCourts = [];
     var gService = null;
+    var currentFilter = 'all';
+
+    function hasLights(court) {
+      var name = (court.name || '').toLowerCase();
+      var types = (court.types || []).join(' ').toLowerCase();
+      return name.includes('light') || name.includes('lit') || types.includes('light');
+    }
 
     function openModal(id) {
       var data = courtDataStore[id];
@@ -117,14 +126,22 @@
           { placeId: data.placeId, fields: ['opening_hours', 'formatted_phone_number', 'website'] },
           function(place, status) {
             var hoursDiv = document.getElementById('modalHours');
+            var html = '';
+
+            var lightsTag = data.lights
+              ? '<span class="lights-badge">Lights available</span>'
+              : '<span class="no-lights-badge">No lights info</span>';
+            html += '<div style="margin-bottom:10px">' + lightsTag + '</div>';
+
             if (status !== 'OK' || !place || !place.opening_hours) {
-              hoursDiv.innerHTML = '<p style="color:#888;font-size:13px">Hours not available for this court.</p>';
+              html += '<p style="color:#888;font-size:13px">Hours not available for this court.</p>';
+              hoursDiv.innerHTML = html;
               return;
             }
 
             var today = new Date().getDay();
             var weekdayText = place.opening_hours.weekday_text;
-            var html = '<table style="width:100%;font-size:13px;border-collapse:collapse">';
+            html += '<table style="width:100%;font-size:13px;border-collapse:collapse">';
 
             weekdayText.forEach(function(line, i) {
               var dayIndex = (i + 1) % 7;
@@ -158,6 +175,78 @@
       document.body.style.overflow = '';
     }
 
+    function applyFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(function(btn) {
+        btn.classList.remove('active');
+      });
+      document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1)).classList.add('active');
+      renderCourts();
+    }
+
+    function applySort() {
+      renderCourts();
+    }
+
+    function renderCourts() {
+      var sortVal = document.getElementById('sortSelect').value;
+      var filtered = allCourts.filter(function(c) {
+        if (currentFilter === 'open') return c.isOpen === true;
+        if (currentFilter === 'lights') return c.lights === true;
+        return true;
+      });
+
+      if (sortVal === 'rating') {
+        filtered.sort(function(a, b) { return (b.rating || 0) - (a.rating || 0); });
+      } else if (sortVal === 'reviews') {
+        filtered.sort(function(a, b) { return (b.reviews || 0) - (a.reviews || 0); });
+      }
+
+      var resultsGrid = document.getElementById('resultsGrid');
+      if (filtered.length === 0) {
+        resultsGrid.innerHTML = '<div class="error-msg">No courts match this filter. Try a different one.</div>';
+        return;
+      }
+
+      resultsGrid.innerHTML = '';
+      filtered.forEach(function(court) {
+        var openBadge = court.isOpen === true
+          ? '<span class="badge-open">Open Now</span>'
+          : court.isOpen === false
+          ? '<span class="badge-closed">Closed</span>'
+          : '<span class="surface-tag">Hours N/A</span>';
+
+        var lightsBadge = court.lights
+          ? '<span class="lights-badge">Lights</span>'
+          : '';
+
+        var stars = court.rating
+          ? '★'.repeat(Math.round(court.rating)) + '☆'.repeat(5 - Math.round(court.rating))
+          : '☆☆☆☆☆';
+
+        resultsGrid.innerHTML +=
+          '<div class="court-card" onclick="openModal(\'' + court.id + '\')" style="cursor:pointer">' +
+            '<div class="card-image">' +
+              '<img src="' + court.photo + '" alt="' + court.name + '"/>' +
+              '<span class="badge-free">Public</span>' +
+            '</div>' +
+            '<div class="card-body">' +
+              '<h3 class="court-name">' + court.name + '</h3>' +
+              '<p class="court-address">' + court.address + '</p>' +
+              '<div class="card-row">' +
+                '<div class="stars">' + stars + '</div>' +
+                '<span class="rating-count">(' + court.reviews + ' reviews)</span>' +
+              '</div>' +
+              '<div class="card-row">' +
+                openBadge +
+                '<span class="surface-tag">Tennis Court</span>' +
+                lightsBadge +
+              '</div>' +
+            '</div>' +
+          '</div>';
+      });
+    }
+
     function initMap() {
       console.log('✅ Google Maps loaded!');
 
@@ -167,16 +256,15 @@
       });
 
       gService = new google.maps.places.PlacesService(map);
-      console.log('✅ PlacesService ready:', gService);
 
       document.getElementById('modalClose').addEventListener('click', closeModal);
       document.getElementById('courtModal').addEventListener('click', function(e) {
         if (e.target === document.getElementById('courtModal')) closeModal();
       });
 
-      var resultsGrid = document.getElementById('resultsGrid');
       var searchBtn = document.getElementById('searchBtn');
       var cityInput = document.getElementById('cityInput');
+      var resultsGrid = document.getElementById('resultsGrid');
 
       searchBtn.addEventListener('click', function() {
         var city = cityInput.value.trim();
@@ -186,6 +274,7 @@
         }
         cityInput.style.border = 'none';
         resultsGrid.innerHTML = '<div class="loading-msg">Searching for courts in <strong>' + city + '</strong>...</div>';
+        document.getElementById('filterBar').style.display = 'none';
 
         var geocoder = new google.maps.Geocoder();
         geocoder.geocode({ address: city }, function(results, status) {
@@ -205,7 +294,7 @@
               return;
             }
 
-            resultsGrid.innerHTML = '';
+            allCourts = [];
             var bounds = new google.maps.LatLngBounds();
 
             places.forEach(function(court, index) {
@@ -214,47 +303,24 @@
                 : 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400';
 
               var rating = court.rating || 0;
-              var stars = rating
-                ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating))
-                : '☆☆☆☆☆';
-
               var isOpen = court.opening_hours ? court.opening_hours.open_now : undefined;
-              var openBadge = isOpen === true
-                ? '<span class="badge-open">Open Now</span>'
-                : isOpen === false
-                ? '<span class="badge-closed">Closed</span>'
-                : '<span class="surface-tag">Hours N/A</span>';
-
+              var lights = hasLights(court);
               var id = 'court_' + index;
-              courtDataStore[id] = {
+
+              var courtObj = {
+                id: id,
                 name: court.name,
                 address: court.vicinity,
                 photo: photo,
                 rating: rating,
                 reviews: court.user_ratings_total || 0,
                 isOpen: isOpen,
+                lights: lights,
                 placeId: court.place_id
               };
 
-              resultsGrid.innerHTML +=
-                '<div class="court-card" onclick="openModal(\'' + id + '\')" style="cursor:pointer">' +
-                  '<div class="card-image">' +
-                    '<img src="' + photo + '" alt="' + court.name + '"/>' +
-                    '<span class="badge-free">Public</span>' +
-                  '</div>' +
-                  '<div class="card-body">' +
-                    '<h3 class="court-name">' + court.name + '</h3>' +
-                    '<p class="court-address">' + court.vicinity + '</p>' +
-                    '<div class="card-row">' +
-                      '<div class="stars">' + stars + '</div>' +
-                      '<span class="rating-count">(' + (court.user_ratings_total || 0) + ' reviews)</span>' +
-                    '</div>' +
-                    '<div class="card-row">' +
-                      openBadge +
-                      '<span class="surface-tag">Tennis Court</span>' +
-                    '</div>' +
-                  '</div>' +
-                '</div>';
+              courtDataStore[id] = courtObj;
+              allCourts.push(courtObj);
 
               new google.maps.Marker({
                 position: court.geometry.location,
@@ -266,6 +332,13 @@
             });
 
             map.fitBounds(bounds);
+            document.getElementById('filterBar').style.display = 'flex';
+            currentFilter = 'all';
+            document.querySelectorAll('.filter-btn').forEach(function(btn) {
+              btn.classList.remove('active');
+            });
+            document.getElementById('filterAll').classList.add('active');
+            renderCourts();
           });
         });
       });
