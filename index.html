@@ -216,12 +216,12 @@
       return '🌤️';
     }
 
-    async function getCourtWeather(court) {
+   async function getCourtWeather(court) {
   var weatherDiv = document.getElementById('weatherSection');
   weatherDiv.innerHTML =
     '<div style="background:#e8f4fd;border-radius:20px;padding:18px 20px;margin-bottom:20px;border:1px solid #b8d8f0;display:flex;align-items:center;gap:12px">' +
       '<span style="font-size:24px">⛅</span>' +
-      '<span style="font-size:13px;color:#555">Loading weather forecast...</span>' +
+      '<span style="font-size:13px;color:#555">Loading 7-day forecast...</span>' +
     '</div>';
 
   try {
@@ -244,10 +244,13 @@
       'https://api.open-meteo.com/v1/forecast?latitude=' + lat +
       '&longitude=' + lng +
       '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation,weather_code,uv_index' +
-      '&daily=temperature_2m_max,temperature_2m_min,weather_code,wind_speed_10m_max,uv_index_max,precipitation_sum,relative_humidity_2m_max' +
+      '&daily=temperature_2m_max,temperature_2m_min,weather_code,wind_speed_10m_max,uv_index_max,precipitation_sum' +
       '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7'
     );
     var data = await res.json();
+
+    console.log('Weather API response:', data);
+
     var cu = data.current;
     var daily = data.daily;
 
@@ -292,45 +295,48 @@
 
     var uvLabel = uv <= 2 ? 'Low' : uv <= 5 ? 'Moderate' : uv <= 7 ? 'High' : 'Very High';
     var dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    var today = new Date().getDay();
+    var todayIndex = new Date().getDay();
 
     var forecastRows = '';
     for (var i = 0; i < 7; i++) {
-      var dayIndex = (today + i) % 7;
-      var dayLabel = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : dayNames[dayIndex];
+      var dayLabel = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : dayNames[(todayIndex + i) % 7];
       var dayCode = daily.weather_code[i];
       var dayIcon = getWeatherIcon(dayCode);
       var dayMax = Math.round(daily.temperature_2m_max[i]);
       var dayMin = Math.round(daily.temperature_2m_min[i]);
       var dayWind = Math.round(daily.wind_speed_10m_max[i]);
       var dayUV = Math.round(daily.uv_index_max[i] || 0);
-      var dayHumidity = Math.round(daily.relative_humidity_2m_max[i] || 0);
-      var dayPrecip = Math.round((daily.precipitation_sum[i] || 0) * 10) / 10;
+      var dayPrecip = (daily.precipitation_sum[i] || 0).toFixed(1);
       var isToday = i === 0;
 
+      var playable = daily.precipitation_sum[i] < 0.1 && daily.wind_speed_10m_max[i] < 20 && daily.temperature_2m_max[i] < 100 && daily.temperature_2m_min[i] > 40;
+      var playDot = playable
+        ? '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#4ade80;margin-left:4px;vertical-align:middle"></span>'
+        : '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#f87171;margin-left:4px;vertical-align:middle"></span>';
+
       forecastRows +=
-        '<div style="display:grid;grid-template-columns:60px 28px 1fr 1fr 1fr 1fr 1fr;align-items:center;gap:6px;padding:8px 10px;border-radius:10px;background:' + (isToday ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)') + ';margin-bottom:5px">' +
-          '<div style="font-size:12px;font-weight:' + (isToday ? '700' : '500') + ';color:#ffffff">' + dayLabel + '</div>' +
-          '<div style="font-size:18px">' + dayIcon + '</div>' +
+        '<div style="display:grid;grid-template-columns:70px 24px 1fr 1fr 1fr 1fr 1fr;align-items:center;gap:4px;padding:9px 10px;border-radius:12px;background:' + (isToday ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.1)') + ';margin-bottom:5px">' +
+          '<div style="font-size:12px;font-weight:' + (isToday ? '700' : '500') + ';color:#ffffff;display:flex;align-items:center">' + dayLabel + playDot + '</div>' +
+          '<div style="font-size:18px;line-height:1">' + dayIcon + '</div>' +
           '<div style="text-align:center">' +
-            '<div style="font-size:11px;color:rgba(255,255,255,0.6)">High/Low</div>' +
-            '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayMax + '°/' + dayMin + '°</div>' +
+            '<div style="font-size:9px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Temp</div>' +
+            '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayMax + '°<span style="opacity:0.6;font-weight:400">/' + dayMin + '°</span></div>' +
           '</div>' +
           '<div style="text-align:center">' +
-            '<div style="font-size:11px;color:rgba(255,255,255,0.6)">Wind</div>' +
-            '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayWind + ' mph</div>' +
+            '<div style="font-size:9px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Wind</div>' +
+            '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayWind + ' <span style="opacity:0.6;font-weight:400;font-size:10px">mph</span></div>' +
           '</div>' +
           '<div style="text-align:center">' +
-            '<div style="font-size:11px;color:rgba(255,255,255,0.6)">Humidity</div>' +
-            '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayHumidity + '%</div>' +
-          '</div>' +
-          '<div style="text-align:center">' +
-            '<div style="font-size:11px;color:rgba(255,255,255,0.6)">UV</div>' +
+            '<div style="font-size:9px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">UV</div>' +
             '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayUV + '</div>' +
           '</div>' +
           '<div style="text-align:center">' +
-            '<div style="font-size:11px;color:rgba(255,255,255,0.6)">Rain</div>' +
-            '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayPrecip + '"</div>' +
+            '<div style="font-size:9px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Rain</div>' +
+            '<div style="font-size:12px;font-weight:700;color:#ffffff">' + dayPrecip + '<span style="opacity:0.6;font-weight:400;font-size:10px">in</span></div>' +
+          '</div>' +
+          '<div style="text-align:center">' +
+            '<div style="font-size:9px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Play?</div>' +
+            '<div style="font-size:11px;font-weight:700;color:#ffffff">' + (playable ? '✅' : '❌') + '</div>' +
           '</div>' +
         '</div>';
     }
@@ -372,15 +378,15 @@
           '</div>' +
         '</div>' +
 
-        '<div style="background:rgba(255,255,255,0.1);border-radius:14px;padding:12px">' +
-          '<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.65);margin-bottom:10px">7-Day Forecast</div>' +
+        '<div style="background:rgba(0,0,0,0.15);border-radius:16px;padding:14px">' +
+          '<div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.65);margin-bottom:10px">7-Day Forecast — <span style="font-weight:400">🟢 Good to play &nbsp; 🔴 Skip today</span></div>' +
           forecastRows +
         '</div>' +
 
       '</div>';
 
   } catch (err) {
-    weatherDiv.innerHTML = '';
+    weatherDiv.innerHTML = '<p style="color:#888;font-size:13px;padding:10px">Weather unavailable.</p>';
     console.log('Weather error:', err);
   }
 }
