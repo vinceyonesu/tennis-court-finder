@@ -817,3 +817,15 @@ body {
   font-size: 13px;
   color: #aaa;
 }
+/* ── SEARCH HISTORY ── */
+.history-chip-x {
+  font-size:11px;
+  color:#aaa;
+  cursor:pointer;
+  margin-left:2px;
+  padding:0 2px;
+}
+
+.history-chip-x:hover {
+  color:#e74c3c;
+}

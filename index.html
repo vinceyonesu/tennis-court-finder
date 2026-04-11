@@ -33,9 +33,15 @@
     <div class="hero-content">
       <h1>Find Tennis Courts <span class="highlight">Near You</span></h1>
       <p class="hero-sub">Search free and paid courts, check opening hours, photos, and ratings — all in one place.</p>
-      <div class="search-bar">
-        <input type="text" id="cityInput" placeholder="Enter a city, e.g. Los Angeles..."/>
-        <button id="searchBtn">Find Courts</button>
+      <div style="position:relative;width:100%;max-width:560px;margin:0 auto">
+        <div class="search-bar">
+          <input type="text" id="cityInput" placeholder="Enter a city, e.g. Los Angeles..." onfocus="showSearchHistory()" onblur="hideSearchHistory()" onkeydown="if(event.key==='Enter')document.getElementById('searchBtn').click()"/>
+          <button id="searchBtn">Find Courts</button>
+        </div>
+        <div id="searchHistoryDropdown" style="display:none;position:absolute;top:calc(100% + 8px);left:0;right:0;background:#ffffff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.12);padding:12px;z-index:200">
+          <div style="font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px">Recent Searches</div>
+          <div id="searchHistoryChips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        </div>
       </div>
       <button id="nearMeBtn" onclick="window.findNearMe()" style="margin-top:14px;background:rgba(255,255,255,0.15);color:#ffffff;border:2px solid rgba(255,255,255,0.5);border-radius:50px;padding:10px 24px;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all 0.2s ease">
         📍 Use My Location
@@ -753,7 +759,53 @@
         goToSlide(courtId, current);
       }, 3000);
     }
+function saveSearchHistory(city) {
+  var history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  history = history.filter(function(c) { return c.toLowerCase() !== city.toLowerCase(); });
+  history.unshift(city);
+  history = history.slice(0, 5);
+  localStorage.setItem('searchHistory', JSON.stringify(history));
+}
 
+function showSearchHistory() {
+  var history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  if (history.length === 0) return;
+  var chips = document.getElementById('searchHistoryChips');
+  chips.innerHTML = '';
+  history.forEach(function(city) {
+    var chip = document.createElement('div');
+    chip.innerHTML =
+      '<span style="font-size:13px">🕐</span>' +
+      '<span style="font-size:13px;font-weight:500;color:#333">' + city + '</span>' +
+      '<span class="history-chip-x" onmousedown="event.preventDefault();removeSearchHistory(\'' + city + '\')">✕</span>';
+    chip.style.cssText = 'display:flex;align-items:center;gap:6px;background:#f4f4f4;border-radius:999px;padding:6px 12px;cursor:pointer;transition:background 0.2s';
+    chip.onmouseover = function() { this.style.background = '#e6f9ee'; };
+    chip.onmouseout = function() { this.style.background = '#f4f4f4'; };
+    chip.onmousedown = function(e) {
+      if (e.target.classList.contains('history-chip-x')) return;
+      e.preventDefault();
+      document.getElementById('cityInput').value = city;
+      document.getElementById('searchHistoryDropdown').style.display = 'none';
+      document.getElementById('searchBtn').click();
+    };
+    chips.appendChild(chip);
+  });
+  document.getElementById('searchHistoryDropdown').style.display = 'block';
+}
+
+function hideSearchHistory() {
+  setTimeout(function() {
+    document.getElementById('searchHistoryDropdown').style.display = 'none';
+  }, 150);
+}
+
+window.removeSearchHistory = function(city) {
+  var history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  history = history.filter(function(c) { return c !== city; });
+  localStorage.setItem('searchHistory', JSON.stringify(history));
+  showSearchHistory();
+  if (history.length === 0) document.getElementById('searchHistoryDropdown').style.display = 'none';
+};
     window.toggleHourly = function(id) {
       var el = document.getElementById(id);
       if (!el) return;
@@ -1156,6 +1208,12 @@
         var city = cityInput.value.trim();
         if (!city) { cityInput.style.border = '2px solid red'; return; }
         cityInput.style.border = 'none';
+        saveSearchHistory(city);
+        var city = cityInput.value.trim();
+        if (!city) { cityInput.style.border = '2px solid red'; return; }
+        cityInput.style.border = 'none';
+        saveSearchHistory(city);
+        resultsGrid.innerHTML = '<div class="loading-msg">Searching for courts in <strong>' + city + '</strong>...</div>';
         resultsGrid.innerHTML = '<div class="loading-msg">Searching for courts in <strong>' + city + '</strong>...</div>';
         document.getElementById('filterBar').style.display = 'none';
         var geocoder = new google.maps.Geocoder();
