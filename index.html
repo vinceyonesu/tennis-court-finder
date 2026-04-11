@@ -303,7 +303,25 @@ window.joinSession = async function(sessionId, placeId) {
     alert('Could not join session. Try again.');
   }
 };
-
+window.deleteSession = async function(sessionId, placeId) {
+  if (!window._currentUser) return;
+  var confirm = window.confirm('Are you sure you want to cancel this session?');
+  if (!confirm) return;
+  try {
+    var sessionRef = window._fbDoc(window._db, 'sessions', sessionId);
+    var sessionSnap = await window._fbGetDoc(sessionRef);
+    if (!sessionSnap.exists()) return;
+    if (sessionSnap.data().uid !== window._currentUser.uid) {
+      alert('You can only cancel your own sessions.');
+      return;
+    }
+    await window._fbUpdateDoc(sessionRef, { deleted: true, deletedAt: window._fbTimestamp.now() });
+    loadSessions(placeId);
+  } catch (err) {
+    console.log('Error deleting session:', err);
+    alert('Could not cancel session. Try again.');
+  }
+};
 async function loadSessions(placeId) {
   var sessionsList = document.getElementById('sessionsList');
   if (!sessionsList || !window._db) return;
@@ -324,6 +342,9 @@ async function loadSessions(placeId) {
     sessionsList.innerHTML = '';
     snapshot.forEach(function(docSnap) {
   var s = docSnap.data();
+
+  // Skip deleted sessions
+  if (s.deleted) return;
 
   // Skip expired sessions — hide 5 minutes after start time
   if (s.date && s.time) {
@@ -367,7 +388,12 @@ async function loadSessions(placeId) {
           (socialLinks ? '<div style="margin-top:6px;margin-bottom:6px">' + socialLinks + '</div>' : '') +
           '<div class="session-footer">' +
             '<div style="display:flex;align-items:center;gap:4px">' + playerAvatars + '<span style="font-size:11px;color:#888;margin-left:10px">' + playersCount + ' player' + (playersCount !== 1 ? 's' : '') + '</span></div>' +
-            (isOwner ? '<span style="font-size:11px;color:#1a6b3c;font-weight:600">Your session</span>' : '<button class="join-btn" onclick="joinSession(\'' + docSnap.id + '\', \'' + placeId + '\')">I\'m In!</button>') +
+            (isOwner
+  ? '<div style="display:flex;gap:6px">' +
+      '<span style="font-size:11px;color:#1a6b3c;font-weight:600;align-self:center">Your session</span>' +
+      '<button onclick="deleteSession(\'' + docSnap.id + '\', \'' + placeId + '\')" style="background:#fdecea;color:#c0392b;border:1px solid #f5c6c6;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:pointer">Cancel</button>' +
+    '</div>'
+  : '<button class="join-btn" onclick="joinSession(\'' + docSnap.id + '\', \'' + placeId + '\')">I\'m In!</button>') +
           '</div>' +
         '</div>';
     });
