@@ -415,3 +415,72 @@ body {
 .directions-btn:hover {
   background: #145530;
 }
+/* ── FILTER BAR ── */
+.filter-bar {
+  max-width: 1200px;
+  margin: 0 auto 28px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  background: #ffffff;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  border-color: #1a6b3c;
+  color: #1a6b3c;
+}
+
+.filter-btn.active {
+  background: #1a6b3c;
+  border-color: #1a6b3c;
+  color: #ffffff;
+}
+
+.filter-divider {
+  flex: 1;
+}
+
+.filter-select {
+  border: 1.5px solid #e0e0e0;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #555;
+  cursor: pointer;
+  background: #ffffff;
+  outline: none;
+}
+
+.lights-badge {
+  background: #fff8e6;
+  color: #854f0b;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid #f4a800;
+}
+
+.no-lights-badge {
+  background: #f0f0f0;
+  color: #888;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
