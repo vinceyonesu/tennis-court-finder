@@ -303,7 +303,15 @@
       showSearchHistory();
       if (history.length === 0) document.getElementById('searchHistoryDropdown').style.display = 'none';
     };
-
+    window.toggleReviews = function() {
+      var section = document.getElementById('reviewsSection');
+      if (!section) return;
+      if (section.style.display === 'none' || section.style.display === '') {
+        section.style.display = 'block';
+      } else {
+        section.style.display = 'none';
+      }
+    };
     window.openModal = function(id) {
       var data = courtDataStore[id] || favorites[id];
       if (!data) return;
