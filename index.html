@@ -96,9 +96,13 @@
   <div id="profilePage" style="display:none;max-width:600px;margin:40px auto;padding:0 24px 60px">
     <div style="background:#ffffff;border-radius:20px;border:1px solid #ebebeb;overflow:hidden">
       <div style="background:linear-gradient(135deg,#1a6b3c,#25a05a);padding:30px 24px;text-align:center">
-        <div id="profilePhotoWrap" style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.3);margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;font-weight:700;border:3px solid rgba(255,255,255,0.5)">
-          <span id="profileInitials">?</span>
-          <img id="profilePhoto" src="" style="display:none;width:100%;height:100%;object-fit:cover"/>
+        <div style="position:relative;width:80px;margin:0 auto 12px">
+          <div id="profilePhotoWrap" style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.3);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;font-weight:700;border:3px solid rgba(255,255,255,0.5)">
+            <span id="profileInitials">?</span>
+            <img id="profilePhoto" src="" style="display:none;width:100%;height:100%;object-fit:cover"/>
+          </div>
+          <label for="photoUpload" style="position:absolute;bottom:0;right:0;background:#ffffff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.2)">📷</label>
+          <input type="file" id="photoUpload" accept="image/*" style="display:none" onchange="uploadProfilePhoto(this)"/>
         </div>
         <div id="profileName" style="font-size:20px;font-weight:700;color:#ffffff;margin-bottom:4px">Not signed in</div>
         <div id="profileEmail" style="font-size:13px;color:rgba(255,255,255,0.75)"></div>
@@ -491,7 +495,31 @@ window.signOutUser = function() {
     document.getElementById('profilePage').style.display = 'none';
   });
 };
-
+window.uploadProfilePhoto = async function(input) {
+  if (!input.files || !input.files[0]) return;
+  if (!window._currentUser) { alert('Please sign in first.'); return; }
+  var file = input.files[0];
+  if (file.size > 5 * 1024 * 1024) { alert('Photo must be under 5MB.'); return; }
+  try {
+    document.getElementById('profileInitials').textContent = '⏳';
+    var storageRef = window._storageRef(window._storage, 'profiles/' + window._currentUser.uid + '/photo');
+    await window._uploadBytes(storageRef, file);
+    var downloadURL = await window._getDownloadURL(storageRef);
+    var profileRef = window._fbDoc(window._db, 'profiles', window._currentUser.uid);
+    await window._fbSetDoc(profileRef, { photo: downloadURL }, { merge: true });
+    document.getElementById('profilePhoto').src = downloadURL;
+    document.getElementById('profilePhoto').style.display = 'block';
+    document.getElementById('profileInitials').style.display = 'none';
+    var navImg = document.getElementById('authAvatarImg');
+    navImg.src = downloadURL;
+    navImg.style.display = 'block';
+    document.getElementById('authAvatarText').style.display = 'none';
+    alert('Profile photo updated!');
+  } catch (err) {
+    console.log('Photo upload error:', err);
+    alert('Could not upload photo. Try again.');
+  }
+};
 window.saveProfile = async function() {
   if (!window._currentUser) { alert('Please sign in first.'); return; }
   try {
@@ -1228,7 +1256,7 @@ window.joinSessionFromNearby = async function(sessionId) {
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc, arrayUnion, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, PhoneAuthProvider, RecaptchaVerifier, signInWithCredential } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
     const firebaseConfig = {
       apiKey: "AIzaSyDl3SuIIHtVijD0NenSIPBVZ5qgAtVSt3U",
       authDomain: "tennis-court-finder-9097c.firebaseapp.com",
@@ -1241,6 +1269,11 @@ window.joinSessionFromNearby = async function(sessionId) {
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+    const storage = getStorage(app);
+window._storage = storage;
+window._storageRef = ref;
+window._uploadBytes = uploadBytes;
+window._getDownloadURL = getDownloadURL;
 
     window._db = db;
     window._auth = auth;
