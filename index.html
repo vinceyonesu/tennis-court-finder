@@ -14,12 +14,13 @@
   <nav class="navbar">
     <div class="nav-logo">🎾 CourtFinder</div>
     <div class="nav-links">
-      <a href="#">Saved Courts</a>
+      <a href="#" id="navSaved" onclick="showSaved()">Saved Courts <span id="savedCount" class="saved-count">0</span></a>
+      <a href="#" id="navSearch" onclick="showSearch()">Search</a>
     </div>
   </nav>
 
   <!-- HERO -->
-  <section class="hero">
+  <section class="hero" id="heroSection">
     <div class="hero-content">
       <h1>Find Tennis Courts <span class="highlight">Near You</span></h1>
       <p class="hero-sub">Search free and paid courts, check opening hours, photos, and ratings — all in one place.</p>
@@ -48,12 +49,22 @@
     <div class="results-grid" id="resultsGrid"></div>
   </section>
 
+  <!-- SAVED COURTS SECTION -->
+  <section class="results-section" id="savedSection" style="display:none">
+    <div style="max-width:1200px;margin:0 auto;padding:0 24px 20px">
+      <h2 style="font-size:22px;font-weight:700;color:#1a1a1a;margin-bottom:4px">Saved Courts</h2>
+      <p style="font-size:14px;color:#888;margin-bottom:24px">Your favorited courts — click any to view details</p>
+    </div>
+    <div class="results-grid" id="savedGrid"></div>
+  </section>
+
   <!-- MODAL -->
   <div id="courtModal" class="modal-overlay">
     <div class="modal-card">
       <button class="modal-close" id="modalClose">✕</button>
       <div class="modal-image">
         <img id="modalPhoto" src="" alt="Court photo"/>
+        <button class="heart-btn" id="modalHeart" onclick="toggleFavoriteFromModal()">♡</button>
       </div>
       <div class="modal-body">
         <h2 id="modalName"></h2>
@@ -78,6 +89,101 @@
     var allCourts = [];
     var gService = null;
     var currentFilter = 'all';
+    var currentModalId = null;
+    var favorites = JSON.parse(localStorage.getItem('courtFavorites') || '{}');
+
+    function saveFavorites() {
+      localStorage.setItem('courtFavorites', JSON.stringify(favorites));
+      updateSavedCount();
+    }
+
+    function updateSavedCount() {
+      var count = Object.keys(favorites).length;
+      document.getElementById('savedCount').textContent = count;
+      document.getElementById('savedCount').style.display = count > 0 ? 'inline-block' : 'none';
+    }
+
+    function toggleFavorite(id) {
+      var data = courtDataStore[id];
+      if (!data) return;
+      if (favorites[id]) {
+        delete favorites[id];
+      } else {
+        favorites[id] = data;
+      }
+      saveFavorites();
+      updateHeartButtons(id);
+    }
+
+    function toggleFavoriteFromModal() {
+      if (currentModalId) toggleFavorite(currentModalId);
+    }
+
+    function updateHeartButtons(id) {
+      var isFav = !!favorites[id];
+      var cardHeart = document.getElementById('heart_' + id);
+      if (cardHeart) {
+        cardHeart.textContent = isFav ? '♥' : '♡';
+        cardHeart.style.color = isFav ? '#e74c3c' : '#fff';
+      }
+      if (currentModalId === id) {
+        var modalHeart = document.getElementById('modalHeart');
+        if (modalHeart) {
+          modalHeart.textContent = isFav ? '♥' : '♡';
+          modalHeart.style.color = isFav ? '#e74c3c' : '#fff';
+        }
+      }
+    }
+
+    function showSaved() {
+      document.getElementById('heroSection').style.display = 'none';
+      document.getElementById('filterBar').style.display = 'none';
+      document.getElementById('resultsGrid').parentElement.style.display = 'none';
+      document.getElementById('savedSection').style.display = 'block';
+      document.getElementById('navSaved').style.color = '#1a6b3c';
+      document.getElementById('navSearch').style.color = '#555';
+
+      var savedGrid = document.getElementById('savedGrid');
+      var keys = Object.keys(favorites);
+      if (keys.length === 0) {
+        savedGrid.innerHTML = '<div class="loading-msg" style="grid-column:1/-1">You have no saved courts yet. Search for courts and click the heart icon to save them!</div>';
+        return;
+      }
+
+      savedGrid.innerHTML = '';
+      keys.forEach(function(id) {
+        var court = favorites[id];
+        var stars = court.rating
+          ? '★'.repeat(Math.round(court.rating)) + '☆'.repeat(5 - Math.round(court.rating))
+          : '☆☆☆☆☆';
+        savedGrid.innerHTML +=
+          '<div class="court-card" onclick="openModal(\'' + id + '\')" style="cursor:pointer">' +
+            '<div class="card-image">' +
+              '<img src="' + court.photo + '" alt="' + court.name + '"/>' +
+              '<button class="heart-btn" id="heart_' + id + '" onclick="event.stopPropagation();toggleFavorite(\'' + id + '\')" style="color:#e74c3c">♥</button>' +
+            '</div>' +
+            '<div class="card-body">' +
+              '<h3 class="court-name">' + court.name + '</h3>' +
+              '<p class="court-address">' + court.address + '</p>' +
+              '<div class="card-row">' +
+                '<div class="stars">' + stars + '</div>' +
+                '<span class="rating-count">(' + court.reviews + ' reviews)</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+      });
+    }
+
+    function showSearch() {
+      document.getElementById('heroSection').style.display = 'block';
+      document.getElementById('resultsGrid').parentElement.style.display = 'block';
+      document.getElementById('savedSection').style.display = 'none';
+      document.getElementById('navSaved').style.color = '#555';
+      document.getElementById('navSearch').style.color = '#1a6b3c';
+      if (allCourts.length > 0) {
+        document.getElementById('filterBar').style.display = 'flex';
+      }
+    }
 
     function hasLights(court) {
       var name = (court.name || '').toLowerCase();
@@ -86,12 +192,18 @@
     }
 
     function openModal(id) {
-      var data = courtDataStore[id];
+      var data = courtDataStore[id] || favorites[id];
       if (!data) return;
+      currentModalId = id;
 
       document.getElementById('modalPhoto').src = data.photo;
       document.getElementById('modalName').textContent = data.name;
       document.getElementById('modalAddress').textContent = data.address;
+
+      var isFav = !!favorites[id];
+      var modalHeart = document.getElementById('modalHeart');
+      modalHeart.textContent = isFav ? '♥' : '♡';
+      modalHeart.style.color = isFav ? '#e74c3c' : '#fff';
 
       var stars = data.rating
         ? '★'.repeat(Math.round(data.rating)) + '☆'.repeat(5 - Math.round(data.rating))
@@ -121,7 +233,7 @@
       document.getElementById('courtModal').classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      if (gService) {
+      if (gService && data.placeId) {
         gService.getDetails(
           { placeId: data.placeId, fields: ['opening_hours', 'formatted_phone_number', 'website'] },
           function(place, status) {
@@ -134,7 +246,7 @@
             html += '<div style="margin-bottom:10px">' + lightsTag + '</div>';
 
             if (status !== 'OK' || !place || !place.opening_hours) {
-              html += '<p style="color:#888;font-size:13px">Hours not available for this court.</p>';
+              html += '<p style="color:#888;font-size:13px">Hours not available.</p>';
               hoursDiv.innerHTML = html;
               return;
             }
@@ -142,7 +254,6 @@
             var today = new Date().getDay();
             var weekdayText = place.opening_hours.weekday_text;
             html += '<table style="width:100%;font-size:13px;border-collapse:collapse">';
-
             weekdayText.forEach(function(line, i) {
               var dayIndex = (i + 1) % 7;
               var isToday = dayIndex === today;
@@ -154,7 +265,6 @@
                 '<td style="padding:5px 8px;text-align:right;color:' + (isToday ? '#1a6b3c' : '#666') + ';font-weight:' + (isToday ? '700' : '400') + '">' + hours + '</td>' +
                 '</tr>';
             });
-
             html += '</table>';
 
             if (place.formatted_phone_number) {
@@ -173,6 +283,7 @@
     function closeModal() {
       document.getElementById('courtModal').classList.remove('active');
       document.body.style.overflow = '';
+      currentModalId = null;
     }
 
     function applyFilter(filter) {
@@ -184,9 +295,7 @@
       renderCourts();
     }
 
-    function applySort() {
-      renderCourts();
-    }
+    function applySort() { renderCourts(); }
 
     function renderCourts() {
       var sortVal = document.getElementById('sortSelect').value;
@@ -204,7 +313,7 @@
 
       var resultsGrid = document.getElementById('resultsGrid');
       if (filtered.length === 0) {
-        resultsGrid.innerHTML = '<div class="error-msg">No courts match this filter. Try a different one.</div>';
+        resultsGrid.innerHTML = '<div class="error-msg">No courts match this filter.</div>';
         return;
       }
 
@@ -216,10 +325,8 @@
           ? '<span class="badge-closed">Closed</span>'
           : '<span class="surface-tag">Hours N/A</span>';
 
-        var lightsBadge = court.lights
-          ? '<span class="lights-badge">Lights</span>'
-          : '';
-
+        var lightsBadge = court.lights ? '<span class="lights-badge">Lights</span>' : '';
+        var isFav = !!favorites[court.id];
         var stars = court.rating
           ? '★'.repeat(Math.round(court.rating)) + '☆'.repeat(5 - Math.round(court.rating))
           : '☆☆☆☆☆';
@@ -229,6 +336,7 @@
             '<div class="card-image">' +
               '<img src="' + court.photo + '" alt="' + court.name + '"/>' +
               '<span class="badge-free">Public</span>' +
+              '<button class="heart-btn" id="heart_' + court.id + '" onclick="event.stopPropagation();toggleFavorite(\'' + court.id + '\')" style="color:' + (isFav ? '#e74c3c' : '#fff') + '">' + (isFav ? '♥' : '♡') + '</button>' +
             '</div>' +
             '<div class="card-body">' +
               '<h3 class="court-name">' + court.name + '</h3>' +
@@ -248,8 +356,6 @@
     }
 
     function initMap() {
-      console.log('✅ Google Maps loaded!');
-
       var map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: 34.0522, lng: -118.2437 },
         zoom: 12
@@ -261,6 +367,8 @@
       document.getElementById('courtModal').addEventListener('click', function(e) {
         if (e.target === document.getElementById('courtModal')) closeModal();
       });
+
+      updateSavedCount();
 
       var searchBtn = document.getElementById('searchBtn');
       var cityInput = document.getElementById('cityInput');
@@ -286,9 +394,7 @@
           var location = results[0].geometry.location;
           map.setCenter(location);
 
-          var request = { location: location, radius: 5000, keyword: 'tennis court' };
-
-          gService.nearbySearch(request, function(places, status) {
+          gService.nearbySearch({ location: location, radius: 5000, keyword: 'tennis court' }, function(places, status) {
             if (status !== 'OK' || !places || !places.length) {
               resultsGrid.innerHTML = '<div class="error-msg">No courts found near ' + city + '.</div>';
               return;
@@ -302,20 +408,16 @@
                 ? court.photos[0].getUrl({ maxWidth: 400 })
                 : 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400';
 
-              var rating = court.rating || 0;
-              var isOpen = court.opening_hours ? court.opening_hours.open_now : undefined;
-              var lights = hasLights(court);
               var id = 'court_' + index;
-
               var courtObj = {
                 id: id,
                 name: court.name,
                 address: court.vicinity,
                 photo: photo,
-                rating: rating,
+                rating: court.rating || 0,
                 reviews: court.user_ratings_total || 0,
-                isOpen: isOpen,
-                lights: lights,
+                isOpen: court.opening_hours ? court.opening_hours.open_now : undefined,
+                lights: hasLights(court),
                 placeId: court.place_id
               };
 
@@ -334,9 +436,7 @@
             map.fitBounds(bounds);
             document.getElementById('filterBar').style.display = 'flex';
             currentFilter = 'all';
-            document.querySelectorAll('.filter-btn').forEach(function(btn) {
-              btn.classList.remove('active');
-            });
+            document.querySelectorAll('.filter-btn').forEach(function(btn) { btn.classList.remove('active'); });
             document.getElementById('filterAll').classList.add('active');
             renderCourts();
           });
