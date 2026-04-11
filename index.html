@@ -153,7 +153,14 @@
             <input type="text" id="profilePhone" placeholder="+1234567890" style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none"/>
           </div>
         </div>
-
+<div style="margin-bottom:12px">
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:8px">Action Photos <span style="font-size:10px;color:#aaa">(up to 3 photos shown on your session cards)</span></label>
+          <div id="galleryPreview" style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap"></div>
+          <label for="galleryUpload" style="display:inline-flex;align-items:center;gap:6px;background:#f0f0f0;border:1.5px dashed #ccc;border-radius:10px;padding:8px 16px;font-size:13px;color:#555;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">
+            📷 Add Photo
+          </label>
+          <input type="file" id="galleryUpload" accept="image/*" style="display:none" onchange="uploadGalleryPhoto(this)"/>
+        </div>
         <button onclick="saveProfile()" style="width:100%;background:#1a6b3c;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;margin-bottom:10px">Save Profile</button>
 
         <div style="font-size:13px;font-weight:600;color:#555;margin-bottom:12px;margin-top:20px;text-transform:uppercase;letter-spacing:0.5px">Phone Verification</div>
@@ -199,6 +206,10 @@
       </div>
     </div>
     <div id="nearbySessionsList"></div>
+  </div>
+  <!-- PHOTO MODAL -->
+  <div id="photoModal" onclick="closePhotoModal()" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);z-index:9999;justify-content:center;align-items:center;cursor:pointer">
+    <img id="photoModalImg" src="" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain"/>
   </div>
   <!-- MAP -->
   <div class="map-section">
@@ -316,6 +327,7 @@ window.postSession = async function(placeId) {
       facebook: profile.facebook || '',
       whatsapp: profile.whatsapp || '',
       utr: profile.utr || '',
+      gallery: profile.gallery || [],
       phoneVerified: profile.phoneVerified || false,
       createdAt: window._fbTimestamp.now()
     });
@@ -425,6 +437,13 @@ async function loadSessions(placeId) {
             '<div>' +
               '<div class="session-name">' + s.name + verifiedBadge + '</div>' +
               '<div style="font-size:11px;color:#888">' + s.skill + (s.utr ? ' · <span style="background:#fff3e0;color:#e65100;font-size:10px;font-weight:600;padding:1px 6px;border-radius:999px">UTR ' + s.utr + '</span>' : '') + ' · ' + s.type + '</div>' +
+              (s.gallery && s.gallery.length > 0
+  ? '<div style="display:flex;gap:6px;margin-top:8px;margin-bottom:4px">' +
+      s.gallery.map(function(url) {
+        return '<img src="' + url + '" style="width:60px;height:60px;border-radius:8px;object-fit:cover;border:1px solid #e8e8e8;cursor:pointer" onclick="showPhotoModal(\'' + url + '\')">';
+      }).join('') +
+    '</div>'
+  : '') +
             '</div>' +
           '</div>' +
           '<div class="session-details">📅 ' + dateStr + ' at ' + timeStr + '</div>' +
@@ -539,6 +558,82 @@ window.uploadProfilePhoto = async function(input) {
     console.log('Photo upload error:', err);
     alert('Could not upload photo. Try again.');
   }
+};
+window.uploadGalleryPhoto = async function(input) {
+  if (!input.files || !input.files[0]) return;
+  if (!window._currentUser) { alert('Please sign in first.'); return; }
+  var file = input.files[0];
+  if (file.size > 5 * 1024 * 1024) { alert('Photo must be under 5MB.'); return; }
+
+  var preview = document.getElementById('galleryPreview');
+  var currentPhotos = window._userGallery || [];
+
+  if (currentPhotos.length >= 6) {
+    alert('Maximum 10 action photos allowed. Remove one first.');
+    return;
+  }
+
+  try {
+    var loadingDiv = document.createElement('div');
+    loadingDiv.style.cssText = 'width:80px;height:80px;border-radius:10px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:20px';
+    loadingDiv.textContent = '⏳';
+    preview.appendChild(loadingDiv);
+
+    var photoIndex = currentPhotos.length;
+    var storageRef = window._storageRef(window._storage, 'profiles/' + window._currentUser.uid + '/gallery_' + photoIndex + '_' + Date.now());
+    await window._uploadBytes(storageRef, file);
+    var downloadURL = await window._getDownloadURL(storageRef);
+
+    currentPhotos.push(downloadURL);
+    window._userGallery = currentPhotos;
+
+    var profileRef = window._fbDoc(window._db, 'profiles', window._currentUser.uid);
+    await window._fbSetDoc(profileRef, { gallery: currentPhotos }, { merge: true });
+
+    preview.removeChild(loadingDiv);
+    renderGalleryPreview(currentPhotos);
+  } catch (err) {
+    console.log('Gallery upload error:', err);
+    alert('Could not upload photo. Try again.');
+  }
+};
+
+function renderGalleryPreview(photos) {
+  var preview = document.getElementById('galleryPreview');
+  if (!preview) return;
+  preview.innerHTML = '';
+  photos.forEach(function(url, index) {
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;width:80px;height:80px';
+    wrap.innerHTML =
+      '<img src="' + url + '" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:1px solid #e8e8e8"/>' +
+      '<button onclick="removeGalleryPhoto(' + index + ')" style="position:absolute;top:-6px;right:-6px;background:#e74c3c;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1">✕</button>';
+    preview.appendChild(wrap);
+  });
+}
+
+window.removeGalleryPhoto = async function(index) {
+  if (!window._currentUser) return;
+  var photos = window._userGallery || [];
+  photos.splice(index, 1);
+  window._userGallery = photos;
+  try {
+    var profileRef = window._fbDoc(window._db, 'profiles', window._currentUser.uid);
+    await window._fbSetDoc(profileRef, { gallery: photos }, { merge: true });
+    renderGalleryPreview(photos);
+  } catch (err) {
+    console.log('Remove photo error:', err);
+  }
+};
+window.showPhotoModal = function(url) {
+  document.getElementById('photoModalImg').src = url;
+  document.getElementById('photoModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+
+window.closePhotoModal = function() {
+  document.getElementById('photoModal').style.display = 'none';
+  document.body.style.overflow = '';
 };
 window.saveProfile = async function() {
   if (!window._currentUser) { alert('Please sign in first.'); return; }
@@ -751,6 +846,13 @@ window.loadNearbySessions = async function() {
                 '<span style="background:#f0f0f0;color:#555;font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px">' + s.skill + '</span>' +
                 (s.courtName ? '<span style="background:#e6f9ee;color:#1a6b3c;font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px">📍 ' + s.courtName + '</span>' : '') +
               '</div>' +
+              (s.gallery && s.gallery.length > 0
+  ? '<div style="display:flex;gap:6px;margin-bottom:8px">' +
+      s.gallery.map(function(url) {
+        return '<img src="' + url + '" style="width:60px;height:60px;border-radius:8px;object-fit:cover;border:1px solid #e8e8e8;cursor:pointer" onclick="showPhotoModal(\'' + url + '\')">';
+      }).join('') +
+    '</div>'
+  : '') +
               (socialLinks ? '<div style="margin-bottom:8px">' + socialLinks + '</div>' : '') +
               '<div style="display:flex;align-items:center;justify-content:space-between">' +
                 '<div style="display:flex;align-items:center;gap:4px">' +
@@ -1366,6 +1468,12 @@ window._getDownloadURL = getDownloadURL;
           var pd = profileSnap.data();
           document.getElementById('profileSkill').value = pd.skill || 'Intermediate';
           document.getElementById('profileUTR').value = pd.utr || '';
+          if (pd.gallery && pd.gallery.length > 0) {
+            window._userGallery = pd.gallery;
+            renderGalleryPreview(pd.gallery);
+          } else {
+            window._userGallery = [];
+          }
           document.getElementById('profileBio').value = pd.bio || '';
           document.getElementById('profileInstagram').value = pd.instagram || '';
           document.getElementById('profileFacebook').value = pd.facebook || '';
