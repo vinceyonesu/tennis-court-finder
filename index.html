@@ -114,11 +114,18 @@
         <div style="margin-bottom:12px">
           <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Skill Level</label>
           <select id="profileSkill" style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none">
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-            <option value="Professional">Professional</option>
+            <option value="Beginner (UTR 1-2)">Beginner (UTR 1-2)</option>
+            <option value="Beginner-Intermediate (UTR 2-4)">Beginner-Intermediate (UTR 2-4)</option>
+            <option value="Intermediate (UTR 4-6)">Intermediate (UTR 4-6)</option>
+            <option value="Intermediate-Advanced (UTR 6-8)">Intermediate-Advanced (UTR 6-8)</option>
+            <option value="Advanced (UTR 8-10)">Advanced (UTR 8-10)</option>
+            <option value="Highly Advanced (UTR 10-12)">Highly Advanced (UTR 10-12)</option>
+            <option value="Professional (UTR 12+)">Professional (UTR 12+)</option>
           </select>
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Your UTR Rating <span style="font-size:10px;color:#aaa">(optional — find yours at utrsports.net)</span></label>
+          <input type="number" id="profileUTR" min="1" max="16" step="0.1" placeholder="e.g. 7.5" style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none"/>
         </div>
 
         <div style="margin-bottom:12px">
@@ -174,9 +181,13 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
         <select id="nearbySkillFilter" onchange="loadNearbySessions()" style="border:1.5px solid #e0e0e0;border-radius:999px;padding:7px 16px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#555;background:#fff;outline:none;cursor:pointer">
           <option value="all">All Skill Levels</option>
-          <option value="Beginner">Beginner</option>
-          <option value="Intermediate">Intermediate</option>
-          <option value="Advanced">Advanced</option>
+          <option value="Beginner (UTR 1-2)">Beginner (UTR 1-2)</option>
+          <option value="Beginner-Intermediate (UTR 2-4)">Beginner-Intermediate (UTR 2-4)</option>
+          <option value="Intermediate (UTR 4-6)">Intermediate (UTR 4-6)</option>
+          <option value="Intermediate-Advanced (UTR 6-8)">Intermediate-Advanced (UTR 6-8)</option>
+          <option value="Advanced (UTR 8-10)">Advanced (UTR 8-10)</option>
+          <option value="Highly Advanced (UTR 10-12)">Highly Advanced (UTR 10-12)</option>
+          <option value="Professional (UTR 12+)">Professional (UTR 12+)</option>
         </select>
         <select id="nearbyTypeFilter" onchange="loadNearbySessions()" style="border:1.5px solid #e0e0e0;border-radius:999px;padding:7px 16px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#555;background:#fff;outline:none;cursor:pointer">
           <option value="all">All Types</option>
@@ -304,6 +315,7 @@ window.postSession = async function(placeId) {
       instagram: profile.instagram || '',
       facebook: profile.facebook || '',
       whatsapp: profile.whatsapp || '',
+      utr: profile.utr || '',
       phoneVerified: profile.phoneVerified || false,
       createdAt: window._fbTimestamp.now()
     });
@@ -412,7 +424,7 @@ async function loadSessions(placeId) {
             avatarHtml +
             '<div>' +
               '<div class="session-name">' + s.name + verifiedBadge + '</div>' +
-              '<div style="font-size:11px;color:#888">' + s.skill + ' · ' + s.type + '</div>' +
+              '<div style="font-size:11px;color:#888">' + s.skill + (s.utr ? ' · <span style="background:#fff3e0;color:#e65100;font-size:10px;font-weight:600;padding:1px 6px;border-radius:999px">UTR ' + s.utr + '</span>' : '') + ' · ' + s.type + '</div>' +
             '</div>' +
           '</div>' +
           '<div class="session-details">📅 ' + dateStr + ' at ' + timeStr + '</div>' +
@@ -462,7 +474,15 @@ function loadHittingPartnerSection(placeId) {
           '<input type="time" id="sessionTime"/>' +
         '</div>' +
         '<div class="hitting-form-row">' +
-          '<select id="sessionSkill"><option value="Beginner">Beginner</option><option value="Intermediate" selected>Intermediate</option><option value="Advanced">Advanced</option></select>' +
+          '<select id="sessionSkill">' +
+  '<option value="Beginner (UTR 1-2)">Beginner (UTR 1-2)</option>' +
+  '<option value="Beginner-Intermediate (UTR 2-4)">Beginner-Intermediate (UTR 2-4)</option>' +
+  '<option value="Intermediate (UTR 4-6)" selected>Intermediate (UTR 4-6)</option>' +
+  '<option value="Intermediate-Advanced (UTR 6-8)">Intermediate-Advanced (UTR 6-8)</option>' +
+  '<option value="Advanced (UTR 8-10)">Advanced (UTR 8-10)</option>' +
+  '<option value="Highly Advanced (UTR 10-12)">Highly Advanced (UTR 10-12)</option>' +
+  '<option value="Professional (UTR 12+)">Professional (UTR 12+)</option>' +
+'</select>' +
           '<select id="sessionType"><option value="Singles">Singles</option><option value="Doubles">Doubles</option><option value="Rally/Practice">Rally/Practice</option></select>' +
         '</div>' +
         '<button class="hitting-post-btn" id="postSessionBtn" onclick="postSession(\'' + placeId + '\')">Post My Session</button>' +
@@ -530,6 +550,7 @@ window.saveProfile = async function() {
       email: window._currentUser.email || '',
       photo: window._currentUser.photoURL || '',
       skill: document.getElementById('profileSkill').value,
+      utr: document.getElementById('profileUTR').value || '',
       bio: document.getElementById('profileBio').value,
       instagram: document.getElementById('profileInstagram').value,
       facebook: document.getElementById('profileFacebook').value,
@@ -1344,6 +1365,7 @@ window._getDownloadURL = getDownloadURL;
         if (profileSnap.exists()) {
           var pd = profileSnap.data();
           document.getElementById('profileSkill').value = pd.skill || 'Intermediate';
+          document.getElementById('profileUTR').value = pd.utr || '';
           document.getElementById('profileBio').value = pd.bio || '';
           document.getElementById('profileInstagram').value = pd.instagram || '';
           document.getElementById('profileFacebook').value = pd.facebook || '';
