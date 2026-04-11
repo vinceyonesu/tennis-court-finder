@@ -1438,6 +1438,46 @@ var currentViewProfileUid = null;
     window.openMessage = function(uid) {
       alert('Messaging coming in Hour 21! 💬');
     };
+
+    async function loadUserSessionsForMyProfile(uid) {
+      var sessionsDiv = document.getElementById('mpSessions');
+      if (!sessionsDiv || !window._db) return;
+      try {
+        var today = new Date().toISOString().split('T')[0];
+        var q = window._fbQuery(
+          window._fbCollection(window._db, 'sessions'),
+          window._fbWhere('uid', '==', uid),
+          window._fbWhere('date', '>=', today),
+          window._fbOrderBy('date', 'asc')
+        );
+        var snap = await window._fbGetDocs(q);
+        if (snap.empty) { sessionsDiv.innerHTML = '<p style="font-size:13px;color:#aaa;padding:8px 0">No upcoming sessions. Post one at a court!</p>'; return; }
+        var html = '';
+        snap.forEach(function(d) {
+          var s = d.data();
+          if (s.deleted) return;
+          var dateStr = new Date(s.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          var timeStr = new Date('2000-01-01T' + s.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          html +=
+            '<div style="background:#f8f9fa;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">' +
+              '<div>' +
+                '<div style="font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px">' + (s.courtName || 'Tennis Court') + '</div>' +
+                '<div style="font-size:12px;color:#888">📅 ' + dateStr + ' at ' + timeStr + ' · ' + s.skill + ' · ' + s.type + '</div>' +
+              '</div>' +
+              '<button onclick="deleteSession(\'' + d.id + '\', null);showMyProfile()" style="background:#fdecea;color:#c0392b;border:1px solid #f5c6c6;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:pointer">Cancel</button>' +
+            '</div>';
+        });
+        sessionsDiv.innerHTML = html || '<p style="font-size:13px;color:#aaa">No upcoming sessions.</p>';
+      } catch (err) { console.log('My sessions error:', err); }
+    }
+
+    window.showMyFollowList = async function(type) {
+      if (!window._currentUser) return;
+      var savedUid = currentViewProfileUid;
+      currentViewProfileUid = window._currentUser.uid;
+      await window.showFollowList(type);
+      currentViewProfileUid = savedUid;
+    };
     window.toggleHourly = function(id) {
       var el = document.getElementById(id);
       if (!el) return;
