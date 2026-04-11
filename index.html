@@ -61,28 +61,26 @@
   </div>
 
   <script>
-    const courtDataStore = {};
-    let placesService;
-
-    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var courtDataStore = {};
+    var gService = null;
 
     function openModal(id) {
-      const data = courtDataStore[id];
+      var data = courtDataStore[id];
       if (!data) return;
 
       document.getElementById('modalPhoto').src = data.photo;
       document.getElementById('modalName').textContent = data.name;
       document.getElementById('modalAddress').textContent = data.address;
 
-      const stars = data.rating
+      var stars = data.rating
         ? '★'.repeat(Math.round(data.rating)) + '☆'.repeat(5 - Math.round(data.rating))
         : '☆☆☆☆☆';
 
       document.getElementById('modalRating').innerHTML =
-        `<span style="color:#f4a800;font-size:16px">${stars}</span>
-         <span style="font-size:13px;color:#999;margin-left:6px">(${data.reviews} reviews)</span>`;
+        '<span style="color:#f4a800;font-size:16px">' + stars + '</span>' +
+        '<span style="font-size:13px;color:#999;margin-left:6px">(' + data.reviews + ' reviews)</span>';
 
-      const statusEl = document.getElementById('modalStatus');
+      var statusEl = document.getElementById('modalStatus');
       if (data.isOpen === true) {
         statusEl.innerHTML = '<span class="badge-open">Open Now</span>';
       } else if (data.isOpen === false) {
@@ -102,39 +100,45 @@
       document.getElementById('courtModal').classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      placesService.getDetails(
-        { placeId: data.placeId, fields: ['opening_hours', 'formatted_phone_number', 'website'] },
-        (place, status) => {
-          const hoursDiv = document.getElementById('modalHours');
-          if (status !== 'OK' || !place.opening_hours) {
-            hoursDiv.innerHTML = '<p style="color:#888;font-size:13px">Hours not available.</p>';
-            return;
+      if (gService) {
+        gService.getDetails(
+          { placeId: data.placeId, fields: ['opening_hours', 'formatted_phone_number', 'website'] },
+          function(place, status) {
+            var hoursDiv = document.getElementById('modalHours');
+            if (status !== 'OK' || !place || !place.opening_hours) {
+              hoursDiv.innerHTML = '<p style="color:#888;font-size:13px">Hours not available for this court.</p>';
+              return;
+            }
+
+            var today = new Date().getDay();
+            var weekdayText = place.opening_hours.weekday_text;
+            var html = '<table style="width:100%;font-size:13px;border-collapse:collapse">';
+
+            weekdayText.forEach(function(line, i) {
+              var dayIndex = (i + 1) % 7;
+              var isToday = dayIndex === today;
+              var parts = line.split(': ');
+              var dayName = parts[0];
+              var hours = parts.slice(1).join(': ') || 'Closed';
+              html += '<tr style="background:' + (isToday ? '#e6f9ee' : 'transparent') + '">' +
+                '<td style="padding:5px 8px;font-weight:' + (isToday ? '700' : '400') + ';color:' + (isToday ? '#1a6b3c' : '#444') + '">' + dayName + '</td>' +
+                '<td style="padding:5px 8px;text-align:right;color:' + (isToday ? '#1a6b3c' : '#666') + ';font-weight:' + (isToday ? '700' : '400') + '">' + hours + '</td>' +
+                '</tr>';
+            });
+
+            html += '</table>';
+
+            if (place.formatted_phone_number) {
+              html += '<p style="margin-top:10px;font-size:13px;color:#555">Phone: ' + place.formatted_phone_number + '</p>';
+            }
+            if (place.website) {
+              html += '<p style="margin-top:4px;font-size:13px"><a href="' + place.website + '" target="_blank" style="color:#1a6b3c">Visit website</a></p>';
+            }
+
+            hoursDiv.innerHTML = html;
           }
-
-          const today = new Date().getDay();
-          const weekdayText = place.opening_hours.weekday_text;
-
-          let html = '<table style="width:100%;font-size:13px;border-collapse:collapse">';
-          weekdayText.forEach((line, i) => {
-            const dayIndex = (i + 1) % 7;
-            const isToday = dayIndex === today;
-            html += `<tr style="background:${isToday ? '#e6f9ee' : 'transparent'}">
-              <td style="padding:5px 8px;font-weight:${isToday ? '700' : '400'};color:${isToday ? '#1a6b3c' : '#444'}">${line.split(':')[0]}</td>
-              <td style="padding:5px 8px;text-align:right;color:${isToday ? '#1a6b3c' : '#666'};font-weight:${isToday ? '700' : '400'}">${line.split(': ').slice(1).join(': ') || 'Closed'}</td>
-            </tr>`;
-          });
-          html += '</table>';
-
-          if (place.formatted_phone_number) {
-            html += `<p style="margin-top:10px;font-size:13px;color:#555">📞 ${place.formatted_phone_number}</p>`;
-          }
-          if (place.website) {
-            html += `<p style="margin-top:4px;font-size:13px"><a href="${place.website}" target="_blank" style="color:#1a6b3c">Visit website</a></p>`;
-          }
-
-          hoursDiv.innerHTML = html;
-        }
-      );
+        );
+      }
     }
 
     function closeModal() {
@@ -145,99 +149,100 @@
     function initMap() {
       console.log('✅ Google Maps loaded!');
 
-      const map = new google.maps.Map(document.getElementById('map'), {
+      var map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: 34.0522, lng: -118.2437 },
         zoom: 12
       });
 
-      placesService = new google.maps.places.PlacesService(map);
-
-      const resultsGrid = document.getElementById('resultsGrid');
-      const searchBtn = document.getElementById('searchBtn');
-      const cityInput = document.getElementById('cityInput');
+      gService = new google.maps.places.PlacesService(map);
+      console.log('✅ PlacesService ready:', gService);
 
       document.getElementById('modalClose').addEventListener('click', closeModal);
-      document.getElementById('courtModal').addEventListener('click', (e) => {
+      document.getElementById('courtModal').addEventListener('click', function(e) {
         if (e.target === document.getElementById('courtModal')) closeModal();
       });
 
-      searchBtn.addEventListener('click', () => {
-        const city = cityInput.value.trim();
+      var resultsGrid = document.getElementById('resultsGrid');
+      var searchBtn = document.getElementById('searchBtn');
+      var cityInput = document.getElementById('cityInput');
+
+      searchBtn.addEventListener('click', function() {
+        var city = cityInput.value.trim();
         if (!city) {
           cityInput.style.border = '2px solid red';
           return;
         }
         cityInput.style.border = 'none';
-        resultsGrid.innerHTML = `<div class="loading-msg">Searching for courts in <strong>${city}</strong>...</div>`;
+        resultsGrid.innerHTML = '<div class="loading-msg">Searching for courts in <strong>' + city + '</strong>...</div>';
 
-        const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ address: city }, (results, status) => {
+        var geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: city }, function(results, status) {
           if (status !== 'OK') {
-            resultsGrid.innerHTML = `<div class="error-msg">City not found.</div>`;
+            resultsGrid.innerHTML = '<div class="error-msg">City not found.</div>';
             return;
           }
 
-          const location = results[0].geometry.location;
+          var location = results[0].geometry.location;
           map.setCenter(location);
 
-          const request = { location, radius: 5000, keyword: 'tennis court' };
+          var request = { location: location, radius: 5000, keyword: 'tennis court' };
 
-          placesService.nearbySearch(request, (places, status) => {
+          gService.nearbySearch(request, function(places, status) {
             if (status !== 'OK' || !places || !places.length) {
-              resultsGrid.innerHTML = `<div class="error-msg">No courts found near ${city}.</div>`;
+              resultsGrid.innerHTML = '<div class="error-msg">No courts found near ' + city + '.</div>';
               return;
             }
 
             resultsGrid.innerHTML = '';
-            const bounds = new google.maps.LatLngBounds();
+            var bounds = new google.maps.LatLngBounds();
 
-            places.forEach((court, index) => {
-              const photo = court.photos
+            places.forEach(function(court, index) {
+              var photo = court.photos
                 ? court.photos[0].getUrl({ maxWidth: 400 })
                 : 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400';
 
-              const stars = court.rating
-                ? '★'.repeat(Math.round(court.rating)) + '☆'.repeat(5 - Math.round(court.rating))
+              var rating = court.rating || 0;
+              var stars = rating
+                ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating))
                 : '☆☆☆☆☆';
 
-              const isOpen = court.opening_hours?.open_now;
-              const openBadge = isOpen === true
-                ? `<span class="badge-open">Open Now</span>`
+              var isOpen = court.opening_hours ? court.opening_hours.open_now : undefined;
+              var openBadge = isOpen === true
+                ? '<span class="badge-open">Open Now</span>'
                 : isOpen === false
-                ? `<span class="badge-closed">Closed</span>`
-                : `<span class="surface-tag">Hours N/A</span>`;
+                ? '<span class="badge-closed">Closed</span>'
+                : '<span class="surface-tag">Hours N/A</span>';
 
-              const id = 'court_' + index;
+              var id = 'court_' + index;
               courtDataStore[id] = {
                 name: court.name,
                 address: court.vicinity,
                 photo: photo,
-                rating: court.rating || null,
+                rating: rating,
                 reviews: court.user_ratings_total || 0,
                 isOpen: isOpen,
                 placeId: court.place_id
               };
 
-              resultsGrid.innerHTML += `
-                <div class="court-card" onclick="openModal('${id}')" style="cursor:pointer">
-                  <div class="card-image">
-                    <img src="${photo}" alt="${court.name}"/>
-                    <span class="badge-free">Public</span>
-                  </div>
-                  <div class="card-body">
-                    <h3 class="court-name">${court.name}</h3>
-                    <p class="court-address">${court.vicinity}</p>
-                    <div class="card-row">
-                      <div class="stars">${stars}</div>
-                      <span class="rating-count">(${court.user_ratings_total || 0} reviews)</span>
-                    </div>
-                    <div class="card-row">
-                      ${openBadge}
-                      <span class="surface-tag">Tennis Court</span>
-                    </div>
-                  </div>
-                </div>
-              `;
+              resultsGrid.innerHTML +=
+                '<div class="court-card" onclick="openModal(\'' + id + '\')" style="cursor:pointer">' +
+                  '<div class="card-image">' +
+                    '<img src="' + photo + '" alt="' + court.name + '"/>' +
+                    '<span class="badge-free">Public</span>' +
+                  '</div>' +
+                  '<div class="card-body">' +
+                    '<h3 class="court-name">' + court.name + '</h3>' +
+                    '<p class="court-address">' + court.vicinity + '</p>' +
+                    '<div class="card-row">' +
+                      '<div class="stars">' + stars + '</div>' +
+                      '<span class="rating-count">(' + (court.user_ratings_total || 0) + ' reviews)</span>' +
+                    '</div>' +
+                    '<div class="card-row">' +
+                      openBadge +
+                      '<span class="surface-tag">Tennis Court</span>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>';
 
               new google.maps.Marker({
                 position: court.geometry.location,
