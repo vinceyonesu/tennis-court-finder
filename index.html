@@ -34,7 +34,25 @@
   <section class="results-section">
     <div class="results-grid" id="resultsGrid"></div>
   </section>
-
+<!-- MODAL -->
+  <div id="courtModal" class="modal-overlay">
+    <div class="modal-card">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div class="modal-image">
+        <img id="modalPhoto" src="" alt="Court photo"/>
+      </div>
+      <div class="modal-body">
+        <h2 id="modalName"></h2>
+        <p id="modalAddress" class="modal-address"></p>
+        <div class="modal-meta">
+          <span id="modalStatus"></span>
+          <span id="modalRating"></span>
+        </div>
+        <div id="modalHours" class="modal-hours"></div>
+        <a id="modalDirections" href="#" target="_blank" class="directions-btn">Get Directions</a>
+      </div>
+    </div>
+  </div>
   <!-- MAP -->
   <div class="map-section">
     <div id="map"></div>
