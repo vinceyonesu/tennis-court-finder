@@ -16,6 +16,14 @@
     <div class="nav-links">
       <a href="#" id="navSaved" onclick="showSaved()">Saved Courts <span id="savedCount" class="saved-count">0</span></a>
       <a href="#" id="navSearch" onclick="showSearch()">Search</a>
+      <a href="#" id="navProfile" onclick="showProfile()" style="display:none">My Profile</a>
+      <div id="authBtn" onclick="handleAuthClick()" style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#f0f0f0;border-radius:50px;padding:6px 14px 6px 6px;transition:background 0.2s">
+        <div id="authAvatar" style="width:28px;height:28px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;overflow:hidden">
+          <span id="authAvatarText">?</span>
+          <img id="authAvatarImg" src="" style="display:none;width:100%;height:100%;object-fit:cover"/>
+        </div>
+        <span id="authBtnText" style="font-size:13px;font-weight:600;color:#333">Sign In</span>
+      </div>
     </div>
   </nav>
 
@@ -83,7 +91,79 @@
       </div>
     </div>
   </div>
+<!-- PROFILE PAGE -->
+  <div id="profilePage" style="display:none;max-width:600px;margin:40px auto;padding:0 24px 60px">
+    <div style="background:#ffffff;border-radius:20px;border:1px solid #ebebeb;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#1a6b3c,#25a05a);padding:30px 24px;text-align:center">
+        <div id="profilePhotoWrap" style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.3);margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;font-weight:700;border:3px solid rgba(255,255,255,0.5)">
+          <span id="profileInitials">?</span>
+          <img id="profilePhoto" src="" style="display:none;width:100%;height:100%;object-fit:cover"/>
+        </div>
+        <div id="profileName" style="font-size:20px;font-weight:700;color:#ffffff;margin-bottom:4px">Not signed in</div>
+        <div id="profileEmail" style="font-size:13px;color:rgba(255,255,255,0.75)"></div>
+        <div id="profileVerifiedBadge" style="display:none;margin-top:8px;background:rgba(255,255,255,0.2);color:#ffffff;font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px;display:inline-block">✅ Phone Verified</div>
+      </div>
+      <div style="padding:20px 24px">
+        <div style="font-size:13px;font-weight:600;color:#555;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">Your Details</div>
 
+        <div style="margin-bottom:12px">
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Skill Level</label>
+          <select id="profileSkill" style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none">
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+            <option value="Professional">Professional</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Bio</label>
+          <textarea id="profileBio" placeholder="Tell other players about yourself..." style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none;resize:none;height:80px"></textarea>
+        </div>
+
+        <div style="font-size:13px;font-weight:600;color:#555;margin-bottom:12px;margin-top:20px;text-transform:uppercase;letter-spacing:0.5px">Social Media</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+          <div>
+            <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">📸 Instagram</label>
+            <input type="text" id="profileInstagram" placeholder="@username" style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none"/>
+          </div>
+          <div>
+            <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">📘 Facebook</label>
+            <input type="text" id="profileFacebook" placeholder="facebook.com/you" style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none"/>
+          </div>
+          <div>
+            <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">💬 WhatsApp</label>
+            <input type="text" id="profileWhatsapp" placeholder="+1234567890" style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none"/>
+          </div>
+          <div>
+            <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">📱 Phone</label>
+            <input type="text" id="profilePhone" placeholder="+1234567890" style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none"/>
+          </div>
+        </div>
+
+        <button onclick="saveProfile()" style="width:100%;background:#1a6b3c;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;margin-bottom:10px">Save Profile</button>
+
+        <div style="font-size:13px;font-weight:600;color:#555;margin-bottom:12px;margin-top:20px;text-transform:uppercase;letter-spacing:0.5px">Phone Verification</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="tel" id="phoneInput" placeholder="+1 234 567 8900" style="flex:1;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none"/>
+          <button onclick="sendVerification()" id="sendVerifyBtn" style="background:#1a6b3c;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;white-space:nowrap">Send Code</button>
+        </div>
+        <div id="verifyCodeWrap" style="display:none;display:flex;gap:8px;margin-bottom:8px">
+          <input type="text" id="verifyCode" placeholder="Enter 6-digit code" style="flex:1;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none"/>
+          <button onclick="confirmVerification()" style="background:#1a6b3c;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">Verify</button>
+        </div>
+        <div id="verifyStatus" style="font-size:12px;color:#888;margin-bottom:20px"></div>
+
+        <div id="recaptcha-container"></div>
+
+        <button onclick="signOutUser()" style="width:100%;background:#fdecea;color:#c0392b;border:1px solid #f5c6c6;border-radius:10px;padding:12px;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="map-section">
   <!-- MAP -->
   <div class="map-section">
     <div id="map"></div>
@@ -162,41 +242,48 @@ setTimeout(function() { clearInterval(fbWait); }, 5000);
       }
     };
 window.postSession = async function(placeId) {
-  var name = document.getElementById('sessionName').value.trim();
+  if (!window._currentUser) {
+    alert('Please sign in first to post a session!');
+    handleAuthClick();
+    return;
+  }
+  var name = window._currentUser.displayName || document.getElementById('sessionName').value.trim();
   var date = document.getElementById('sessionDate').value;
   var time = document.getElementById('sessionTime').value;
   var skill = document.getElementById('sessionSkill').value;
   var type = document.getElementById('sessionType').value;
-
-  if (!name || !date || !time) {
-    alert('Please fill in your name, date, and time.');
-    return;
-  }
-
+  if (!date || !time) { alert('Please fill in date and time.'); return; }
   var btn = document.getElementById('postSessionBtn');
   btn.textContent = 'Posting...';
   btn.disabled = true;
-
   try {
+    var profileRef = window._fbDoc(window._db, 'profiles', window._currentUser.uid);
+    var profileSnap = await window._fbGetDoc(profileRef);
+    var profile = profileSnap.exists() ? profileSnap.data() : {};
     await window._fbAddDoc(window._fbCollection(window._db, 'sessions'), {
       placeId: placeId,
       name: name,
+      uid: window._currentUser.uid,
+      photo: window._currentUser.photoURL || '',
       date: date,
       time: time,
       skill: skill,
       type: type,
-      players: [name],
+      players: [{ name: name, uid: window._currentUser.uid, photo: window._currentUser.photoURL || '' }],
+      instagram: profile.instagram || '',
+      facebook: profile.facebook || '',
+      whatsapp: profile.whatsapp || '',
+      phoneVerified: profile.phoneVerified || false,
       createdAt: window._fbTimestamp.now()
     });
-    document.getElementById('sessionName').value = '';
     document.getElementById('sessionDate').value = '';
     document.getElementById('sessionTime').value = '';
-    btn.textContent = 'Post Session';
+    btn.textContent = 'Post My Session';
     btn.disabled = false;
     loadSessions(placeId);
   } catch (err) {
     console.log('Error posting session:', err);
-    btn.textContent = 'Post Session';
+    btn.textContent = 'Post My Session';
     btn.disabled = false;
     alert('Could not post session. Try again.');
   }
@@ -221,7 +308,6 @@ async function loadSessions(placeId) {
   var sessionsList = document.getElementById('sessionsList');
   if (!sessionsList || !window._db) return;
   sessionsList.innerHTML = '<p style="font-size:12px;color:#888;text-align:center;padding:8px">Loading sessions...</p>';
-
   try {
     var today = new Date().toISOString().split('T')[0];
     var q = window._fbQuery(
@@ -241,18 +327,40 @@ async function loadSessions(placeId) {
       var dateStr = new Date(s.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
       var timeStr = new Date('2000-01-01T' + s.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
       var playersCount = s.players ? s.players.length : 1;
-      var playerNames = s.players ? s.players.join(', ') : s.name;
+      var avatarHtml = s.photo
+        ? '<img src="' + s.photo + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #e8e8e8"/>'
+        : '<div style="width:36px;height:36px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:700">' + (s.name ? s.name[0].toUpperCase() : '?') + '</div>';
+      var verifiedBadge = s.phoneVerified ? '<span style="background:#e6f9ee;color:#1a6b3c;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;margin-left:6px">✅ Verified</span>' : '';
+      var socialLinks = '';
+      if (s.instagram) socialLinks += '<a href="https://instagram.com/' + s.instagram.replace('@','') + '" target="_blank" style="text-decoration:none;font-size:11px;color:#833ab4;margin-right:8px">📸 Instagram</a>';
+      if (s.facebook) socialLinks += '<a href="https://facebook.com/' + s.facebook + '" target="_blank" style="text-decoration:none;font-size:11px;color:#1877f2;margin-right:8px">📘 Facebook</a>';
+      if (s.whatsapp) socialLinks += '<a href="https://wa.me/' + s.whatsapp.replace(/[^0-9]/g,'') + '" target="_blank" style="text-decoration:none;font-size:11px;color:#25d366">💬 WhatsApp</a>';
+      var isOwner = window._currentUser && window._currentUser.uid === s.uid;
+      var playerAvatars = '';
+      if (s.players && s.players.length > 0) {
+        s.players.forEach(function(p) {
+          if (typeof p === 'object' && p.photo) {
+            playerAvatars += '<img src="' + p.photo + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-right:-6px"/>';
+          } else {
+            var pName = typeof p === 'string' ? p : p.name || '?';
+            playerAvatars += '<div style="width:24px;height:24px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;border:2px solid #fff;margin-right:-6px">' + pName[0].toUpperCase() + '</div>';
+          }
+        });
+      }
       sessionsList.innerHTML +=
         '<div class="session-card">' +
-          '<div class="session-name">' + s.name + ' is playing</div>' +
-          '<div class="session-details">' +
-            '📅 ' + dateStr + ' at ' + timeStr + '<br>' +
-            '🎾 ' + s.type + ' · ' + s.skill + '<br>' +
-            '👥 ' + playerNames +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
+            avatarHtml +
+            '<div>' +
+              '<div class="session-name">' + s.name + verifiedBadge + '</div>' +
+              '<div style="font-size:11px;color:#888">' + s.skill + ' · ' + s.type + '</div>' +
+            '</div>' +
           '</div>' +
+          '<div class="session-details">📅 ' + dateStr + ' at ' + timeStr + '</div>' +
+          (socialLinks ? '<div style="margin-top:6px;margin-bottom:6px">' + socialLinks + '</div>' : '') +
           '<div class="session-footer">' +
-            '<span class="session-players">' + playersCount + ' player' + (playersCount !== 1 ? 's' : '') + ' going</span>' +
-            '<button class="join-btn" onclick="joinSession(\'' + docSnap.id + '\', \'' + placeId + '\')">I\'m In!</button>' +
+            '<div style="display:flex;align-items:center;gap:4px">' + playerAvatars + '<span style="font-size:11px;color:#888;margin-left:10px">' + playersCount + ' player' + (playersCount !== 1 ? 's' : '') + '</span></div>' +
+            (isOwner ? '<span style="font-size:11px;color:#1a6b3c;font-weight:600">Your session</span>' : '<button class="join-btn" onclick="joinSession(\'' + docSnap.id + '\', \'' + placeId + '\')">I\'m In!</button>') +
           '</div>' +
         '</div>';
     });
@@ -269,39 +377,134 @@ function loadHittingPartnerSection(placeId) {
     section.innerHTML = '<p style="font-size:12px;color:#888;padding:10px">Connecting to database...</p>';
     return;
   }
-
   var today = new Date().toISOString().split('T')[0];
+  var isSignedIn = !!window._currentUser;
+  var nameField = isSignedIn
+    ? '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 12px;background:#e6f9ee;border-radius:10px">' +
+        (window._currentUser.photoURL ? '<img src="' + window._currentUser.photoURL + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover"/>' : '<div style="width:28px;height:28px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700">' + (window._currentUser.displayName ? window._currentUser.displayName[0] : '?') + '</div>') +
+        '<span style="font-size:13px;font-weight:600;color:#1a6b3c">Posting as ' + (window._currentUser.displayName || 'You') + '</span>' +
+      '</div>'
+    : '<div style="background:#fff8e6;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#854f0b">⚠️ <strong>Sign in</strong> to post a session and show your profile to other players. <span style="color:#1a6b3c;cursor:pointer;text-decoration:underline" onclick="handleAuthClick()">Sign in now</span></div>' +
+      '<input type="text" id="sessionName" placeholder="Your name" style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px 12px;font-size:13px;font-family:\'Plus Jakarta Sans\',sans-serif;color:#1a1a1a;outline:none;margin-bottom:8px"/>';
 
   section.innerHTML =
     '<div class="hitting-section">' +
       '<div class="hitting-title">🎾 Find a Hitting Partner</div>' +
       '<div class="hitting-subtitle">Post your session or join someone already playing here</div>' +
       '<div class="hitting-form">' +
-        '<input type="text" id="sessionName" placeholder="Your name"/>' +
+        nameField +
         '<div class="hitting-form-row">' +
           '<input type="date" id="sessionDate" min="' + today + '"/>' +
           '<input type="time" id="sessionTime"/>' +
         '</div>' +
         '<div class="hitting-form-row">' +
-          '<select id="sessionSkill">' +
-            '<option value="Beginner">Beginner</option>' +
-            '<option value="Intermediate" selected>Intermediate</option>' +
-            '<option value="Advanced">Advanced</option>' +
-          '</select>' +
-          '<select id="sessionType">' +
-            '<option value="Singles">Singles</option>' +
-            '<option value="Doubles">Doubles</option>' +
-            '<option value="Rally/Practice">Rally/Practice</option>' +
-          '</select>' +
+          '<select id="sessionSkill"><option value="Beginner">Beginner</option><option value="Intermediate" selected>Intermediate</option><option value="Advanced">Advanced</option></select>' +
+          '<select id="sessionType"><option value="Singles">Singles</option><option value="Doubles">Doubles</option><option value="Rally/Practice">Rally/Practice</option></select>' +
         '</div>' +
         '<button class="hitting-post-btn" id="postSessionBtn" onclick="postSession(\'' + placeId + '\')">Post My Session</button>' +
       '</div>' +
       '<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px">Upcoming Sessions at This Court</div>' +
       '<div id="sessionsList"></div>' +
     '</div>';
-
   loadSessions(placeId);
 }
+window.handleAuthClick = function() {
+  if (window._currentUser) {
+    showProfile();
+  } else {
+    if (!window._signInWithPopup) { alert('Firebase still loading, try again in a second.'); return; }
+    var provider = new window._GoogleAuthProvider();
+    window._signInWithPopup(window._auth, provider)
+      .then(function(result) {
+        console.log('Signed in:', result.user.displayName);
+      })
+      .catch(function(err) {
+        console.log('Sign in error:', err);
+        alert('Sign in failed. Please try again.');
+      });
+  }
+};
+
+window.signOutUser = function() {
+  window._signOut(window._auth).then(function() {
+    showSearch();
+    document.getElementById('profilePage').style.display = 'none';
+  });
+};
+
+window.saveProfile = async function() {
+  if (!window._currentUser) { alert('Please sign in first.'); return; }
+  try {
+    var profileRef = window._fbDoc(window._db, 'profiles', window._currentUser.uid);
+    await window._fbSetDoc(profileRef, {
+      uid: window._currentUser.uid,
+      name: window._currentUser.displayName || '',
+      email: window._currentUser.email || '',
+      photo: window._currentUser.photoURL || '',
+      skill: document.getElementById('profileSkill').value,
+      bio: document.getElementById('profileBio').value,
+      instagram: document.getElementById('profileInstagram').value,
+      facebook: document.getElementById('profileFacebook').value,
+      whatsapp: document.getElementById('profileWhatsapp').value,
+      phone: document.getElementById('profilePhone').value,
+      updatedAt: window._fbTimestamp.now()
+    }, { merge: true });
+    alert('Profile saved!');
+  } catch (err) {
+    console.log('Save profile error:', err);
+    alert('Could not save profile. Try again.');
+  }
+};
+
+window.sendVerification = async function() {
+  var phone = document.getElementById('phoneInput').value.trim();
+  if (!phone) { alert('Please enter your phone number.'); return; }
+  if (!window._currentUser) { alert('Please sign in first.'); return; }
+  try {
+    document.getElementById('sendVerifyBtn').textContent = 'Sending...';
+    window._recaptchaVerifier = new window._RecaptchaVerifier(window._auth, 'recaptcha-container', { size: 'invisible' });
+    var provider = new window._PhoneAuthProvider(window._auth);
+    window._verificationId = await provider.verifyPhoneNumber(phone, window._recaptchaVerifier);
+    document.getElementById('verifyCodeWrap').style.display = 'flex';
+    document.getElementById('verifyStatus').textContent = 'Code sent! Check your phone.';
+    document.getElementById('verifyStatus').style.color = '#1a6b3c';
+    document.getElementById('sendVerifyBtn').textContent = 'Send Code';
+  } catch (err) {
+    console.log('Phone verify error:', err);
+    document.getElementById('verifyStatus').textContent = 'Error: ' + err.message;
+    document.getElementById('verifyStatus').style.color = '#c0392b';
+    document.getElementById('sendVerifyBtn').textContent = 'Send Code';
+  }
+};
+
+window.confirmVerification = async function() {
+  var code = document.getElementById('verifyCode').value.trim();
+  if (!code) { alert('Please enter the verification code.'); return; }
+  try {
+    var credential = window._PhoneAuthProvider.credential(window._verificationId, code);
+    await window._signInWithCredential(window._auth, credential);
+    var profileRef = window._fbDoc(window._db, 'profiles', window._currentUser.uid);
+    await window._fbSetDoc(profileRef, { phoneVerified: true }, { merge: true });
+    document.getElementById('verifyStatus').textContent = '✅ Phone verified!';
+    document.getElementById('verifyStatus').style.color = '#1a6b3c';
+    document.getElementById('profileVerifiedBadge').style.display = 'inline-block';
+  } catch (err) {
+    console.log('Confirm verify error:', err);
+    document.getElementById('verifyStatus').textContent = 'Invalid code. Try again.';
+    document.getElementById('verifyStatus').style.color = '#c0392b';
+  }
+};
+
+window.showProfile = function() {
+  if (!window._currentUser) { handleAuthClick(); return; }
+  document.getElementById('heroSection').style.display = 'none';
+  document.getElementById('filterBar').style.display = 'none';
+  document.getElementById('resultsGrid').parentElement.style.display = 'none';
+  document.getElementById('savedSection').style.display = 'none';
+  document.getElementById('profilePage').style.display = 'block';
+  document.getElementById('navProfile').style.color = '#1a6b3c';
+  document.getElementById('navSearch').style.color = '#555';
+};
     window.toggleHourly = function(id) {
       var el = document.getElementById(id);
       if (!el) return;
@@ -495,13 +698,15 @@ function loadHittingPartnerSection(placeId) {
     };
 
     window.showSearch = function() {
-      document.getElementById('heroSection').style.display = 'block';
-      document.getElementById('resultsGrid').parentElement.style.display = 'block';
-      document.getElementById('savedSection').style.display = 'none';
-      document.getElementById('navSaved').style.color = '#555';
-      document.getElementById('navSearch').style.color = '#1a6b3c';
-      if (allCourts.length > 0) document.getElementById('filterBar').style.display = 'flex';
-    };
+  document.getElementById('heroSection').style.display = 'block';
+  document.getElementById('resultsGrid').parentElement.style.display = 'block';
+  document.getElementById('savedSection').style.display = 'none';
+  document.getElementById('profilePage').style.display = 'none';
+  document.getElementById('navSaved').style.color = '#555';
+  document.getElementById('navSearch').style.color = '#1a6b3c';
+  document.getElementById('navProfile').style.color = '#555';
+  if (allCourts.length > 0) document.getElementById('filterBar').style.display = 'flex';
+};
 
     function hasLights(court) {
       var name = (court.name || '').toLowerCase();
@@ -773,22 +978,26 @@ function loadHittingPartnerSection(placeId) {
 
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHq7QJIROeH2ZphtL07WQKLWK2Z9ELmZU&libraries=places&callback=initMap" async defer></script>
 
-  <script type="module">
+<script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc, arrayUnion, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, PhoneAuthProvider, RecaptchaVerifier, signInWithCredential } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyDl3SuIIHtVijD0NenSIPBVZ5qgAtVSt3U",
-  authDomain: "tennis-court-finder-9097c.firebaseapp.com",
-  projectId: "tennis-court-finder-9097c",
-  storageBucket: "tennis-court-finder-9097c.firebasestorage.app",
-  messagingSenderId: "648106409158",
-  appId: "1:648106409158:web:1b866ec65e23a3a0cd2bc7"
+      authDomain: "tennis-court-finder-9097c.firebaseapp.com",
+      projectId: "tennis-court-finder-9097c",
+      storageBucket: "tennis-court-finder-9097c.firebasestorage.app",
+      messagingSenderId: "648106409158",
+      appId: "1:648106409158:web:1b866ec65e23a3a0cd2bc7"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
+
     window._db = db;
+    window._auth = auth;
     window._fbCollection = collection;
     window._fbAddDoc = addDoc;
     window._fbGetDocs = getDocs;
@@ -799,6 +1008,83 @@ function loadHittingPartnerSection(placeId) {
     window._fbUpdateDoc = updateDoc;
     window._fbDoc = doc;
     window._fbArrayUnion = arrayUnion;
+    window._fbSetDoc = setDoc;
+    window._fbGetDoc = getDoc;
+    window._GoogleAuthProvider = GoogleAuthProvider;
+    window._signInWithPopup = signInWithPopup;
+    window._signOut = signOut;
+    window._PhoneAuthProvider = PhoneAuthProvider;
+    window._RecaptchaVerifier = RecaptchaVerifier;
+    window._signInWithCredential = signInWithCredential;
+
+    onAuthStateChanged(auth, async function(user) {
+      window._currentUser = user;
+      if (user) {
+        document.getElementById('authAvatarText').style.display = 'none';
+        var img = document.getElementById('authAvatarImg');
+        if (user.photoURL) {
+          img.src = user.photoURL;
+          img.style.display = 'block';
+        } else {
+          document.getElementById('authAvatarText').style.display = 'block';
+          document.getElementById('authAvatarText').textContent = user.displayName ? user.displayName[0].toUpperCase() : '?';
+        }
+        document.getElementById('authBtnText').textContent = user.displayName ? user.displayName.split(' ')[0] : 'Profile';
+        document.getElementById('authBtn').style.background = '#e6f9ee';
+        document.getElementById('navProfile').style.display = 'block';
+
+        var profileRef = window._fbDoc(db, 'profiles', user.uid);
+        var profileSnap = await window._fbGetDoc(profileRef);
+        if (!profileSnap.exists()) {
+          await window._fbSetDoc(profileRef, {
+            uid: user.uid,
+            name: user.displayName || '',
+            email: user.email || '',
+            photo: user.photoURL || '',
+            skill: 'Intermediate',
+            bio: '',
+            instagram: '',
+            facebook: '',
+            whatsapp: '',
+            phone: '',
+            phoneVerified: false,
+            createdAt: window._fbTimestamp.now()
+          });
+        }
+
+        document.getElementById('profileName').textContent = user.displayName || 'No name';
+        document.getElementById('profileEmail').textContent = user.email || '';
+        if (user.photoURL) {
+          document.getElementById('profilePhoto').src = user.photoURL;
+          document.getElementById('profilePhoto').style.display = 'block';
+          document.getElementById('profileInitials').style.display = 'none';
+        } else {
+          document.getElementById('profileInitials').textContent = user.displayName ? user.displayName[0].toUpperCase() : '?';
+        }
+
+        if (profileSnap.exists()) {
+          var pd = profileSnap.data();
+          document.getElementById('profileSkill').value = pd.skill || 'Intermediate';
+          document.getElementById('profileBio').value = pd.bio || '';
+          document.getElementById('profileInstagram').value = pd.instagram || '';
+          document.getElementById('profileFacebook').value = pd.facebook || '';
+          document.getElementById('profileWhatsapp').value = pd.whatsapp || '';
+          document.getElementById('profilePhone').value = pd.phone || '';
+          if (pd.phoneVerified) {
+            document.getElementById('profileVerifiedBadge').style.display = 'inline-block';
+          }
+        }
+      } else {
+        document.getElementById('authAvatarText').style.display = 'block';
+        document.getElementById('authAvatarText').textContent = '?';
+        document.getElementById('authAvatarImg').style.display = 'none';
+        document.getElementById('authBtnText').textContent = 'Sign In';
+        document.getElementById('authBtn').style.background = '#f0f0f0';
+        document.getElementById('navProfile').style.display = 'none';
+        window._currentUser = null;
+      }
+    });
+
     console.log('✅ Firebase ready!');
   </script>
 </body>
