@@ -16,9 +16,8 @@
     <div class="nav-links">
       <a href="#" id="navSaved" onclick="showSaved()">Saved Courts <span id="savedCount" class="saved-count">0</span></a>
       <a href="#" id="navSearch" onclick="showSearch()">Search</a>
-      <a href="#" id="navProfile" onclick="showMyProfile()" style="display:none">My Profile</a>
       <a href="#" id="navNearby" onclick="showNearby()">🎾 Players Near You</a>
-      <div id="authBtn" onclick="handleAuthClick()" style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#f0f0f0;border-radius:50px;padding:6px 14px 6px 6px;transition:background 0.2s">
+      <div id="authBtn" onclick="handleAuthClick()" style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#f0f0f0;border-radius:50px;padding:6px 14px 6px 6px;transition:all 0.2s" onmouseover="this.style.background='#e6f9ee'" onmouseout="this.style.background=window._currentUser?'#e6f9ee':'#f0f0f0'">
         <div id="authAvatar" style="width:28px;height:28px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;overflow:hidden">
           <span id="authAvatarText">?</span>
           <img id="authAvatarImg" src="" style="display:none;width:100%;height:100%;object-fit:cover"/>
@@ -803,7 +802,7 @@
     }
 
     window.handleAuthClick = function() {
-      if (window._currentUser) { showProfile(); return; }
+      if (window._currentUser) { showMyProfile(); return; }
       if (!window._signInWithPopup) { alert('Firebase still loading, try again.'); return; }
       var provider = new window._GoogleAuthProvider();
       window._signInWithPopup(window._auth, provider)
@@ -968,7 +967,6 @@
       document.getElementById('viewProfilePage').style.display = 'none';
       document.getElementById('myProfilePage').style.display = 'block';
       document.getElementById('map').closest('.map-section').style.display = 'none';
-      document.getElementById('navProfile').style.color = '#1a6b3c';
       document.getElementById('navSearch').style.color = '#555';
 
       var user = window._currentUser;
@@ -1037,7 +1035,6 @@
       document.getElementById('nearbyPage').style.display = 'block';
       document.getElementById('navNearby').style.color = '#1a6b3c';
       document.getElementById('navSearch').style.color = '#555';
-      document.getElementById('navProfile').style.color = '#555';
       document.getElementById('navSaved').style.color = '#555';
       loadNearbySessions();
     };
@@ -1690,7 +1687,6 @@ var currentViewProfileUid = null;
       document.getElementById('viewProfilePage').style.display = 'none';
       document.getElementById('navSaved').style.color = '#555';
       document.getElementById('navSearch').style.color = '#1a6b3c';
-      document.getElementById('navProfile').style.color = '#555';
       document.getElementById('navNearby').style.color = '#555';
       if (allCourts.length > 0) document.getElementById('filterBar').style.display = 'flex';
     };
@@ -2101,7 +2097,6 @@ var currentViewProfileUid = null;
         else { document.getElementById('authAvatarText').style.display = 'block'; document.getElementById('authAvatarText').textContent = user.displayName ? user.displayName[0].toUpperCase() : '?'; }
         document.getElementById('authBtnText').textContent = user.displayName ? user.displayName.split(' ')[0] : 'Profile';
         document.getElementById('authBtn').style.background = '#e6f9ee';
-        document.getElementById('navProfile').style.display = 'block';
         var profileRef = window._fbDoc(db, 'profiles', user.uid);
         var profileSnap = await window._fbGetDoc(profileRef);
         if (!profileSnap.exists()) {
@@ -2146,7 +2141,6 @@ var currentViewProfileUid = null;
         document.getElementById('authAvatarImg').style.display = 'none';
         document.getElementById('authBtnText').textContent = 'Sign In';
         document.getElementById('authBtn').style.background = '#f0f0f0';
-        document.getElementById('navProfile').style.display = 'none';
         window._currentUser = null;
       }
     });
