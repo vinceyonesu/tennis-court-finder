@@ -939,18 +939,74 @@
       }
     };
 
-    window.showProfile = function() {
+    window.showMyProfile = async function() {
       if (!window._currentUser) { handleAuthClick(); return; }
       document.getElementById('heroSection').style.display = 'none';
       document.getElementById('filterBar').style.display = 'none';
       document.getElementById('resultsGrid').parentElement.style.display = 'none';
       document.getElementById('savedSection').style.display = 'none';
       document.getElementById('nearbyPage').style.display = 'none';
-      document.getElementById('profilePage').style.display = 'block';
+      document.getElementById('profilePage').style.display = 'none';
+      document.getElementById('viewProfilePage').style.display = 'none';
+      document.getElementById('myProfilePage').style.display = 'block';
       document.getElementById('navProfile').style.color = '#1a6b3c';
       document.getElementById('navSearch').style.color = '#555';
+
+      var user = window._currentUser;
+      document.getElementById('mpName').textContent = user.displayName || 'No name';
+      document.getElementById('mpEmail').textContent = user.email || '';
+
+      var profileRef = window._fbDoc(window._db, 'profiles', user.uid);
+      var profileSnap = await window._fbGetDoc(profileRef);
+      var p = profileSnap.exists() ? profileSnap.data() : {};
+
+      if (p.photo || user.photoURL) {
+        document.getElementById('mpPhoto').src = p.photo || user.photoURL;
+        document.getElementById('mpPhoto').style.display = 'block';
+        document.getElementById('mpInitials').style.display = 'none';
+      } else {
+        document.getElementById('mpInitials').textContent = user.displayName ? user.displayName[0].toUpperCase() : '?';
+      }
+
+      if (p.phoneVerified) document.getElementById('mpVerifiedBadge').style.display = 'inline-block';
+      document.getElementById('mpSkill').textContent = p.skill ? '🎾 ' + p.skill : '';
+      document.getElementById('mpUTR').textContent = p.utr ? '📊 UTR ' + p.utr : '';
+      document.getElementById('mpBio').textContent = p.bio || '';
+
+      var socialHtml = '';
+      if (p.instagram) socialHtml += '<a href="https://instagram.com/' + p.instagram.replace('@','') + '" target="_blank" style="text-decoration:none;font-size:12px;color:#833ab4;background:#f8f0ff;padding:5px 12px;border-radius:999px">📸 Instagram</a>';
+      if (p.facebook) socialHtml += '<a href="https://facebook.com/' + p.facebook + '" target="_blank" style="text-decoration:none;font-size:12px;color:#1877f2;background:#f0f5ff;padding:5px 12px;border-radius:999px">📘 Facebook</a>';
+      if (p.whatsapp) socialHtml += '<a href="https://wa.me/' + p.whatsapp.replace(/[^0-9]/g,'') + '" target="_blank" style="text-decoration:none;font-size:12px;color:#25d366;background:#f0fff5;padding:5px 12px;border-radius:999px">💬 WhatsApp</a>';
+      document.getElementById('mpSocial').innerHTML = socialHtml;
+
+      if (p.gallery && p.gallery.length > 0) {
+        document.getElementById('mpGallery').innerHTML = p.gallery.map(function(url) {
+          return '<img src="' + url + '" style="width:80px;height:80px;border-radius:10px;object-fit:cover;cursor:pointer" onclick="showPhotoModal(\'' + url + '\')">';
+        }).join('');
+      } else {
+        document.getElementById('mpGalleryWrap').style.display = 'none';
+      }
+
+      var followersQ = window._fbQuery(window._fbCollection(window._db, 'follows'), window._fbWhere('followingId', '==', user.uid));
+      var followingQ = window._fbQuery(window._fbCollection(window._db, 'follows'), window._fbWhere('followerId', '==', user.uid));
+      var followersSnap = await window._fbGetDocs(followersQ);
+      var followingSnap = await window._fbGetDocs(followingQ);
+      var followerIds = []; followersSnap.forEach(function(d) { followerIds.push(d.data().followerId); });
+      var followingIds = []; followingSnap.forEach(function(d) { followingIds.push(d.data().followingId); });
+      var mutualCount = followerIds.filter(function(id) { return followingIds.includes(id); }).length;
+      document.getElementById('mpFollowerCount').textContent = followersSnap.size;
+      document.getElementById('mpFollowingCount').textContent = followingSnap.size;
+      document.getElementById('mpMutualCount').textContent = mutualCount;
+
+      await loadUserSessionsForMyProfile(user.uid);
     };
 
+    window.showEditProfile = function() {
+      document.getElementById('myProfilePage').style.display = 'none';
+      document.getElementById('profilePage').style.display = 'block';
+    };
+
+    window.showProfile = window.showMyProfile;
     window.showNearby = function() {
       document.getElementById('heroSection').style.display = 'none';
       document.getElementById('filterBar').style.display = 'none';
