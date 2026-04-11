@@ -523,3 +523,10 @@ body {
   border-radius: 16px;
   display: block;
 }
+.nav-logo {
+  cursor: pointer;
+}
+
+.nav-logo:hover {
+  opacity: 0.85;
+}
