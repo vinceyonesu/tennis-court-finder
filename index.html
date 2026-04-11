@@ -78,6 +78,7 @@
         </div>
         <div id="weatherSection"></div>
         <div id="modalHours" class="modal-hours"></div>
+         <div id="hittingPartnerSection"></div>
         <a id="modalDirections" href="#" target="_blank" class="directions-btn">Get Directions</a>
       </div>
     </div>
@@ -123,6 +124,7 @@
       document.getElementById('courtModal').classList.add('active');
       document.body.style.overflow = 'hidden';
       getCourtWeather(data);
+       setTimeout(function() { loadHittingPartnerSection(data.placeId); }, 500);
       if (gService && data.placeId) {
         gService.getDetails(
           { placeId: data.placeId, fields: ['opening_hours', 'formatted_phone_number', 'website'] },
@@ -153,7 +155,143 @@
         );
       }
     };
+window.postSession = async function(placeId) {
+  var name = document.getElementById('sessionName').value.trim();
+  var date = document.getElementById('sessionDate').value;
+  var time = document.getElementById('sessionTime').value;
+  var skill = document.getElementById('sessionSkill').value;
+  var type = document.getElementById('sessionType').value;
 
+  if (!name || !date || !time) {
+    alert('Please fill in your name, date, and time.');
+    return;
+  }
+
+  var btn = document.getElementById('postSessionBtn');
+  btn.textContent = 'Posting...';
+  btn.disabled = true;
+
+  try {
+    await window._fbAddDoc(window._fbCollection(window._db, 'sessions'), {
+      placeId: placeId,
+      name: name,
+      date: date,
+      time: time,
+      skill: skill,
+      type: type,
+      players: [name],
+      createdAt: window._fbTimestamp.now()
+    });
+    document.getElementById('sessionName').value = '';
+    document.getElementById('sessionDate').value = '';
+    document.getElementById('sessionTime').value = '';
+    btn.textContent = 'Post Session';
+    btn.disabled = false;
+    loadSessions(placeId);
+  } catch (err) {
+    console.log('Error posting session:', err);
+    btn.textContent = 'Post Session';
+    btn.disabled = false;
+    alert('Could not post session. Try again.');
+  }
+};
+
+window.joinSession = async function(sessionId, placeId) {
+  var name = prompt('Enter your name to join this session:');
+  if (!name || !name.trim()) return;
+  try {
+    var sessionRef = window._fbDoc(window._db, 'sessions', sessionId);
+    await window._fbUpdateDoc(sessionRef, {
+      players: window._fbArrayUnion(name.trim())
+    });
+    loadSessions(placeId);
+  } catch (err) {
+    console.log('Error joining session:', err);
+    alert('Could not join session. Try again.');
+  }
+};
+
+async function loadSessions(placeId) {
+  var sessionsList = document.getElementById('sessionsList');
+  if (!sessionsList || !window._db) return;
+  sessionsList.innerHTML = '<p style="font-size:12px;color:#888;text-align:center;padding:8px">Loading sessions...</p>';
+
+  try {
+    var today = new Date().toISOString().split('T')[0];
+    var q = window._fbQuery(
+      window._fbCollection(window._db, 'sessions'),
+      window._fbWhere('placeId', '==', placeId),
+      window._fbWhere('date', '>=', today),
+      window._fbOrderBy('date', 'asc')
+    );
+    var snapshot = await window._fbGetDocs(q);
+    if (snapshot.empty) {
+      sessionsList.innerHTML = '<div class="no-sessions">No sessions posted yet. Be the first!</div>';
+      return;
+    }
+    sessionsList.innerHTML = '';
+    snapshot.forEach(function(docSnap) {
+      var s = docSnap.data();
+      var dateStr = new Date(s.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      var timeStr = new Date('2000-01-01T' + s.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      var playersCount = s.players ? s.players.length : 1;
+      var playerNames = s.players ? s.players.join(', ') : s.name;
+      sessionsList.innerHTML +=
+        '<div class="session-card">' +
+          '<div class="session-name">' + s.name + ' is playing</div>' +
+          '<div class="session-details">' +
+            '📅 ' + dateStr + ' at ' + timeStr + '<br>' +
+            '🎾 ' + s.type + ' · ' + s.skill + '<br>' +
+            '👥 ' + playerNames +
+          '</div>' +
+          '<div class="session-footer">' +
+            '<span class="session-players">' + playersCount + ' player' + (playersCount !== 1 ? 's' : '') + ' going</span>' +
+            '<button class="join-btn" onclick="joinSession(\'' + docSnap.id + '\', \'' + placeId + '\')">I\'m In!</button>' +
+          '</div>' +
+        '</div>';
+    });
+  } catch (err) {
+    console.log('Error loading sessions:', err);
+    sessionsList.innerHTML = '<div class="no-sessions">Could not load sessions.</div>';
+  }
+}
+
+function loadHittingPartnerSection(placeId) {
+  var section = document.getElementById('hittingPartnerSection');
+  if (!section) return;
+
+  var today = new Date().toISOString().split('T')[0];
+
+  section.innerHTML =
+    '<div class="hitting-section">' +
+      '<div class="hitting-title">🎾 Find a Hitting Partner</div>' +
+      '<div class="hitting-subtitle">Post your session or join someone already playing here</div>' +
+      '<div class="hitting-form">' +
+        '<input type="text" id="sessionName" placeholder="Your name"/>' +
+        '<div class="hitting-form-row">' +
+          '<input type="date" id="sessionDate" min="' + today + '"/>' +
+          '<input type="time" id="sessionTime"/>' +
+        '</div>' +
+        '<div class="hitting-form-row">' +
+          '<select id="sessionSkill">' +
+            '<option value="Beginner">Beginner</option>' +
+            '<option value="Intermediate" selected>Intermediate</option>' +
+            '<option value="Advanced">Advanced</option>' +
+          '</select>' +
+          '<select id="sessionType">' +
+            '<option value="Singles">Singles</option>' +
+            '<option value="Doubles">Doubles</option>' +
+            '<option value="Rally/Practice">Rally/Practice</option>' +
+          '</select>' +
+        '</div>' +
+        '<button class="hitting-post-btn" id="postSessionBtn" onclick="postSession(\'' + placeId + '\')">Post My Session</button>' +
+      '</div>' +
+      '<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px">Upcoming Sessions at This Court</div>' +
+      '<div id="sessionsList"></div>' +
+    '</div>';
+
+  loadSessions(placeId);
+}
     window.toggleHourly = function(id) {
       var el = document.getElementById(id);
       if (!el) return;
@@ -624,5 +762,34 @@
   </script>
 
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHq7QJIROeH2ZphtL07WQKLWK2Z9ELmZU&libraries=places&callback=initMap" async defer></script>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDl3SuIIHtVijD0NenSIPBVZ5qgAtVSt3U",
+  authDomain: "tennis-court-finder-9097c.firebaseapp.com",
+  projectId: "tennis-court-finder-9097c",
+  storageBucket: "tennis-court-finder-9097c.firebasestorage.app",
+  messagingSenderId: "648106409158",
+  appId: "1:648106409158:web:1b866ec65e23a3a0cd2bc7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    window._db = db;
+    window._fbCollection = collection;
+    window._fbAddDoc = addDoc;
+    window._fbGetDocs = getDocs;
+    window._fbQuery = query;
+    window._fbWhere = where;
+    window._fbOrderBy = orderBy;
+    window._fbTimestamp = Timestamp;
+    window._fbUpdateDoc = updateDoc;
+    window._fbDoc = doc;
+    window._fbArrayUnion = arrayUnion;
+    console.log('✅ Firebase ready!');
+  </script>
 </body>
 </html>
