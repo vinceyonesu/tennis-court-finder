@@ -219,16 +219,28 @@
   </div>
 
   <!-- PLAYERS NEAR YOU -->
+  <!-- PLAYERS NEAR YOU -->
   <div id="nearbyPage" style="display:none;max-width:700px;margin:40px auto;padding:0 24px 60px">
-    <div style="margin-bottom:20px">
-      <h2 style="font-size:22px;font-weight:700;color:#1a1a1a;margin-bottom:4px">🎾 Players Near You</h2>
-      <p style="font-size:14px;color:#888;margin-bottom:16px">Find hitting partners at courts near your location</p>
-      <div style="margin-bottom:16px">
-        <div style="display:flex;gap:8px">
-          <input type="text" id="playerSearchInput" placeholder="Search players by name..." style="flex:1;border:1.5px solid #e0e0e0;border-radius:999px;padding:9px 18px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none"/>
-          <button onclick="searchPlayers()" style="background:#1a6b3c;color:#fff;border:none;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">Search</button>
+
+    <!-- Search Players -->
+    <div style="background:#ffffff;border-radius:20px;border:1px solid #ebebeb;padding:20px 24px;margin-bottom:24px">
+      <div style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:4px">🔍 Find Players</div>
+      <div style="font-size:13px;color:#888;margin-bottom:12px">Search by name to follow other players</div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="playerSearchInput" placeholder="Search players by name..." onkeydown="if(event.key==='Enter')searchPlayers()" style="flex:1;border:1.5px solid #e0e0e0;border-radius:12px;padding:10px 16px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='#1a6b3c'" onblur="this.style.borderColor='#e0e0e0'"/>
+        <button onclick="searchPlayers()" style="background:#1a6b3c;color:#fff;border:none;border-radius:12px;padding:10px 20px;font-size:13px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">Search</button>
+      </div>
+      <div id="playerSearchResults" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Sessions Feed -->
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:2px">🎾 Players Near You</div>
+          <div style="font-size:13px;color:#888">Find hitting partners at courts near you</div>
         </div>
-        <div id="playerSearchResults" style="margin-top:10px"></div>
+        <button onclick="loadNearbySessions()" style="background:#f0f0f0;color:#555;border:none;border-radius:999px;padding:7px 14px;font-size:12px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">🔄 Refresh</button>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
         <select id="nearbySkillFilter" onchange="loadNearbySessions()" style="border:1.5px solid #e0e0e0;border-radius:999px;padding:7px 16px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#555;background:#fff;outline:none;cursor:pointer">
@@ -247,10 +259,9 @@
           <option value="Doubles">Doubles</option>
           <option value="Rally/Practice">Rally/Practice</option>
         </select>
-        <button onclick="loadNearbySessions()" style="background:#1a6b3c;color:#fff;border:none;border-radius:999px;padding:7px 16px;font-size:13px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">🔄 Refresh</button>
       </div>
+      <div id="nearbySessionsList"></div>
     </div>
-    <div id="nearbySessionsList"></div>
   </div>
 
   <!-- PHOTO MODAL -->
@@ -1014,18 +1025,21 @@
     };
 
     window.showProfile = window.showMyProfile;
-    window.showNearby = function() {
+   window.showNearby = function() {
       document.getElementById('heroSection').style.display = 'none';
       document.getElementById('filterBar').style.display = 'none';
       document.getElementById('resultsGrid').parentElement.style.display = 'none';
       document.getElementById('savedSection').style.display = 'none';
       document.getElementById('profilePage').style.display = 'none';
+      document.getElementById('myProfilePage').style.display = 'none';
+      document.getElementById('viewProfilePage').style.display = 'none';
       document.getElementById('nearbyPage').style.display = 'block';
       document.getElementById('navNearby').style.color = '#1a6b3c';
       document.getElementById('navSearch').style.color = '#555';
+      document.getElementById('navProfile').style.color = '#555';
+      document.getElementById('navSaved').style.color = '#555';
       loadNearbySessions();
     };
-
     window.loadNearbySessions = async function() {
       var list = document.getElementById('nearbySessionsList');
       if (!list || !window._db) { list.innerHTML = '<div style="text-align:center;padding:40px;color:#888;font-size:14px">Connecting to database...</div>'; return; }
