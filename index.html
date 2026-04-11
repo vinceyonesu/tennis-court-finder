@@ -256,6 +256,55 @@
       savedTag.style.display = 'inline';
       setTimeout(function() { savedTag.style.display = 'none'; }, 2000);
     };
+
+    function saveSearchHistory(city) {
+      var history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+      history = history.filter(function(c) { return c.toLowerCase() !== city.toLowerCase(); });
+      history.unshift(city);
+      history = history.slice(0, 5);
+      localStorage.setItem('searchHistory', JSON.stringify(history));
+    }
+
+    function showSearchHistory() {
+      var history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+      if (history.length === 0) return;
+      var chips = document.getElementById('searchHistoryChips');
+      chips.innerHTML = '';
+      history.forEach(function(city) {
+        var chip = document.createElement('div');
+        chip.innerHTML =
+          '<span style="font-size:13px">🕐</span>' +
+          '<span style="font-size:13px;font-weight:500;color:#333">' + city + '</span>' +
+          '<span class="history-chip-x" onmousedown="event.preventDefault();removeSearchHistory(\'' + city + '\')">✕</span>';
+        chip.style.cssText = 'display:flex;align-items:center;gap:6px;background:#f4f4f4;border-radius:999px;padding:6px 12px;cursor:pointer;transition:background 0.2s';
+        chip.onmouseover = function() { this.style.background = '#e6f9ee'; };
+        chip.onmouseout = function() { this.style.background = '#f4f4f4'; };
+        chip.onmousedown = function(e) {
+          if (e.target.classList.contains('history-chip-x')) return;
+          e.preventDefault();
+          document.getElementById('cityInput').value = city;
+          document.getElementById('searchHistoryDropdown').style.display = 'none';
+          document.getElementById('searchBtn').click();
+        };
+        chips.appendChild(chip);
+      });
+      document.getElementById('searchHistoryDropdown').style.display = 'block';
+    }
+
+    function hideSearchHistory() {
+      setTimeout(function() {
+        document.getElementById('searchHistoryDropdown').style.display = 'none';
+      }, 150);
+    }
+
+    window.removeSearchHistory = function(city) {
+      var history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+      history = history.filter(function(c) { return c !== city; });
+      localStorage.setItem('searchHistory', JSON.stringify(history));
+      showSearchHistory();
+      if (history.length === 0) document.getElementById('searchHistoryDropdown').style.display = 'none';
+    };
+
     window.openModal = function(id) {
       var data = courtDataStore[id] || favorites[id];
       if (!data) return;
@@ -278,6 +327,7 @@
       document.getElementById('modalHours').innerHTML = '<p style="color:#888;font-size:13px">Loading hours...</p>';
       document.getElementById('weatherSection').innerHTML = '';
       document.getElementById('hittingPartnerSection').innerHTML = '';
+      document.getElementById('courtNotesSection').innerHTML = '';
       document.getElementById('modalDirections').href =
         'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(data.address) + '&destination_place_id=' + data.placeId;
       document.getElementById('courtModal').classList.add('active');
@@ -363,10 +413,7 @@
           players: window._fbArrayUnion({ name: name, uid: window._currentUser.uid, photo: window._currentUser.photoURL || '' })
         });
         loadSessions(placeId);
-      } catch (err) {
-        console.log('Error joining session:', err);
-        alert('Could not join session. Try again.');
-      }
+      } catch (err) { console.log('Error joining session:', err); alert('Could not join session. Try again.'); }
     };
 
     window.deleteSession = async function(sessionId, placeId) {
@@ -380,10 +427,7 @@
         await window._fbUpdateDoc(sessionRef, { deleted: true, deletedAt: window._fbTimestamp.now() });
         if (placeId) loadSessions(placeId);
         else loadNearbySessions();
-      } catch (err) {
-        console.log('Error deleting session:', err);
-        alert('Could not cancel session. Try again.');
-      }
+      } catch (err) { console.log('Error deleting session:', err); alert('Could not cancel session. Try again.'); }
     };
 
     async function loadSessions(placeId) {
@@ -497,7 +541,11 @@
       var provider = new window._GoogleAuthProvider();
       window._signInWithPopup(window._auth, provider)
         .then(function(result) { console.log('Signed in:', result.user.displayName); })
-        .catch(function(err) { console.log('Sign in error:', err); alert('Sign in failed. Please try again.'); });
+        .catch(function(err) {
+          if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+          console.log('Sign in error:', err);
+          alert('Sign in failed. Please try again.');
+        });
     };
 
     window.signOutUser = function() {
@@ -788,53 +836,7 @@
         goToSlide(courtId, current);
       }, 3000);
     }
-function saveSearchHistory(city) {
-  var history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-  history = history.filter(function(c) { return c.toLowerCase() !== city.toLowerCase(); });
-  history.unshift(city);
-  history = history.slice(0, 5);
-  localStorage.setItem('searchHistory', JSON.stringify(history));
-}
 
-function showSearchHistory() {
-  var history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-  if (history.length === 0) return;
-  var chips = document.getElementById('searchHistoryChips');
-  chips.innerHTML = '';
-  history.forEach(function(city) {
-    var chip = document.createElement('div');
-    chip.innerHTML =
-      '<span style="font-size:13px">🕐</span>' +
-      '<span style="font-size:13px;font-weight:500;color:#333">' + city + '</span>' +
-      '<span class="history-chip-x" onmousedown="event.preventDefault();removeSearchHistory(\'' + city + '\')">✕</span>';
-    chip.style.cssText = 'display:flex;align-items:center;gap:6px;background:#f4f4f4;border-radius:999px;padding:6px 12px;cursor:pointer;transition:background 0.2s';
-    chip.onmouseover = function() { this.style.background = '#e6f9ee'; };
-    chip.onmouseout = function() { this.style.background = '#f4f4f4'; };
-    chip.onmousedown = function(e) {
-      if (e.target.classList.contains('history-chip-x')) return;
-      e.preventDefault();
-      document.getElementById('cityInput').value = city;
-      document.getElementById('searchHistoryDropdown').style.display = 'none';
-      document.getElementById('searchBtn').click();
-    };
-    chips.appendChild(chip);
-  });
-  document.getElementById('searchHistoryDropdown').style.display = 'block';
-}
-
-function hideSearchHistory() {
-  setTimeout(function() {
-    document.getElementById('searchHistoryDropdown').style.display = 'none';
-  }, 150);
-}
-
-window.removeSearchHistory = function(city) {
-  var history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-  history = history.filter(function(c) { return c !== city; });
-  localStorage.setItem('searchHistory', JSON.stringify(history));
-  showSearchHistory();
-  if (history.length === 0) document.getElementById('searchHistoryDropdown').style.display = 'none';
-};
     window.toggleHourly = function(id) {
       var el = document.getElementById(id);
       if (!el) return;
@@ -1215,7 +1217,7 @@ window.removeSearchHistory = function(city) {
               '<h3 class="court-name">'+court.name+'</h3>' +
               '<p class="court-address">'+court.address+'</p>' +
               '<div class="card-row"><div class="stars">'+stars+'</div><span class="rating-count">('+court.reviews+' reviews)</span></div>' +
-'<div class="card-row">'+openBadge+'<span class="surface-tag">Tennis Court</span>'+lightsBadge+distanceBadge+notesBadge+'</div>' +              
+              '<div class="card-row">'+openBadge+'<span class="surface-tag">Tennis Court</span>'+lightsBadge+distanceBadge+notesBadge+'</div>' +
             '</div>' +
           '</div>';
       });
@@ -1243,11 +1245,6 @@ window.removeSearchHistory = function(city) {
         if (!city) { cityInput.style.border = '2px solid red'; return; }
         cityInput.style.border = 'none';
         saveSearchHistory(city);
-        var city = cityInput.value.trim();
-        if (!city) { cityInput.style.border = '2px solid red'; return; }
-        cityInput.style.border = 'none';
-        saveSearchHistory(city);
-        resultsGrid.innerHTML = '<div class="loading-msg">Searching for courts in <strong>' + city + '</strong>...</div>';
         resultsGrid.innerHTML = '<div class="loading-msg">Searching for courts in <strong>' + city + '</strong>...</div>';
         document.getElementById('filterBar').style.display = 'none';
         var geocoder = new google.maps.Geocoder();
