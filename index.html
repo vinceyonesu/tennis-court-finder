@@ -53,10 +53,19 @@
     <button class="filter-btn active" id="filterAll" onclick="applyFilter('all')">All Courts</button>
     <button class="filter-btn" id="filterOpen" onclick="applyFilter('open')">Open Now</button>
     <div class="filter-divider"></div>
+    <select class="filter-select" id="radiusSelect" onchange="applyRadiusFilter()">
+      <option value="all">Any Distance</option>
+      <option value="5">Within 5 miles</option>
+      <option value="10">Within 10 miles</option>
+      <option value="20">Within 20 miles</option>
+      <option value="30">Within 30 miles</option>
+    </select>
     <select class="filter-select" id="sortSelect" onchange="applySort()">
       <option value="default">Sort: Default</option>
-      <option value="rating">Sort: Best Rated</option>
-      <option value="reviews">Sort: Most Reviews</option>
+      <option value="closest">Closest First</option>
+      <option value="furthest">Furthest First</option>
+      <option value="rating">Best Rated</option>
+      <option value="reviews">Most Reviews</option>
     </select>
   </div>
 
@@ -1168,7 +1177,8 @@
       document.getElementById('filter' + filter.charAt(0).toUpperCase() + filter.slice(1)).classList.add('active');
       renderCourts();
     };
-    window.applySort = function() { renderCourts(); };
+    window.applySort = function() { currentPage = 1; renderCourts(); };
+    window.applyRadiusFilter = function() { currentPage = 1; renderCourts(); };
     window.toggleFavoriteFromModal = function() { if (currentModalId) toggleFavorite(currentModalId); };
 
     // ── MARKERS ──
@@ -1398,12 +1408,22 @@
     // ── RENDER COURTS ──
     function renderCourts() {
       var sortVal = document.getElementById('sortSelect').value;
+      var radiusVal = document.getElementById('radiusSelect') ? document.getElementById('radiusSelect').value : 'all';
       var filtered = allCourts.filter(function(c) {
-        if (currentFilter === 'open') return c.isOpen === true;
+        if (currentFilter === 'open' && c.isOpen !== true) return false;
+        if (radiusVal !== 'all' && window._userLat && c.lat) {
+          var dist = parseFloat(getDistance(window._userLat, window._userLng, c.lat, c.lng));
+          if (dist > parseFloat(radiusVal)) return false;
+        }
         return true;
       });
       if (sortVal === 'rating') filtered.sort(function(a,b){ return (b.rating||0)-(a.rating||0); });
       else if (sortVal === 'reviews') filtered.sort(function(a,b){ return (b.reviews||0)-(a.reviews||0); });
+      else if (sortVal === 'closest' && window._userLat) {
+        filtered.sort(function(a,b){ return parseFloat(getDistance(window._userLat,window._userLng,a.lat,a.lng)) - parseFloat(getDistance(window._userLat,window._userLng,b.lat,b.lng)); });
+      } else if (sortVal === 'furthest' && window._userLat) {
+        filtered.sort(function(a,b){ return parseFloat(getDistance(window._userLat,window._userLng,b.lat,b.lng)) - parseFloat(getDistance(window._userLat,window._userLng,a.lat,a.lng)); });
+      }
       var resultsGrid = document.getElementById('resultsGrid');
       if (filtered.length === 0) { resultsGrid.innerHTML = '<div class="error-msg">No courts match this filter.</div>'; return; }
       var perPage = 20;
