@@ -2044,16 +2044,68 @@ async function searchNearbyCourts(location, map) {
         resultsGrid.innerHTML = '<div class="error-msg">Could not search courts. Try again.</div>';
       }
     }
-    window.initMap = async function() {
-      const { Map } = await google.maps.importLibrary('maps');
-      const { Place, SearchNearbyRankPreference } = await google.maps.importLibrary('places');
-      window._GMPlace = Place;
-      window._GMSearchNearby = SearchNearbyRankPreference;
-
-      var map = new Map(document.getElementById('map'), {
+    async function searchNearbyCourts(location, map) {
+      var resultsGrid = document.getElementById('resultsGrid');
+      try {
+        const { Place, SearchNearbyRankPreference } = await google.maps.importLibrary('places');
+        var request = {
+          fields: ['displayName', 'location', 'businessStatus', 'photos', 'rating', 'userRatingCount', 'regularOpeningHours', 'id', 'formattedAddress', 'types'],
+          locationRestriction: {
+            circle: { center: location, radius: 5000 }
+          },
+          includedPrimaryTypes: ['tennis_court'],
+          maxResultCount: 20,
+          rankPreference: SearchNearbyRankPreference.POPULARITY
+        };
+        var { places } = await Place.searchNearby(request);
+        if (!places || places.length === 0) {
+          resultsGrid.innerHTML = '<div class="error-msg">No courts found in this area.</div>';
+          return;
+        }
+        allCourts = [];
+        courtDataStore = {};
+        var bounds = new google.maps.LatLngBounds();
+        places.forEach(function(place, index) {
+          var photos = place.photos
+            ? place.photos.slice(0, 3).map(function(p) { return p.getURI({ maxWidth: 400 }); })
+            : ['https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400'];
+          var photo = photos[0];
+          var id = 'court_' + index;
+          var isOpen = place.regularOpeningHours ? place.regularOpeningHours.isOpen() : undefined;
+          var courtObj = {
+            id: id,
+            name: place.displayName,
+            address: place.formattedAddress || '',
+            photo: photo,
+            photos: photos,
+            rating: place.rating || 0,
+            reviews: place.userRatingCount || 0,
+            isOpen: isOpen,
+            lights: hasLights({ name: place.displayName, types: place.types || [] }),
+            placeId: place.id,
+            lat: place.location.lat(),
+            lng: place.location.lng()
+          };
+          courtDataStore[id] = courtObj;
+          allCourts.push(courtObj);
+          addMarker(place, courtObj, map);
+          bounds.extend(place.location);
+        });
+        map.fitBounds(bounds);
+        document.getElementById('filterBar').style.display = 'flex';
+        currentFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.getElementById('filterAll').classList.add('active');
+        renderCourts();
+      } catch (err) {
+        console.log('Search error:', err);
+        resultsGrid.innerHTML = '<div class="error-msg">Could not search courts. Try again.</div>';
+      }
+    }
+    window.initMap = function() {
+      var map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: 34.0522, lng: -118.2437 },
-        zoom: 12,
-        mapId: 'DEMO_MAP_ID'
+        zoom: 12
       });
       window._courtMap = map;
 
