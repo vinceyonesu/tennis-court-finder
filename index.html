@@ -1197,8 +1197,44 @@
       document.getElementById('navNearby').style.color = '#555';
       document.getElementById('navSaved').style.color = '#555';
       loadConversations();
+       var navMsg = document.getElementById('navMessages');
+      if (navMsg) navMsg.innerHTML = '💬 Messages';
     };
-
+      window.startGlobalMessageListener = function(mutualIds) {
+      if (window._globalMsgUnsubscribe) { window._globalMsgUnsubscribe(); window._globalMsgUnsubscribe = null; }
+      if (!window._currentUser || mutualIds.length === 0) return;
+      var myUid = window._currentUser.uid;
+      // Listen for messages where I am the receiver
+      var q = window._fbQuery(
+        window._fbCollection(window._db, 'messages'),
+        window._fbWhere('receiverId', '==', myUid),
+        window._fbOrderBy('createdAt', 'desc')
+      );
+      var isFirstLoad = true;
+      window._globalMsgUnsubscribe = window._fbOnSnapshot(q, async function(snapshot) {
+        if (isFirstLoad) { isFirstLoad = false; return; } // skip initial load
+        snapshot.docChanges().forEach(async function(change) {
+          if (change.type === 'added') {
+            var msg = change.doc.data();
+            // only notify if not currently chatting with this person
+            if (msg.senderId === window._currentChatUid) return;
+            try {
+              var profileSnap = await window._fbGetDoc(window._fbDoc(window._db, 'profiles', msg.senderId));
+              var p = profileSnap.exists() ? profileSnap.data() : {};
+              var senderName = p.name || 'Someone';
+              var senderPhoto = p.photo || '';
+              showMessageNotification(senderName, senderPhoto, msg.text);
+              // Also show in-app badge on Messages nav
+              var navMsg = document.getElementById('navMessages');
+              var messagingPage = document.getElementById('messagingPage');
+              if (navMsg && messagingPage && messagingPage.style.display === 'none') {
+                navMsg.innerHTML = '💬 Messages <span id="msgBadge" style="background:#e74c3c;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:999px;margin-left:4px">●</span>';
+              }
+            } catch(err) { console.log('Notification error:', err); }
+          }
+        });
+      });
+    };
     window.openMessage = function(uid) {
       showMessaging();
       setTimeout(function() { openConversation(uid); }, 300);
@@ -1228,6 +1264,8 @@
           window._mutualFriends.push(Object.assign({ uid: uid }, p));
           renderConversationItem(uid, p);
         }
+         // Listen for incoming messages across all conversations
+        startGlobalMessageListener(mutualIds);
       } catch(err) { console.log('Load conversations error:', err); }
     };
 
@@ -1379,7 +1417,32 @@
     window.closeNewMessageModal = function() {
       document.getElementById('newMessageModal').style.display = 'none';
     };
+// ── NOTIFICATIONS ──
+    window.requestNotificationPermission = async function() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+    };
 
+    function showMessageNotification(senderName, senderPhoto, text) {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      var messagingPage = document.getElementById('messagingPage');
+      var isOnMessaging = messagingPage && messagingPage.style.display !== 'none';
+      if (isOnMessaging) return; // don't notify if already on messages page
+      var notification = new Notification(senderName + ' sent you a message', {
+        body: text,
+        icon: senderPhoto || 'https://vinceyonesu.github.io/tennis-court-finder/icon.png',
+        badge: senderPhoto || '',
+        tag: 'message_' + senderName
+      });
+      notification.onclick = function() {
+        window.focus();
+        showMessaging();
+        notification.close();
+      };
+      setTimeout(function() { notification.close(); }, 5000);
+    }
     window.closeMessaging = function() {
       if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       document.getElementById('messagingPage').style.display = 'none';
@@ -1990,6 +2053,7 @@
 
     onAuthStateChanged(auth, async function(user) {
       window._currentUser = user;
+      if (user) { window.requestNotificationPermission && window.requestNotificationPermission(); }
       if (user) {
         document.getElementById('authAvatarText').style.display = 'none';
         var img = document.getElementById('authAvatarImg');
