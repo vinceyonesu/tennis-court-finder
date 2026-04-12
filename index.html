@@ -17,6 +17,7 @@
       <a href="#" id="navSaved" onclick="showSaved()">Saved Courts <span id="savedCount" class="saved-count">0</span></a>
       <a href="#" id="navSearch" onclick="showSearch()">Search</a>
       <a href="#" id="navNearby" onclick="showNearby()">🎾 Players Near You</a>
+      <a href="#" id="navMessages" onclick="showMessaging()">💬 Messages</a>
       <div id="authBtn" onclick="handleAuthClick()" style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#f0f0f0;border-radius:50px;padding:6px 14px 6px 6px;transition:all 0.2s" onmouseover="this.style.background='#e6f9ee'" onmouseout="this.style.background=window._currentUser?'#e6f9ee':'#f0f0f0'">
         <div id="authAvatar" style="width:28px;height:28px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;overflow:hidden">
           <span id="authAvatarText">?</span>
@@ -329,22 +330,39 @@
   <div id="messagingPage" style="display:none;max-width:900px;margin:40px auto;padding:0 24px 60px">
     <div style="background:#ffffff;border-radius:20px;border:1px solid #ebebeb;overflow:hidden;display:flex;height:600px">
       <!-- Sidebar -->
-      <div style="width:280px;border-right:1px solid #f0f0f0;display:flex;flex-direction:column;flex-shrink:0">
+      <div style="width:260px;border-right:1px solid #f0f0f0;display:flex;flex-direction:column;flex-shrink:0">
         <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:16px;font-weight:700;color:#1a1a1a">💬 Messages</div>
-          <button onclick="closeMessaging()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#888">✕</button>
+          <div style="font-size:15px;font-weight:700;color:#1a1a1a">💬 Messages</div>
+          <button onclick="showNewMessageModal()" style="background:#1a6b3c;color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1" title="New Message">+</button>
         </div>
-        <div id="conversationsList" style="overflow-y:auto;flex:1"></div>
+        <div id="conversationsList" style="overflow-y:auto;flex:1">
+          <div style="font-size:13px;color:#aaa;padding:20px;text-align:center">No conversations yet.<br/>Click + to start one!</div>
+        </div>
       </div>
       <!-- Chat area -->
       <div style="flex:1;display:flex;flex-direction:column;min-width:0">
         <div id="chatHeader" style="padding:14px 20px;border-bottom:1px solid #f0f0f0;min-height:60px;display:flex;align-items:center">
-          <div style="font-size:14px;color:#aaa">Select a conversation</div>
+          <div style="font-size:14px;color:#aaa">👈 Select a conversation or click + to start one</div>
         </div>
-        <div id="chatArea" style="flex:1;overflow-y:auto;padding:16px 0;background:#fafafa"></div>
+        <div id="chatArea" style="flex:1;overflow-y:auto;padding:16px 0;background:#fafafa">
+          <div style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:12px">💬</div><div style="font-size:14px;color:#888">Your messages will appear here</div></div>
+        </div>
         <div id="chatInputArea" style="padding:12px 16px;border-top:1px solid #f0f0f0;display:none;gap:8px;align-items:center">
           <input type="text" id="chatMessageInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()" style="flex:1;border:1.5px solid #e0e0e0;border-radius:24px;padding:10px 16px;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a;outline:none" onfocus="this.style.borderColor='#1a6b3c'" onblur="this.style.borderColor='#e0e0e0'"/>
           <button onclick="sendMessage()" style="background:#1a6b3c;color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">↑</button>
+        </div>
+      </div>
+    </div>
+    <!-- New Message Modal -->
+    <div id="newMessageModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:9000;justify-content:center;align-items:center">
+      <div style="background:#fff;border-radius:20px;width:90%;max-width:400px;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:16px;font-weight:700;color:#1a1a1a">New Message</div>
+          <button onclick="closeNewMessageModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#888">✕</button>
+        </div>
+        <div style="padding:16px 20px">
+          <div style="font-size:13px;color:#888;margin-bottom:12px">Your mutual friends</div>
+          <div id="newMessageList"></div>
         </div>
       </div>
     </div>
@@ -1099,48 +1117,151 @@
       currentViewProfileUid = savedUid;
     };
     // ── MESSAGING ──
-    window.openMessage = function(uid) {
-      if (!window._currentUser) { alert('Please sign in first.'); return; }
-      var hide = ['heroSection','filterBar','savedSection','nearbyPage','myProfilePage','viewProfilePage','profilePage'];
-      hide.forEach(function(id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; });
-      var rg = document.getElementById('resultsGrid'); if (rg) rg.parentElement.style.display = 'none';
-      var ms = document.getElementById('map'); if (ms) ms.closest('.map-section').style.display = 'none';
-      var mp = document.getElementById('messagingPage'); if (mp) mp.style.display = 'block';
-      else { alert('Messaging page not found — make sure the HTML was added!'); return; }
-      window._currentChatUid = uid;
+    window.showMessaging = function() {
+      if (!window._currentUser) { handleAuthClick(); return; }
+      document.getElementById('heroSection').style.display = 'none';
+      document.getElementById('filterBar').style.display = 'none';
+      document.getElementById('resultsGrid').parentElement.style.display = 'none';
+      document.getElementById('savedSection').style.display = 'none';
+      document.getElementById('nearbyPage').style.display = 'none';
+      document.getElementById('myProfilePage').style.display = 'none';
+      document.getElementById('viewProfilePage').style.display = 'none';
+      document.getElementById('profilePage').style.display = 'none';
+      document.getElementById('map').closest('.map-section').style.display = 'none';
+      
+      document.getElementById('messagingPage').style.display = 'none';
+      document.getElementById('navMessages').style.color = '#1a6b3c';
+      document.getElementById('navSearch').style.color = '#555';
+      document.getElementById('navNearby').style.color = '#555';
+      document.getElementById('navSaved').style.color = '#555';
       loadConversations();
-      openConversation(uid);
     };
+
+    window.openMessage = function(uid) {
+      showMessaging();
+      setTimeout(function() { openConversation(uid); }, 300);
+    };
+
     window.loadConversations = async function() {
       var list = document.getElementById('conversationsList');
       if (!list || !window._db || !window._currentUser) return;
-      list.innerHTML = '<div style="font-size:13px;color:#aaa;padding:12px">Loading...</div>';
+      list.innerHTML = '<div style="font-size:13px;color:#aaa;padding:20px;text-align:center">Loading...</div>';
       try {
         var followingSnap = await window._fbGetDocs(window._fbQuery(window._fbCollection(window._db, 'follows'), window._fbWhere('followerId', '==', window._currentUser.uid)));
         var followersSnap = await window._fbGetDocs(window._fbQuery(window._fbCollection(window._db, 'follows'), window._fbWhere('followingId', '==', window._currentUser.uid)));
         var followingIds = []; followingSnap.forEach(function(d) { followingIds.push(d.data().followingId); });
         var followerIds = []; followersSnap.forEach(function(d) { followerIds.push(d.data().followerId); });
         var mutualIds = followingIds.filter(function(id) { return followerIds.includes(id); });
-        if (mutualIds.length === 0) { list.innerHTML = '<div style="font-size:13px;color:#aaa;padding:12px">No mutual friends yet.</div>'; return; }
+        if (mutualIds.length === 0) {
+          list.innerHTML = '<div style="font-size:13px;color:#aaa;padding:20px;text-align:center">No mutual friends yet.<br/>Follow someone who follows you back!</div>';
+          return;
+        }
         list.innerHTML = '';
         for (var i = 0; i < mutualIds.length; i++) {
           var uid = mutualIds[i];
           var profileSnap = await window._fbGetDoc(window._fbDoc(window._db, 'profiles', uid));
           if (!profileSnap.exists()) continue;
           var p = profileSnap.data();
-          var convId = [window._currentUser.uid, uid].sort().join('_');
-          var isActive = window._currentChatUid === uid;
           var finalUid = uid;
           var div = document.createElement('div');
           div.id = 'conv_' + uid;
           div.onclick = function(u) { return function() { openConversation(u); }; }(finalUid);
-          div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;background:' + (isActive ? '#e6f9ee' : '#fff') + ';transition:background 0.2s';
-          div.onmouseover = function() { if (this.id !== 'conv_' + window._currentChatUid) this.style.background = '#f8f9fa'; };
-          div.onmouseout = function() { this.style.background = this.id === 'conv_' + window._currentChatUid ? '#e6f9ee' : '#fff'; };
-          div.innerHTML = (p.photo ? '<img src="' + p.photo + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0"/>' : '<div style="width:40px;height:40px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700;flex-shrink:0">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>') + '<div style="min-width:0"><div style="font-size:14px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (p.name || 'Unknown') + '</div><div style="font-size:12px;color:#888">' + (p.skill || '') + '</div></div>';
+          div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;background:#fff;transition:background 0.2s';
+          div.onmouseover = function() { if ('conv_' + window._currentChatUid !== this.id) this.style.background = '#f8f9fa'; };
+          div.onmouseout = function() { this.style.background = 'conv_' + window._currentChatUid === this.id ? '#e6f9ee' : '#fff'; };
+          div.innerHTML = (p.photo ? '<img src="' + p.photo + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0"/>' : '<div style="width:40px;height:40px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700;flex-shrink:0">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>') + '<div style="min-width:0"><div style="font-size:14px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (p.name || 'Unknown') + '</div><div style="font-size:12px;color:#888">Tap to chat</div></div>';
           list.appendChild(div);
         }
       } catch(err) { console.log('Load conversations error:', err); }
+    };
+
+    window.openConversation = async function(uid) {
+      window._currentChatUid = uid;
+      document.querySelectorAll('[id^="conv_"]').forEach(function(el) { el.style.background = '#fff'; });
+      var activeConv = document.getElementById('conv_' + uid);
+      if (activeConv) activeConv.style.background = '#e6f9ee';
+      var chatArea = document.getElementById('chatArea');
+      var chatHeader = document.getElementById('chatHeader');
+      var chatInput = document.getElementById('chatInputArea');
+      if (!chatArea) return;
+      chatArea.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;font-size:14px">Loading messages...</div>';
+      try {
+        var profileSnap = await window._fbGetDoc(window._fbDoc(window._db, 'profiles', uid));
+        var p = profileSnap.exists() ? profileSnap.data() : {};
+        chatHeader.innerHTML = '<div style="display:flex;align-items:center;gap:10px">' +
+          (p.photo ? '<img src="' + p.photo + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>' : '<div style="width:36px;height:36px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:700">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>') +
+          '<div><div style="font-size:15px;font-weight:700;color:#1a1a1a">' + (p.name || 'Unknown') + '</div><div style="font-size:12px;color:#1a6b3c">👥 Mutual Friend</div></div></div>';
+        chatInput.style.display = 'flex';
+        var convId = [window._currentUser.uid, uid].sort().join('_');
+        if (window._messageUnsubscribe) window._messageUnsubscribe();
+        var q = window._fbQuery(window._fbCollection(window._db, 'messages'), window._fbWhere('convId', '==', convId), window._fbOrderBy('createdAt', 'asc'));
+        window._messageUnsubscribe = window._fbOnSnapshot(q, function(snapshot) {
+          chatArea.innerHTML = '';
+          if (snapshot.empty) {
+            chatArea.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="font-size:40px;margin-bottom:12px">👋</div><div style="font-size:14px;color:#888">No messages yet — say hello!</div></div>';
+            return;
+          }
+          snapshot.forEach(function(docSnap) {
+            var m = docSnap.data();
+            var isMe = m.senderId === window._currentUser.uid;
+            var timeStr = m.createdAt ? new Date(m.createdAt.toDate()).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+            chatArea.innerHTML += '<div style="display:flex;justify-content:' + (isMe ? 'flex-end' : 'flex-start') + ';margin-bottom:8px;padding:0 12px"><div style="max-width:70%"><div style="background:' + (isMe ? '#1a6b3c' : '#f0f0f0') + ';color:' + (isMe ? '#fff' : '#1a1a1a') + ';border-radius:' + (isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px') + ';padding:10px 14px;font-size:14px;line-height:1.4;word-break:break-word">' + m.text + '</div><div style="font-size:10px;color:#aaa;margin-top:3px;text-align:' + (isMe ? 'right' : 'left') + '">' + timeStr + '</div></div></div>';
+          });
+          chatArea.scrollTop = chatArea.scrollHeight;
+        });
+      } catch(err) { console.log('Open conversation error:', err); }
+    };
+
+    window.sendMessage = async function() {
+      var input = document.getElementById('chatMessageInput');
+      var text = input ? input.value.trim() : '';
+      if (!text || !window._currentUser || !window._currentChatUid) return;
+      var convId = [window._currentUser.uid, window._currentChatUid].sort().join('_');
+      input.value = '';
+      try {
+        await window._fbAddDoc(window._fbCollection(window._db, 'messages'), {
+          convId: convId, text: text,
+          senderId: window._currentUser.uid,
+          receiverId: window._currentChatUid,
+          createdAt: window._fbTimestamp.now()
+        });
+      } catch(err) { console.log('Send message error:', err); alert('Could not send message.'); }
+    };
+
+    window.showNewMessageModal = async function() {
+      if (!window._currentUser) { handleAuthClick(); return; }
+      var modal = document.getElementById('newMessageModal');
+      var list = document.getElementById('newMessageList');
+      modal.style.display = 'flex';
+      list.innerHTML = '<div style="font-size:13px;color:#aaa;text-align:center;padding:12px">Loading mutual friends...</div>';
+      try {
+        var followingSnap = await window._fbGetDocs(window._fbQuery(window._fbCollection(window._db, 'follows'), window._fbWhere('followerId', '==', window._currentUser.uid)));
+        var followersSnap = await window._fbGetDocs(window._fbQuery(window._fbCollection(window._db, 'follows'), window._fbWhere('followingId', '==', window._currentUser.uid)));
+        var followingIds = []; followingSnap.forEach(function(d) { followingIds.push(d.data().followingId); });
+        var followerIds = []; followersSnap.forEach(function(d) { followerIds.push(d.data().followerId); });
+        var mutualIds = followingIds.filter(function(id) { return followerIds.includes(id); });
+        if (mutualIds.length === 0) { list.innerHTML = '<div style="font-size:13px;color:#aaa;text-align:center;padding:12px">No mutual friends yet!</div>'; return; }
+        list.innerHTML = '';
+        for (var i = 0; i < mutualIds.length; i++) {
+          var uid = mutualIds[i];
+          var profileSnap = await window._fbGetDoc(window._fbDoc(window._db, 'profiles', uid));
+          if (!profileSnap.exists()) continue;
+          var p = profileSnap.data();
+          var finalUid = uid;
+          list.innerHTML += '<div onclick="closeNewMessageModal();openConversation(\'' + finalUid + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;cursor:pointer">' +
+            (p.photo ? '<img src="' + p.photo + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover"/>' : '<div style="width:40px;height:40px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>') +
+            '<div><div style="font-size:14px;font-weight:600;color:#1a1a1a">' + (p.name || 'Unknown') + '</div><div style="font-size:12px;color:#888">' + (p.skill || '') + '</div></div></div>';
+        }
+      } catch(err) { console.log('New message modal error:', err); }
+    };
+
+    window.closeNewMessageModal = function() {
+      document.getElementById('newMessageModal').style.display = 'none';
+    };
+
+    window.closeMessaging = function() {
+      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
+      showSearch();
     };
 
     window.openConversation = async function(uid) {
