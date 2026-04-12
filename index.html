@@ -1371,36 +1371,62 @@
 
     window.openConversation = async function(uid) {
       window._currentChatUid = uid;
-      document.querySelectorAll('[id^="conv_"]').forEach(function(el) { el.style.background = '#fff'; });
+      document.querySelectorAll('.conv-item').forEach(function(el) { el.style.background = '#fff'; });
       var activeConv = document.getElementById('conv_' + uid);
       if (activeConv) activeConv.style.background = '#e6f9ee';
-      var chatArea = document.getElementById('chatArea');
+      var chatEmptyState = document.getElementById('chatEmptyState');
       var chatHeader = document.getElementById('chatHeader');
+      var chatArea = document.getElementById('chatArea');
       var chatInput = document.getElementById('chatInputArea');
-      if (!chatArea) return;
-      chatArea.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;font-size:14px">Loading messages...</div>';
+      if (chatEmptyState) chatEmptyState.style.display = 'none';
+      if (chatHeader) { chatHeader.style.display = 'flex'; chatHeader.style.removeProperty('display'); chatHeader.style.display = 'flex'; }
+      if (chatArea) { chatArea.style.display = 'block'; chatArea.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa">Loading...</div>'; }
+      if (chatInput) { chatInput.style.display = 'flex'; }
       try {
         var profileSnap = await window._fbGetDoc(window._fbDoc(window._db, 'profiles', uid));
         var p = profileSnap.exists() ? profileSnap.data() : {};
-        chatHeader.innerHTML = '<div style="display:flex;align-items:center;gap:10px">' + (p.photo ? '<img src="' + p.photo + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>' : '<div style="width:36px;height:36px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:700">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>') + '<div><div style="font-size:15px;font-weight:700;color:#1a1a1a">' + (p.name || 'Unknown') + '</div><div style="font-size:12px;color:#888">👥 Mutual Friend</div></div></div>';
-        chatInput.style.display = 'flex';
+        var avatarHtml = p.photo
+          ? '<img src="' + p.photo + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>'
+          : '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1a6b3c,#25a05a);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:700">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>';
+        if (document.getElementById('chatHeaderAvatar')) document.getElementById('chatHeaderAvatar').innerHTML = avatarHtml;
+        if (document.getElementById('chatHeaderName')) document.getElementById('chatHeaderName').textContent = p.name || 'Unknown';
         var convId = [window._currentUser.uid, uid].sort().join('_');
-        if (window._messageUnsubscribe) window._messageUnsubscribe();
-        var q = window._fbQuery(window._fbCollection(window._db, 'messages'), window._fbWhere('convId', '==', convId), window._fbOrderBy('createdAt', 'asc'));
+        if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
+        var q = window._fbQuery(
+          window._fbCollection(window._db, 'messages'),
+          window._fbWhere('convId', '==', convId),
+          window._fbOrderBy('createdAt', 'asc')
+        );
         window._messageUnsubscribe = window._fbOnSnapshot(q, function(snapshot) {
+          console.log('snapshot received, size:', snapshot.size);
+          if (!chatArea) return;
           chatArea.innerHTML = '';
           if (snapshot.empty) {
-            chatArea.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="font-size:40px;margin-bottom:12px">💬</div><div style="font-size:14px;color:#888">No messages yet.<br>Say hello!</div></div>';
+            var bigAvatar = p.photo
+              ? '<img src="' + p.photo + '" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:16px"/>'
+              : '<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#1a6b3c,#25a05a);display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;font-weight:700;margin:0 auto 16px">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>';
+            chatArea.innerHTML = '<div style="text-align:center;padding:40px 20px">' + bigAvatar + '<div style="font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:6px">' + (p.name || 'Unknown') + '</div><div style="font-size:13px;color:#aaa">👥 You are mutual friends — say hello!</div></div>';
             return;
           }
+          var lastDate = '';
           snapshot.forEach(function(docSnap) {
             var m = docSnap.data();
             var isMe = m.senderId === window._currentUser.uid;
+            var msgDate = m.createdAt ? new Date(m.createdAt.toDate()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+            if (msgDate && msgDate !== lastDate) {
+              chatArea.innerHTML += '<div style="text-align:center;margin:12px 0"><span style="background:#f0f0f0;color:#888;font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px">' + msgDate + '</span></div>';
+              lastDate = msgDate;
+            }
             var timeStr = m.createdAt ? new Date(m.createdAt.toDate()).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
-            chatArea.innerHTML += '<div style="display:flex;justify-content:' + (isMe ? 'flex-end' : 'flex-start') + ';margin-bottom:8px;padding:0 12px"><div style="max-width:70%"><div style="background:' + (isMe ? '#1a6b3c' : '#f0f0f0') + ';color:' + (isMe ? '#fff' : '#1a1a1a') + ';border-radius:' + (isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px') + ';padding:10px 14px;font-size:14px;line-height:1.4">' + m.text + '</div><div style="font-size:10px;color:#aaa;margin-top:3px;text-align:' + (isMe ? 'right' : 'left') + '">' + timeStr + '</div></div></div>';
+            chatArea.innerHTML += '<div style="display:flex;justify-content:' + (isMe ? 'flex-end' : 'flex-start') + ';margin-bottom:4px;padding:0 16px;align-items:flex-end;gap:8px">' +
+              (!isMe ? '<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1a6b3c,#25a05a);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700;flex-shrink:0;margin-bottom:2px">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>' : '') +
+              '<div style="max-width:65%"><div style="background:' + (isMe ? '#1a6b3c' : '#f0f0f0') + ';color:' + (isMe ? '#fff' : '#1a1a1a') + ';border-radius:' + (isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px') + ';padding:10px 14px;font-size:14px;line-height:1.5;word-break:break-word">' + m.text + '</div><div style="font-size:10px;color:#aaa;margin-top:3px;' + (isMe ? 'text-align:right;padding-right:4px' : 'padding-left:4px') + '">' + timeStr + '</div></div></div>';
           });
           chatArea.scrollTop = chatArea.scrollHeight;
+        }, function(err) {
+          console.log('onSnapshot error:', err);
         });
+        if (document.getElementById('chatMessageInput')) document.getElementById('chatMessageInput').focus();
       } catch(err) { console.log('Open conversation error:', err); }
     };
 
