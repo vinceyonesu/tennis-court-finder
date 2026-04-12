@@ -1078,21 +1078,16 @@
     // ── MESSAGING ──
     window.openMessage = function(uid) {
       if (!window._currentUser) { alert('Please sign in first.'); return; }
-      document.getElementById('heroSection').style.display = 'none';
-      document.getElementById('filterBar').style.display = 'none';
-      document.getElementById('resultsGrid').parentElement.style.display = 'none';
-      document.getElementById('savedSection').style.display = 'none';
-      document.getElementById('nearbyPage').style.display = 'none';
-      document.getElementById('myProfilePage').style.display = 'none';
-      document.getElementById('viewProfilePage').style.display = 'none';
-      document.getElementById('profilePage').style.display = 'none';
-      document.getElementById('map').closest('.map-section').style.display = 'none';
-      document.getElementById('messagingPage').style.display = 'block';
+      var hide = ['heroSection','filterBar','savedSection','nearbyPage','myProfilePage','viewProfilePage','profilePage'];
+      hide.forEach(function(id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; });
+      var rg = document.getElementById('resultsGrid'); if (rg) rg.parentElement.style.display = 'none';
+      var ms = document.getElementById('map'); if (ms) ms.closest('.map-section').style.display = 'none';
+      var mp = document.getElementById('messagingPage'); if (mp) mp.style.display = 'block';
+      else { alert('Messaging page not found — make sure the HTML was added!'); return; }
       window._currentChatUid = uid;
       loadConversations();
       openConversation(uid);
     };
-
     window.loadConversations = async function() {
       var list = document.getElementById('conversationsList');
       if (!list || !window._db || !window._currentUser) return;
