@@ -17,7 +17,7 @@
       <a href="#" id="navSaved" onclick="showSaved()">Saved Courts <span id="savedCount" class="saved-count">0</span></a>
       <a href="#" id="navSearch" onclick="showSearch()">Search</a>
       <a href="#" id="navNearby" onclick="showNearby()">🎾 Players Near You</a>
-      <a href="#" id="navMessages" onclick="showMessaging()">💬 Messages</a>
+      <a href="#" id="navMessages" onclick="showMessaging()" style="position:relative">💬 Messages <span id="msgBadge" style="display:none;position:absolute;top:-6px;right:-10px;background:#e74c3c;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:999px;min-width:18px;text-align:center">0</span></a>
       <div id="authBtn" onclick="handleAuthClick()" style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#f0f0f0;border-radius:50px;padding:6px 14px 6px 6px;transition:all 0.2s" onmouseover="this.style.background='#e6f9ee'" onmouseout="this.style.background=window._currentUser?'#e6f9ee':'#f0f0f0'">
         <div id="authAvatar" style="width:28px;height:28px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;overflow:hidden">
           <span id="authAvatarText">?</span>
@@ -1188,57 +1188,63 @@
       document.getElementById('myProfilePage').style.display = 'none';
       document.getElementById('viewProfilePage').style.display = 'none';
       document.getElementById('profilePage').style.display = 'none';
-      document.getElementById('messagingPage').style.display = 'none';
-      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       document.getElementById('map').closest('.map-section').style.display = 'none';
       document.getElementById('messagingPage').style.display = 'block';
-      document.getElementById('navMessages').style.color = '#1a6b3c';
-      document.getElementById('navSearch').style.color = '#555';
-      document.getElementById('navNearby').style.color = '#555';
-      document.getElementById('navSaved').style.color = '#555';
       loadConversations();
-       var navMsg = document.getElementById('navMessages');
-      if (navMsg) navMsg.innerHTML = '💬 Messages';
+      // ↓ ADD THESE LINES ↓
+      window._unreadCount = 0;
+      updateMsgBadge(0);
+      var navMsg = document.getElementById('navMessages');
+      if (navMsg) navMsg.style.color = '#1a6b3c';
     };
       window.startGlobalMessageListener = function(mutualIds) {
       if (window._globalMsgUnsubscribe) { window._globalMsgUnsubscribe(); window._globalMsgUnsubscribe = null; }
       if (!window._currentUser || mutualIds.length === 0) return;
       var myUid = window._currentUser.uid;
-      // Listen for messages where I am the receiver
       var q = window._fbQuery(
         window._fbCollection(window._db, 'messages'),
         window._fbWhere('receiverId', '==', myUid),
         window._fbOrderBy('createdAt', 'desc')
       );
       var isFirstLoad = true;
+      window._unreadCount = window._unreadCount || 0;
       window._globalMsgUnsubscribe = window._fbOnSnapshot(q, async function(snapshot) {
-        if (isFirstLoad) { isFirstLoad = false; return; } // skip initial load
+        if (isFirstLoad) { isFirstLoad = false; return; }
         snapshot.docChanges().forEach(async function(change) {
           if (change.type === 'added') {
             var msg = change.doc.data();
-            // only notify if not currently chatting with this person
             if (msg.senderId === window._currentChatUid) return;
+            var messagingPage = document.getElementById('messagingPage');
+            var isOnMessaging = messagingPage && messagingPage.style.display !== 'none';
             try {
               var profileSnap = await window._fbGetDoc(window._fbDoc(window._db, 'profiles', msg.senderId));
               var p = profileSnap.exists() ? profileSnap.data() : {};
               var senderName = p.name || 'Someone';
               var senderPhoto = p.photo || '';
+              // Browser notification
               showMessageNotification(senderName, senderPhoto, msg.text);
-              // Also show in-app badge on Messages nav
-              var navMsg = document.getElementById('navMessages');
-              var messagingPage = document.getElementById('messagingPage');
-              if (navMsg && messagingPage && messagingPage.style.display === 'none') {
-                navMsg.innerHTML = '💬 Messages <span id="msgBadge" style="background:#e74c3c;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:999px;margin-left:4px">●</span>';
+              // Badge count
+              if (!isOnMessaging) {
+                window._unreadCount = (window._unreadCount || 0) + 1;
+                updateMsgBadge(window._unreadCount);
               }
             } catch(err) { console.log('Notification error:', err); }
           }
         });
       });
     };
-    window.openMessage = function(uid) {
-      showMessaging();
-      setTimeout(function() { openConversation(uid); }, 300);
-    };
+
+    function updateMsgBadge(count) {
+      var badge = document.getElementById('msgBadge');
+      if (!badge) return;
+      if (count > 0) {
+        badge.style.display = 'inline-block';
+        badge.textContent = count > 99 ? '99+' : count;
+      } else {
+        badge.style.display = 'none';
+        badge.textContent = '0';
+      }
+    }
 
     window.loadConversations = async function() {
       var list = document.getElementById('conversationsList');
