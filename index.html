@@ -1462,7 +1462,7 @@
           try {
             var req = {
               fields: ['displayName','location','businessStatus','photos','rating','userRatingCount','regularOpeningHours','id','formattedAddress','types'],
-              locationRestriction: { circle: { center: { lat: location.lat(), lng: location.lng() }, radius: radii[r] } },
+              locationRestriction: new google.maps.Circle({ center: { lat: location.lat(), lng: location.lng() }, radius: radii[r] }),
               includedPrimaryTypes: ['tennis_court'],
               maxResultCount: 20,
               rankPreference: SearchNearbyRankPreference.POPULARITY
@@ -1473,7 +1473,7 @@
                 if (!seenIds.has(p.id)) { seenIds.add(p.id); allPlaces.push(p); }
               });
             }
-          } catch(e) {}
+          } catch(e) { console.log('Radius search error:', e); }
         }
         if (allPlaces.length === 0) { resultsGrid.innerHTML = '<div class="error-msg">No courts found in this area.</div>'; return; }
         allCourts = [];
