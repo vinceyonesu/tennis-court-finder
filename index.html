@@ -1568,35 +1568,37 @@ var currentViewProfileUid = null;
       if (currentModalId) toggleFavorite(currentModalId);
     };
 
-    async function addMarker(place, courtObj, map) {
-      const { AdvancedMarkerElement } = await google.maps.importLibrary('marker');
-      var marker = new AdvancedMarkerElement({
-        position: courtObj,
-        map: map,
-        title: courtObj.name
-      });
-      var isOpen = courtObj.isOpen;
-      var statusText = isOpen === true ? '<span style="color:#1a6b3c;font-weight:600;font-size:12px">● Open Now</span>' : isOpen === false ? '<span style="color:#c0392b;font-weight:600;font-size:12px">● Closed</span>' : '<span style="color:#888;font-size:12px">● Hours N/A</span>';
-      var stars = courtObj.rating ? '★'.repeat(Math.round(courtObj.rating)) + '☆'.repeat(5 - Math.round(courtObj.rating)) : '☆☆☆☆☆';
-      var infoContent =
-        '<div style="width:220px;font-family:sans-serif;cursor:pointer" onclick="openModal(\'' + courtObj.id + '\')">' +
-          '<img src="' + courtObj.photo + '" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px"/>' +
-          '<div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:4px">' + courtObj.name + '</div>' +
-          '<div style="font-size:11px;color:#888;margin-bottom:6px">' + courtObj.address + '</div>' +
-          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="color:#f4a800;font-size:13px">' + stars + '</span>' + statusText + '</div>' +
-          '<div style="background:#1a6b3c;color:#fff;text-align:center;padding:7px;border-radius:8px;font-size:12px;font-weight:600">View Details</div>' +
-        '</div>';
-      var infoWindow = new google.maps.InfoWindow({ content: infoContent });
-      marker.addListener('click', function() {
-        if (activeInfoWindow) activeInfoWindow.close();
-        infoWindow.open(map, marker);
-        activeInfoWindow = infoWindow;
-        var cardEl = document.getElementById('court_card_' + courtObj.id);
-        if (cardEl) {
-          cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          cardEl.style.outline = '3px solid #1a6b3c';
-          setTimeout(function() { cardEl.style.outline = 'none'; }, 2000);
-        }
+    function addMarker(place, courtObj, map) {
+      google.maps.importLibrary('marker').then(function(markerLib) {
+        var AdvancedMarkerElement = markerLib.AdvancedMarkerElement;
+        var marker = new AdvancedMarkerElement({
+          position: { lat: courtObj.lat, lng: courtObj.lng },
+          map: map,
+          title: courtObj.name
+        });
+        var isOpen = courtObj.isOpen;
+        var statusText = isOpen === true ? '<span style="color:#1a6b3c;font-weight:600;font-size:12px">● Open Now</span>' : isOpen === false ? '<span style="color:#c0392b;font-weight:600;font-size:12px">● Closed</span>' : '<span style="color:#888;font-size:12px">● Hours N/A</span>';
+        var stars = courtObj.rating ? '★'.repeat(Math.round(courtObj.rating)) + '☆'.repeat(5 - Math.round(courtObj.rating)) : '☆☆☆☆☆';
+        var infoContent =
+          '<div style="width:220px;font-family:sans-serif;cursor:pointer" onclick="openModal(\'' + courtObj.id + '\')">' +
+            '<img src="' + courtObj.photo + '" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px"/>' +
+            '<div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:4px">' + courtObj.name + '</div>' +
+            '<div style="font-size:11px;color:#888;margin-bottom:6px">' + courtObj.address + '</div>' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="color:#f4a800;font-size:13px">' + stars + '</span>' + statusText + '</div>' +
+            '<div style="background:#1a6b3c;color:#fff;text-align:center;padding:7px;border-radius:8px;font-size:12px;font-weight:600">View Details</div>' +
+          '</div>';
+        var infoWindow = new google.maps.InfoWindow({ content: infoContent });
+        marker.addListener('click', function() {
+          if (activeInfoWindow) activeInfoWindow.close();
+          infoWindow.open(map, marker);
+          activeInfoWindow = infoWindow;
+          var cardEl = document.getElementById('court_card_' + courtObj.id);
+          if (cardEl) {
+            cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            cardEl.style.outline = '3px solid #1a6b3c';
+            setTimeout(function() { cardEl.style.outline = 'none'; }, 2000);
+          }
+        });
       });
     }
 
