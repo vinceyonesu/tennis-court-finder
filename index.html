@@ -1295,17 +1295,27 @@
     window.sendMessage = async function() {
       var input = document.getElementById('chatMessageInput');
       var text = input ? input.value.trim() : '';
-      if (!text || !window._currentUser || !window._currentChatUid) return;
+      console.log('sendMessage called, text:', text, 'chatUid:', window._currentChatUid, 'user:', window._currentUser ? window._currentUser.uid : 'none');
+      if (!text) { console.log('no text'); return; }
+      if (!window._currentUser) { console.log('not signed in'); return; }
+      if (!window._currentChatUid) { console.log('no chat uid'); return; }
+      if (!window._db) { console.log('no db'); return; }
       var convId = [window._currentUser.uid, window._currentChatUid].sort().join('_');
+      console.log('convId:', convId);
       input.value = '';
       try {
-        await window._fbAddDoc(window._fbCollection(window._db, 'messages'), {
-          convId: convId, text: text,
+        var docRef = await window._fbAddDoc(window._fbCollection(window._db, 'messages'), {
+          convId: convId,
+          text: text,
           senderId: window._currentUser.uid,
           receiverId: window._currentChatUid,
           createdAt: window._fbTimestamp.now()
         });
-      } catch(err) { console.log('Send message error:', err); alert('Could not send message.'); }
+        console.log('Message sent! id:', docRef.id);
+      } catch(err) {
+        console.log('Send message error:', err);
+        alert('Could not send: ' + err.message);
+      }
     };
 
     window.showNewMessageModal = async function() {
