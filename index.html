@@ -895,6 +895,7 @@
       document.getElementById('map').closest('.map-section').style.display = 'none';
       document.getElementById('navSearch').style.color = '#555';
       document.getElementById('messagingPage').style.display = 'none';
+      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       var user = window._currentUser;
       document.getElementById('mpName').textContent = user.displayName || 'No name';
       document.getElementById('mpEmail').textContent = user.email || '';
@@ -942,6 +943,7 @@
       document.getElementById('navSearch').style.color = '#555';
       document.getElementById('navSaved').style.color = '#555';
       document.getElementById('messagingPage').style.display = 'none';
+      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       loadNearbySessions();
     };
     window.loadNearbySessions = async function() {
@@ -1041,6 +1043,7 @@
       document.getElementById('vpInitials').textContent = '?';
       document.getElementById('vpFollowBtn').innerHTML = '';
       document.getElementById('messagingPage').style.display = 'none';
+      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       document.getElementById('vpSessions').innerHTML = '<p style="font-size:13px;color:#aaa">Loading sessions...</p>';
       try {
         var profileSnap = await window._fbGetDoc(window._fbDoc(window._db, 'profiles', uid));
@@ -1177,6 +1180,7 @@
       document.getElementById('viewProfilePage').style.display = 'none';
       document.getElementById('profilePage').style.display = 'none';
       document.getElementById('messagingPage').style.display = 'none';
+      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       document.getElementById('map').closest('.map-section').style.display = 'none';
       document.getElementById('messagingPage').style.display = 'block';
       document.getElementById('navMessages').style.color = '#1a6b3c';
@@ -1616,6 +1620,7 @@
       document.getElementById('navSaved').style.color = '#1a6b3c';
       document.getElementById('navSearch').style.color = '#555';
       document.getElementById('messagingPage').style.display = 'none';
+      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       var savedGrid = document.getElementById('savedGrid');
       var keys = Object.keys(favorites);
       if (keys.length === 0) { savedGrid.innerHTML = '<div class="loading-msg" style="grid-column:1/-1">No saved courts yet. Search and click the heart to save courts!</div>'; return; }
@@ -1644,6 +1649,7 @@
       document.getElementById('navSearch').style.color = '#1a6b3c';
       document.getElementById('navNearby').style.color = '#555';
       document.getElementById('messagingPage').style.display = 'none';
+      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       if (allCourts.length > 0) document.getElementById('filterBar').style.display = 'flex';
     };
 
