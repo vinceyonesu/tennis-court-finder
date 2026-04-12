@@ -1434,7 +1434,7 @@
         var SearchNearbyRankPreference = placesLib.SearchNearbyRankPreference;
         var request = {
           fields: ['displayName', 'location', 'businessStatus', 'photos', 'rating', 'userRatingCount', 'regularOpeningHours', 'id', 'formattedAddress', 'types'],
-          locationRestriction: { circle: { center: { lat: location.lat(), lng: location.lng() }, radius: 5000 } },
+          locationRestriction: new google.maps.Circle({ center: { lat: location.lat(), lng: location.lng() }, radius: 5000 }),
           includedPrimaryTypes: ['tennis_court'],
           maxResultCount: 20,
           rankPreference: SearchNearbyRankPreference.POPULARITY
