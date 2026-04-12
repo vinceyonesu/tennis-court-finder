@@ -1128,8 +1128,11 @@
       var thumb = document.getElementById('notifyThumb_' + uid);
       if (toggle) toggle.style.background = isNowNotifying ? '#1a6b3c' : '#ccc';
       if (thumb) thumb.style.transform = isNowNotifying ? 'translateX(20px)' : 'translateX(0)';
-      if (isNowNotifying) {
-        alert('🔔 You\'ll be notified when ' + uid + ' posts a session!');
+       if (isNowNotifying) {
+        var friendProfile = window._mutualFriends ? window._mutualFriends.find(function(f) { return f.uid === uid; }) : null;
+        var friendName = friendProfile ? friendProfile.name : 'this player';
+        alert('🔔 You\'ll be notified when ' + friendName + ' posts a session!');
+    
       }
     };
     window.closeViewProfile = function() {
