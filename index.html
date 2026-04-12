@@ -1093,15 +1093,17 @@
         btn.innerHTML =
           '<div style="display:flex;gap:8px;flex-wrap:wrap"><button onclick="toggleFollow(\'' + uid + '\')" style="flex:1;background:' + (isFollowing ? '#f0f0f0' : '#1a6b3c') + ';color:' + (isFollowing ? '#555' : '#fff') + ';border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:pointer">' + (isMutual ? '👥 Mutual Friends' : isFollowing ? '✓ Following' : '+ Follow') + '</button>' +
           (isMutual ? '<button onclick="openMessage(\'' + uid + '\')" style="flex:1;background:#e6f9ee;color:#1a6b3c;border:1px solid #1a6b3c;border-radius:10px;padding:10px;font-size:14px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:pointer">💬 Message</button>' : '') + '</div>' +
-          (isMutual ? '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f8f9fa;border-radius:10px"><span style="font-size:13px;color:#555">🔔 Notify when playing</span><label style="position:relative;display:inline-block;width:40px;height:22px;margin-left:auto"><input type="checkbox" id="notifyToggle_' + uid + '" onchange="toggleNotifyFriend(\'' + uid + '\')" style="opacity:0;width:0;height:0"><span onclick="document.getElementById(\'notifyToggle_' + uid + '\').click()" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;border-radius:22px;transition:0.3s"></span></label></div>' : '');
+          (isMutual ? '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f8f9fa;border-radius:10px;cursor:pointer" onclick="toggleNotifyFriend(\'' + uid + '\')"><span style="font-size:13px;color:#555">🔔 Notify when playing</span><div id="notifyToggle_' + uid + '" style="margin-left:auto;width:44px;height:24px;border-radius:12px;background:#ccc;position:relative;transition:background 0.3s;flex-shrink:0"><div id="notifyThumb_' + uid + '" style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.3s;box-shadow:0 1px 4px rgba(0,0,0,0.2)"></div></div></div>' : '');
         if (isMutual) {
           var notifyKey = 'notify_' + window._currentUser.uid + '_' + uid;
           var isNotifying = localStorage.getItem(notifyKey) === 'true';
           setTimeout(function() {
+            var notifyKey = 'notify_' + window._currentUser.uid + '_' + uid;
+            var isNotifying = localStorage.getItem(notifyKey) === 'true';
             var toggle = document.getElementById('notifyToggle_' + uid);
-            var span = toggle ? toggle.nextElementSibling : null;
-            if (toggle) toggle.checked = isNotifying;
-            if (span) span.style.background = isNotifying ? '#1a6b3c' : '#ccc';
+            var thumb = document.getElementById('notifyThumb_' + uid);
+            if (toggle) toggle.style.background = isNotifying ? '#1a6b3c' : '#ccc';
+            if (thumb) thumb.style.transform = isNotifying ? 'translateX(20px)' : 'translateX(0)';
           }, 100);
         }
       } catch (err) { console.log('Follow button error:', err); }
@@ -1120,11 +1122,15 @@
     };
     window.toggleNotifyFriend = function(uid) {
       var notifyKey = 'notify_' + window._currentUser.uid + '_' + uid;
-      var toggle = document.getElementById('notifyToggle_' + uid);
-      var span = toggle ? toggle.nextElementSibling : null;
-      var isNowNotifying = toggle ? toggle.checked : false;
+      var isNowNotifying = localStorage.getItem(notifyKey) !== 'true';
       localStorage.setItem(notifyKey, isNowNotifying.toString());
-      if (span) span.style.background = isNowNotifying ? '#1a6b3c' : '#ccc';
+      var toggle = document.getElementById('notifyToggle_' + uid);
+      var thumb = document.getElementById('notifyThumb_' + uid);
+      if (toggle) toggle.style.background = isNowNotifying ? '#1a6b3c' : '#ccc';
+      if (thumb) thumb.style.transform = isNowNotifying ? 'translateX(20px)' : 'translateX(0)';
+      if (isNowNotifying) {
+        alert('🔔 You\'ll be notified when ' + uid + ' posts a session!');
+      }
     };
     window.closeViewProfile = function() {
       document.getElementById('viewProfilePage').style.display = 'none';
