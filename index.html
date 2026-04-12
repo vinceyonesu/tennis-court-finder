@@ -1222,7 +1222,7 @@
               var senderName = p.name || 'Someone';
               var senderPhoto = p.photo || '';
               // Browser notification
-              showMessageNotification(senderName, senderPhoto, msg.text);
+              showBrowserNotification(senderName, senderPhoto, msg.text);
               // Badge count
               if (!isOnMessaging) {
                 window._unreadCount = (window._unreadCount || 0) + 1;
@@ -1299,85 +1299,6 @@
         el.style.display = el.getAttribute('data-name').includes(query) ? 'flex' : 'none';
       });
     };
-
-    window.openConversation = async function(uid) {
-      window._currentChatUid = uid;
-      document.querySelectorAll('.conv-item').forEach(function(el) { el.style.background = '#fff'; });
-      var activeConv = document.getElementById('conv_' + uid);
-      if (activeConv) activeConv.style.background = '#e6f9ee';
-      document.getElementById('chatEmptyState').style.display = 'none';
-      document.getElementById('chatHeader').style.display = 'flex';
-      document.getElementById('chatArea').style.display = 'block';
-      document.getElementById('chatInputArea').style.display = 'flex';
-      var chatArea = document.getElementById('chatArea');
-      chatArea.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;font-size:14px">Loading messages...</div>';
-      try {
-        var profileSnap = await window._fbGetDoc(window._fbDoc(window._db, 'profiles', uid));
-        var p = profileSnap.exists() ? profileSnap.data() : {};
-        var avatarHtml = p.photo
-          ? '<img src="' + p.photo + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>'
-          : '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1a6b3c,#25a05a);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:700">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>';
-        document.getElementById('chatHeaderAvatar').innerHTML = avatarHtml;
-        document.getElementById('chatHeaderName').textContent = p.name || 'Unknown';
-        var convId = [window._currentUser.uid, uid].sort().join('_');
-        if (window._messageUnsubscribe) window._messageUnsubscribe();
-        var q = window._fbQuery(window._fbCollection(window._db, 'messages'), window._fbWhere('convId', '==', convId), window._fbOrderBy('createdAt', 'asc'));
-        window._messageUnsubscribe = window._fbOnSnapshot(q, function(snapshot) {
-          chatArea.innerHTML = '';
-          if (snapshot.empty) {
-            var bigAvatar = p.photo
-              ? '<img src="' + p.photo + '" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:16px"/>'
-              : '<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#1a6b3c,#25a05a);display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;font-weight:700;margin:0 auto 16px">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>';
-            chatArea.innerHTML = '<div style="text-align:center;padding:40px 20px">' + bigAvatar + '<div style="font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:6px">' + (p.name || 'Unknown') + '</div><div style="font-size:13px;color:#888;margin-bottom:4px">' + (p.skill || '') + '</div><div style="font-size:13px;color:#aaa">👥 You are mutual friends</div></div>';
-            return;
-          }
-          var lastDate = '';
-          snapshot.forEach(function(docSnap) {
-            var m = docSnap.data();
-            var isMe = m.senderId === window._currentUser.uid;
-            var msgDate = m.createdAt ? new Date(m.createdAt.toDate()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-            if (msgDate && msgDate !== lastDate) {
-              chatArea.innerHTML += '<div style="text-align:center;margin:12px 0"><span style="background:#f0f0f0;color:#888;font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px">' + msgDate + '</span></div>';
-              lastDate = msgDate;
-            }
-            var timeStr = m.createdAt ? new Date(m.createdAt.toDate()).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
-            chatArea.innerHTML += '<div style="display:flex;justify-content:' + (isMe ? 'flex-end' : 'flex-start') + ';margin-bottom:4px;padding:0 16px;align-items:flex-end;gap:8px">' +
-              (!isMe ? '<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1a6b3c,#25a05a);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700;flex-shrink:0;margin-bottom:2px">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>' : '') +
-              '<div style="max-width:65%"><div style="background:' + (isMe ? '#1a6b3c' : '#f0f0f0') + ';color:' + (isMe ? '#fff' : '#1a1a1a') + ';border-radius:' + (isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px') + ';padding:10px 14px;font-size:14px;line-height:1.5;word-break:break-word">' + m.text + '</div><div style="font-size:10px;color:#aaa;margin-top:3px;' + (isMe ? 'text-align:right;padding-right:4px' : 'padding-left:4px') + '">' + timeStr + '</div></div>' +
-              '</div>';
-          });
-          chatArea.scrollTop = chatArea.scrollHeight;
-        });
-        document.getElementById('chatMessageInput').focus();
-      } catch(err) { console.log('Open conversation error:', err); }
-    };
-
-    window.sendMessage = async function() {
-      var input = document.getElementById('chatMessageInput');
-      var text = input ? input.value.trim() : '';
-      console.log('sendMessage called, text:', text, 'chatUid:', window._currentChatUid, 'user:', window._currentUser ? window._currentUser.uid : 'none');
-      if (!text) { console.log('no text'); return; }
-      if (!window._currentUser) { console.log('not signed in'); return; }
-      if (!window._currentChatUid) { console.log('no chat uid'); return; }
-      if (!window._db) { console.log('no db'); return; }
-      var convId = [window._currentUser.uid, window._currentChatUid].sort().join('_');
-      console.log('convId:', convId);
-      input.value = '';
-      try {
-        var docRef = await window._fbAddDoc(window._fbCollection(window._db, 'messages'), {
-          convId: convId,
-          text: text,
-          senderId: window._currentUser.uid,
-          receiverId: window._currentChatUid,
-          createdAt: window._fbTimestamp.now()
-        });
-        console.log('Message sent! id:', docRef.id);
-      } catch(err) {
-        console.log('Send message error:', err);
-        alert('Could not send: ' + err.message);
-      }
-    };
-
     window.showNewMessageModal = async function() {
       if (!window._currentUser) { handleAuthClick(); return; }
       var modal = document.getElementById('newMessageModal');
@@ -1431,7 +1352,7 @@
       }
     };
 
-    function showMessageNotification(senderName, senderPhoto, text) {
+    function showBrowserNotification(senderName, senderPhoto, text) {
       if (!('Notification' in window) || Notification.permission !== 'granted') return;
       var messagingPage = document.getElementById('messagingPage');
       var isOnMessaging = messagingPage && messagingPage.style.display !== 'none';
@@ -1449,12 +1370,6 @@
       };
       setTimeout(function() { notification.close(); }, 5000);
     }
-    window.closeMessaging = function() {
-      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
-      document.getElementById('messagingPage').style.display = 'none';
-      showSearch();
-    };
-
     window.openConversation = async function(uid) {
       window._currentChatUid = uid;
       document.querySelectorAll('.conv-item').forEach(function(el) { el.style.background = '#fff'; });
@@ -2029,6 +1944,8 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, PhoneAuthProvider, RecaptchaVerifier, signInWithCredential } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc, arrayUnion, setDoc, getDoc, deleteDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    window._fbOnSnapshot = onSnapshot;
 
     const firebaseConfig = {
       apiKey: "AIzaSyDl3SuIIHtVijD0NenSIPBVZ5qgAtVSt3U",
@@ -2051,8 +1968,6 @@
     window._fbTimestamp = Timestamp; window._fbUpdateDoc = updateDoc; window._fbDoc = doc;
     window._fbArrayUnion = arrayUnion; window._fbSetDoc = setDoc; window._fbGetDoc = getDoc;
     window._fbDeleteDoc = deleteDoc;
-    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc, arrayUnion, setDoc, getDoc, deleteDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-    window._fbOnSnapshot = onSnapshot;
     window._GoogleAuthProvider = GoogleAuthProvider; window._signInWithPopup = signInWithPopup;
     window._signOut = signOut; window._PhoneAuthProvider = PhoneAuthProvider;
     window._RecaptchaVerifier = RecaptchaVerifier; window._signInWithCredential = signInWithCredential;
