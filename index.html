@@ -330,6 +330,7 @@
     var favorites = JSON.parse(localStorage.getItem('courtFavorites') || '{}');
     var activeInfoWindow = null;
     var currentViewProfileUid = null;
+    var currentPage = 1;
 
     // ── SEARCH HISTORY ──
     function saveSearchHistory(city) {
@@ -1109,9 +1110,7 @@
       document.querySelectorAll('[id^="dot_' + courtId + '_"]').forEach(function(dot, i) { dot.style.background = i === index ? '#ffffff' : 'rgba(255,255,255,0.5)'; });
     };
     function autoSlide(courtId, photoCount) {
-      if (photoCount <= 1) return;
-      var current = 0;
-      setInterval(function() { current = (current + 1) % photoCount; goToSlide(courtId, current); }, 3000);
+      // manual only - no auto sliding
     }
 
     // ── TOGGLE HOURLY ──
@@ -1403,54 +1402,89 @@
         if (currentFilter === 'open') return c.isOpen === true;
         return true;
       });
-      if (sortVal === 'rating') filtered.sort(function(a, b) { return (b.rating||0)-(a.rating||0); });
-      else if (sortVal === 'reviews') filtered.sort(function(a, b) { return (b.reviews||0)-(a.reviews||0); });
+      if (sortVal === 'rating') filtered.sort(function(a,b){ return (b.rating||0)-(a.rating||0); });
+      else if (sortVal === 'reviews') filtered.sort(function(a,b){ return (b.reviews||0)-(a.reviews||0); });
       var resultsGrid = document.getElementById('resultsGrid');
       if (filtered.length === 0) { resultsGrid.innerHTML = '<div class="error-msg">No courts match this filter.</div>'; return; }
+      var perPage = 20;
+      var totalPages = Math.ceil(filtered.length / perPage);
+      if (currentPage > totalPages) currentPage = 1;
+      var start = (currentPage - 1) * perPage;
+      var pageItems = filtered.slice(start, start + perPage);
       resultsGrid.innerHTML = '';
-      filtered.forEach(function(court) {
+      pageItems.forEach(function(court) {
         var openBadge = court.isOpen===true?'<span class="badge-open">Open Now</span>':court.isOpen===false?'<span class="badge-closed">Closed</span>':'<span class="surface-tag">Hours N/A</span>';
         var isFav = !!favorites[court.id];
         var stars = court.rating ? '★'.repeat(Math.round(court.rating))+'☆'.repeat(5-Math.round(court.rating)) : '☆☆☆☆☆';
         var distanceBadge = '';
-        if (window._userLat && court.lat) { var dist = getDistance(window._userLat, window._userLng, court.lat, court.lng); distanceBadge = '<span class="surface-tag">📍 ' + dist + ' mi</span>'; }
+        if (window._userLat && court.lat) { var dist = getDistance(window._userLat,window._userLng,court.lat,court.lng); distanceBadge = '<span class="surface-tag">📍 '+dist+' mi</span>'; }
         var notesBadge = '';
-        var courtNotes = JSON.parse(localStorage.getItem('courtNotes') || '{}');
+        var courtNotes = JSON.parse(localStorage.getItem('courtNotes')||'{}');
         if (courtNotes[court.placeId]) notesBadge = '<span class="surface-tag" style="background:#fff8dc;color:#d4920a;border:1px solid #f4e566">📝 Note</span>';
         var photos = court.photos || [court.photo];
-        var slidesHtml = photos.map(function(p, idx) { return '<img src="'+p+'" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:'+(idx===0?'1':'0')+';transition:opacity 0.4s ease" class="slide-img"/>'; }).join('');
-        var dotsHtml = photos.length > 1 ? '<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:4">' + photos.map(function(_, idx) { return '<div id="dot_'+court.id+'_'+idx+'" onclick="event.stopPropagation();goToSlide(\''+court.id+'\','+idx+')" style="width:6px;height:6px;border-radius:50%;background:'+(idx===0?'#ffffff':'rgba(255,255,255,0.5)')+';cursor:pointer;transition:background 0.2s"></div>'; }).join('') + '</div>' : '';
-        resultsGrid.innerHTML += '<div class="court-card" id="court_card_'+court.id+'" onclick="openModal(\''+court.id+'\')" style="cursor:pointer"><div class="card-image" style="position:relative"><div id="slide_'+court.id+'" style="width:100%;height:190px;overflow:hidden;position:relative">' + slidesHtml + '</div>' + dotsHtml + '<span class="badge-free">Public</span><button class="heart-btn" id="heart_'+court.id+'" onclick="event.stopPropagation();toggleFavorite(\''+court.id+'\')" style="color:'+(isFav?'#e74c3c':'#fff')+'">'+(isFav?'♥':'♡')+'</button></div><div class="card-body"><h3 class="court-name">'+court.name+'</h3><p class="court-address">'+court.address+'</p><div class="card-row"><div class="stars">'+stars+'</div><span class="rating-count">('+court.reviews+' reviews)</span></div><div class="card-row">'+openBadge+'<span class="surface-tag">Tennis Court</span>'+distanceBadge+notesBadge+'</div></div></div>';
+        var slidesHtml = photos.map(function(p,idx){ return '<img src="'+p+'" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:'+(idx===0?'1':'0')+';transition:opacity 0.4s ease" class="slide-img"/>'; }).join('');
+        var dotsHtml = photos.length>1 ? '<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:4">'+photos.map(function(_,idx){ return '<div id="dot_'+court.id+'_'+idx+'" onclick="event.stopPropagation();goToSlide(\''+court.id+'\','+idx+')" style="width:6px;height:6px;border-radius:50%;background:'+(idx===0?'#ffffff':'rgba(255,255,255,0.5)')+';cursor:pointer;transition:background 0.2s"></div>'; }).join('')+'</div>' : '';
+        resultsGrid.innerHTML += '<div class="court-card" id="court_card_'+court.id+'" onclick="openModal(\''+court.id+'\')" style="cursor:pointer"><div class="card-image" style="position:relative"><div id="slide_'+court.id+'" style="width:100%;height:190px;overflow:hidden;position:relative">'+slidesHtml+'</div>'+dotsHtml+'<span class="badge-free">Public</span><button class="heart-btn" id="heart_'+court.id+'" onclick="event.stopPropagation();toggleFavorite(\''+court.id+'\')" style="color:'+(isFav?'#e74c3c':'#fff')+'">'+(isFav?'♥':'♡')+'</button></div><div class="card-body"><h3 class="court-name">'+court.name+'</h3><p class="court-address">'+court.address+'</p><div class="card-row"><div class="stars">'+stars+'</div><span class="rating-count">('+court.reviews+' reviews)</span></div><div class="card-row">'+openBadge+'<span class="surface-tag">Tennis Court</span>'+distanceBadge+notesBadge+'</div></div></div>';
       });
-      filtered.forEach(function(court) { if (court.photos && court.photos.length > 1) autoSlide(court.id, court.photos.length); });
+      pageItems.forEach(function(court){ if (court.photos && court.photos.length>1) autoSlide(court.id, court.photos.length); });
+      // Pagination
+      if (totalPages > 1) {
+        var paginationHtml = '<div style="grid-column:1/-1;display:flex;justify-content:center;align-items:center;gap:8px;padding:20px 0;flex-wrap:wrap">';
+        paginationHtml += '<button onclick="goToPage('+(currentPage-1)+')" '+(currentPage===1?'disabled':'')+' style="background:'+(currentPage===1?'#f0f0f0':'#1a6b3c')+';color:'+(currentPage===1?'#aaa':'#fff')+';border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:'+(currentPage===1?'default':'pointer')+'">← Prev</button>';
+        for (var p = 1; p <= totalPages; p++) {
+          paginationHtml += '<button onclick="goToPage('+p+')" style="background:'+(p===currentPage?'#1a6b3c':'#f0f0f0')+';color:'+(p===currentPage?'#fff':'#555')+';border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:pointer;min-width:40px">'+p+'</button>';
+        }
+        paginationHtml += '<button onclick="goToPage('+(currentPage+1)+')" '+(currentPage===totalPages?'disabled':'')+' style="background:'+(currentPage===totalPages?'#f0f0f0':'#1a6b3c')+';color:'+(currentPage===totalPages?'#aaa':'#fff')+';border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;font-family:\'Plus Jakarta Sans\',sans-serif;cursor:'+(currentPage===totalPages?'default':'pointer')+'">Next →</button>';
+        paginationHtml += '<span style="font-size:12px;color:#888;margin-left:8px">'+filtered.length+' courts total</span>';
+        paginationHtml += '</div>';
+        resultsGrid.innerHTML += paginationHtml;
+      }
     }
+    window.goToPage = function(page) {
+      var totalPages = Math.ceil(allCourts.length / 20);
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      renderCourts();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     // ── SEARCH NEARBY ──
-    async function searchNearbyCourts(location, map) {
+   async function searchNearbyCourts(location, map) {
       var resultsGrid = document.getElementById('resultsGrid');
       try {
         var placesLib = await google.maps.importLibrary('places');
         var Place = placesLib.Place;
         var SearchNearbyRankPreference = placesLib.SearchNearbyRankPreference;
-        var request = {
-          fields: ['displayName', 'location', 'businessStatus', 'photos', 'rating', 'userRatingCount', 'regularOpeningHours', 'id', 'formattedAddress', 'types'],
-          locationRestriction: new google.maps.Circle({ center: { lat: location.lat(), lng: location.lng() }, radius: 5000 }),
-          includedPrimaryTypes: ['tennis_court'],
-          maxResultCount: 20,
-          rankPreference: SearchNearbyRankPreference.POPULARITY
-        };
-        var result = await Place.searchNearby(request);
-        var places = result.places;
-        if (!places || places.length === 0) { resultsGrid.innerHTML = '<div class="error-msg">No courts found in this area.</div>'; return; }
+        var seenIds = new Set();
+        var allPlaces = [];
+        var radii = [2000, 5000, 10000, 20000];
+        for (var r = 0; r < radii.length; r++) {
+          try {
+            var req = {
+              fields: ['displayName','location','businessStatus','photos','rating','userRatingCount','regularOpeningHours','id','formattedAddress','types'],
+              locationRestriction: { circle: { center: { lat: location.lat(), lng: location.lng() }, radius: radii[r] } },
+              includedPrimaryTypes: ['tennis_court'],
+              maxResultCount: 20,
+              rankPreference: SearchNearbyRankPreference.POPULARITY
+            };
+            var res = await Place.searchNearby(req);
+            if (res.places) {
+              res.places.forEach(function(p) {
+                if (!seenIds.has(p.id)) { seenIds.add(p.id); allPlaces.push(p); }
+              });
+            }
+          } catch(e) {}
+        }
+        if (allPlaces.length === 0) { resultsGrid.innerHTML = '<div class="error-msg">No courts found in this area.</div>'; return; }
         allCourts = [];
         courtDataStore = {};
         var bounds = new google.maps.LatLngBounds();
-        places.forEach(function(place, index) {
-          var photos = place.photos ? place.photos.slice(0, 3).map(function(p) { return p.getURI({ maxWidth: 400 }); }) : ['https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400'];
-          var photo = photos[0];
+        allPlaces.forEach(function(place, index) {
+          var photos = place.photos ? place.photos.slice(0,3).map(function(p){ return p.getURI({maxWidth:400}); }) : ['https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400'];
           var id = 'court_' + index;
-          var isOpen = place.regularOpeningHours ? place.regularOpeningHours.isOpen : undefined;
-          var courtObj = { id: id, name: place.displayName, address: place.formattedAddress || '', photo: photo, photos: photos, rating: place.rating || 0, reviews: place.userRatingCount || 0, isOpen: isOpen, lights: hasLights({ name: place.displayName, types: place.types || [] }), placeId: place.id, lat: place.location.lat(), lng: place.location.lng() };
+          var isOpen = undefined;
+          try { if (place.regularOpeningHours) isOpen = place.regularOpeningHours.isOpen(); } catch(e) {}
+          var courtObj = { id:id, name:place.displayName, address:place.formattedAddress||'', photo:photos[0], photos:photos, rating:place.rating||0, reviews:place.userRatingCount||0, isOpen:isOpen, lights:hasLights({name:place.displayName,types:place.types||[]}), placeId:place.id, lat:place.location.lat(), lng:place.location.lng() };
           courtDataStore[id] = courtObj;
           allCourts.push(courtObj);
           addMarker(place, courtObj, map);
@@ -1459,10 +1493,11 @@
         map.fitBounds(bounds);
         document.getElementById('filterBar').style.display = 'flex';
         currentFilter = 'all';
-        document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        currentPage = 1;
+        document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
         document.getElementById('filterAll').classList.add('active');
         renderCourts();
-      } catch (err) { console.log('Search error:', err); resultsGrid.innerHTML = '<div class="error-msg">Could not search courts. Try again.</div>'; }
+      } catch(err) { console.log('Search error:', err); resultsGrid.innerHTML = '<div class="error-msg">Could not search courts. Try again.</div>'; }
     }
 
     // ── INIT MAP ──
