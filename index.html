@@ -327,7 +327,6 @@
   <script>
     var courtDataStore = {};
     var allCourts = [];
-    var gService = null;
     var currentFilter = 'all';
     var currentModalId = null;
     var favorites = JSON.parse(localStorage.getItem('courtFavorites') || '{}');
@@ -578,18 +577,16 @@
       }, 200);
       setTimeout(function() { clearInterval(reviewWait); }, 5000);
       loadCourtNotes(data.placeId);
-      if (gService && data.placeId) {
-        gService.getDetails(
-          { placeId: data.placeId, fields: ['opening_hours', 'formatted_phone_number', 'website', 'reviews'] },
-          function(place, status) {
-            var hoursDiv = document.getElementById('modalHours');
-            var html = '';
-            if (status !== 'OK' || !place || !place.opening_hours) {
-              html += '<p style="color:#888;font-size:13px">Hours not available.</p>';
-              hoursDiv.innerHTML = html; return;
-            }
+      if (data.placeId) {
+        try {
+          const { Place } = await google.maps.importLibrary('places');
+          var place = new Place({ id: data.placeId, requestedLanguage: 'en' });
+          await place.fetchFields({ fields: ['regularOpeningHours', 'nationalPhoneNumber', 'websiteURI', 'reviews', 'displayName'] });
+          var hoursDiv = document.getElementById('modalHours');
+          var html = '';
+          if (place.regularOpeningHours && place.regularOpeningHours.weekdayDescriptions) {
             var today = new Date().getDay();
-            var weekdayText = place.opening_hours.weekday_text;
+            var weekdayText = place.regularOpeningHours.weekdayDescriptions;
             html += '<table style="width:100%;font-size:13px;border-collapse:collapse">';
             weekdayText.forEach(function(line, i) {
               var dayIndex = (i + 1) % 7, isToday = dayIndex === today;
@@ -599,43 +596,46 @@
                 '<td style="padding:5px 8px;text-align:right;color:' + (isToday ? '#1a6b3c' : '#666') + ';font-weight:' + (isToday ? '700' : '400') + '">' + hours + '</td></tr>';
             });
             html += '</table>';
-            if (place.formatted_phone_number) html += '<p style="margin-top:10px;font-size:13px;color:#555">Phone: ' + place.formatted_phone_number + '</p>';
-            if (place.website) html += '<p style="margin-top:4px;font-size:13px"><a href="' + place.website + '" target="_blank" style="color:#1a6b3c">Visit website</a></p>';
-            hoursDiv.innerHTML = html;
-
-            if (place.reviews && place.reviews.length > 0) {
-              var reviewsHtml = '';
-              place.reviews.forEach(function(review) {
-                var reviewStars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
-                var reviewDate = new Date(review.time * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                reviewsHtml +=
-                  '<div style="padding:12px 0;border-bottom:1px solid #f0f0f0">' +
-                    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
-                      '<img src="' + review.profile_photo_url + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/>' +
-                      '<div>' +
-                        '<div style="font-size:13px;font-weight:600;color:#1a1a1a">' + review.author_name + '</div>' +
-                        '<div style="display:flex;align-items:center;gap:6px">' +
-                          '<span style="color:#f4a800;font-size:12px">' + reviewStars + '</span>' +
-                          '<span style="font-size:11px;color:#aaa">' + reviewDate + '</span>' +
-                        '</div>' +
+          } else {
+            html += '<p style="color:#888;font-size:13px">Hours not available.</p>';
+          }
+          if (place.nationalPhoneNumber) html += '<p style="margin-top:10px;font-size:13px;color:#555">Phone: ' + place.nationalPhoneNumber + '</p>';
+          if (place.websiteURI) html += '<p style="margin-top:4px;font-size:13px"><a href="' + place.websiteURI + '" target="_blank" style="color:#1a6b3c">Visit website</a></p>';
+          hoursDiv.innerHTML = html;
+          if (place.reviews && place.reviews.length > 0) {
+            var reviewsHtml = '';
+            place.reviews.forEach(function(review) {
+              var reviewStars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+              var reviewDate = review.relativePublishTimeDescription || '';
+              reviewsHtml +=
+                '<div style="padding:12px 0;border-bottom:1px solid #f0f0f0">' +
+                  '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+                    (review.authorPhotoURI ? '<img src="' + review.authorPhotoURI + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/>' : '<div style="width:32px;height:32px;border-radius:50%;background:#e0e0e0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>') +
+                    '<div>' +
+                      '<div style="font-size:13px;font-weight:600;color:#1a1a1a">' + (review.authorDisplayName || 'Anonymous') + '</div>' +
+                      '<div style="display:flex;align-items:center;gap:6px">' +
+                        '<span style="color:#f4a800;font-size:12px">' + reviewStars + '</span>' +
+                        '<span style="font-size:11px;color:#aaa">' + reviewDate + '</span>' +
                       '</div>' +
                     '</div>' +
-                    '<p style="font-size:13px;color:#555;line-height:1.5;margin:0">' + review.text + '</p>' +
-                  '</div>';
-              });
-              document.getElementById('googleReviewsSection').innerHTML =
-                '<div style="background:#f8f9fa;border-radius:12px;padding:4px 14px 14px">' +
-                  '<div style="font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.8px;padding:10px 0 6px">Google Reviews</div>' +
-                  reviewsHtml +
+                  '</div>' +
+                  '<p style="font-size:13px;color:#555;line-height:1.5;margin:0">' + (review.text || '') + '</p>' +
                 '</div>';
-            } else {
-              document.getElementById('googleReviewsSection').innerHTML =
-                '<div style="font-size:13px;color:#aaa;padding:8px 0">No reviews available.</div>';
-            }
+            });
+            document.getElementById('googleReviewsSection').innerHTML =
+              '<div style="background:#f8f9fa;border-radius:12px;padding:4px 14px 14px">' +
+                '<div style="font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.8px;padding:10px 0 6px">Google Reviews</div>' +
+                reviewsHtml +
+              '</div>';
+          } else {
+            document.getElementById('googleReviewsSection').innerHTML =
+              '<div style="font-size:13px;color:#aaa;padding:8px 0">No reviews available.</div>';
           }
-        );
+        } catch (err) {
+          console.log('Places details error:', err);
+          document.getElementById('modalHours').innerHTML = '<p style="color:#888;font-size:13px">Hours not available.</p>';
+        }
       }
-    };
 
     window.postSession = async function(placeId) {
       if (!window._currentUser) { alert('Please sign in first to post a session!'); handleAuthClick(); return; }
@@ -1540,38 +1540,8 @@ var currentViewProfileUid = null;
           document.getElementById('savedSection').style.display = 'none';
           var location = new google.maps.LatLng(lat, lng);
           if (window._courtMap) window._courtMap.setCenter(location);
-          gService.nearbySearch({ location: location, radius: 5000, keyword: 'tennis court' }, function(places, status) {
-            if (status !== 'OK' || !places || !places.length) {
-              resultsGrid.innerHTML = '<div class="error-msg">No courts found near your location.</div>'; return;
-            }
-            allCourts = [];
-            var bounds = new google.maps.LatLngBounds();
-            places.forEach(function(court, index) {
-              var photos = court.photos
-                ? court.photos.slice(0, 3).map(function(p) { return p.getUrl({ maxWidth: 400 }); })
-                : ['https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400'];
-              var photo = photos[0];
-              var id = 'court_' + index;
-              var courtObj = {
-                id: id, name: court.name, address: court.vicinity, photo: photo, photos: photos,
-                rating: court.rating || 0, reviews: court.user_ratings_total || 0,
-                isOpen: court.opening_hours ? court.opening_hours.open_now : undefined,
-                lights: hasLights(court), placeId: court.place_id,
-                lat: court.geometry.location.lat(), lng: court.geometry.location.lng()
-              };
-              courtDataStore[id] = courtObj;
-              allCourts.push(courtObj);
-              if (window._courtMap) addMarker(court, courtObj, window._courtMap);
-              bounds.extend(court.geometry.location);
-            });
-            if (window._courtMap) window._courtMap.fitBounds(bounds);
-            document.getElementById('filterBar').style.display = 'flex';
-            currentFilter = 'all';
-            document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
-            document.getElementById('filterAll').classList.add('active');
-            renderCourts();
-          });
-        },
+         searchNearbyCourts(location, window._courtMap);
+           },
         function(error) {
           btn.textContent = '📍 Use My Location';
           btn.style.opacity = '1';
@@ -1598,8 +1568,13 @@ var currentViewProfileUid = null;
       if (currentModalId) toggleFavorite(currentModalId);
     };
 
-    function addMarker(court, courtObj, map) {
-      var marker = new google.maps.Marker({ position: court.geometry.location, map: map, title: court.name });
+    async function addMarker(place, courtObj, map) {
+      const { AdvancedMarkerElement } = await google.maps.importLibrary('marker');
+      var marker = new AdvancedMarkerElement({
+        position: courtObj,
+        map: map,
+        title: courtObj.name
+      });
       var isOpen = courtObj.isOpen;
       var statusText = isOpen === true ? '<span style="color:#1a6b3c;font-weight:600;font-size:12px">● Open Now</span>' : isOpen === false ? '<span style="color:#c0392b;font-weight:600;font-size:12px">● Closed</span>' : '<span style="color:#888;font-size:12px">● Hours N/A</span>';
       var stars = courtObj.rating ? '★'.repeat(Math.round(courtObj.rating)) + '☆'.repeat(5 - Math.round(courtObj.rating)) : '☆☆☆☆☆';
@@ -1793,12 +1768,9 @@ var currentViewProfileUid = null;
       var weatherDiv = document.getElementById('weatherSection');
       weatherDiv.innerHTML = '<div style="background:#e8f4fd;border-radius:20px;padding:18px 20px;margin-bottom:20px;border:1px solid #b8d8f0;display:flex;align-items:center;gap:12px"><span style="font-size:24px">⛅</span><span style="font-size:13px;color:#555">Loading 7-day forecast...</span></div>';
       try {
-        var placeResult = await new Promise(function(resolve) {
-          gService.getDetails({ placeId: court.placeId, fields: ['geometry'] }, function(place, status) { resolve({ place: place, status: status }); });
-        });
-        if (placeResult.status !== 'OK') { weatherDiv.innerHTML = ''; return; }
-        var lat = placeResult.place.geometry.location.lat();
-        var lng = placeResult.place.geometry.location.lng();
+        var lat = court.lat;
+        var lng = court.lng;
+        if (!lat || !lng) { weatherDiv.innerHTML = ''; return; }
         var res = await fetch(
           'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lng +
           '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation,weather_code,uv_index' +
@@ -2014,70 +1986,108 @@ var currentViewProfileUid = null;
         if (court.photos && court.photos.length > 1) autoSlide(court.id, court.photos.length);
       });
     }
+async function searchNearbyCourts(location, map) {
+      var resultsGrid = document.getElementById('resultsGrid');
+      try {
+        const { Place, SearchNearbyRankPreference } = await google.maps.importLibrary('places');
+        var request = {
+          fields: ['displayName', 'location', 'businessStatus', 'photos', 'rating', 'userRatingCount', 'regularOpeningHours', 'id', 'formattedAddress', 'types'],
+          locationRestriction: {
+            circle: { center: location, radius: 5000 }
+          },
+          includedPrimaryTypes: ['tennis_court'],
+          maxResultCount: 20,
+          rankPreference: SearchNearbyRankPreference.POPULARITY
+        };
+        var { places } = await Place.searchNearby(request);
+        if (!places || places.length === 0) {
+          resultsGrid.innerHTML = '<div class="error-msg">No courts found in this area.</div>';
+          return;
+        }
+        allCourts = [];
+        courtDataStore = {};
+        var bounds = new google.maps.LatLngBounds();
+        places.forEach(function(place, index) {
+          var photos = place.photos
+            ? place.photos.slice(0, 3).map(function(p) { return p.getURI({ maxWidth: 400 }); })
+            : ['https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400'];
+          var photo = photos[0];
+          var id = 'court_' + index;
+          var isOpen = place.regularOpeningHours ? place.regularOpeningHours.isOpen() : undefined;
+          var courtObj = {
+            id: id,
+            name: place.displayName,
+            address: place.formattedAddress || '',
+            photo: photo,
+            photos: photos,
+            rating: place.rating || 0,
+            reviews: place.userRatingCount || 0,
+            isOpen: isOpen,
+            lights: hasLights({ name: place.displayName, types: place.types || [] }),
+            placeId: place.id,
+            lat: place.location.lat(),
+            lng: place.location.lng()
+          };
+          courtDataStore[id] = courtObj;
+          allCourts.push(courtObj);
+          addMarker(place, courtObj, map);
+          bounds.extend(place.location);
+        });
+        map.fitBounds(bounds);
+        document.getElementById('filterBar').style.display = 'flex';
+        currentFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.getElementById('filterAll').classList.add('active');
+        renderCourts();
+      } catch (err) {
+        console.log('Search error:', err);
+        resultsGrid.innerHTML = '<div class="error-msg">Could not search courts. Try again.</div>';
+      }
+    }
+    window.initMap = async function() {
+      const { Map } = await google.maps.importLibrary('maps');
+      const { Place, SearchNearbyRankPreference } = await google.maps.importLibrary('places');
+      window._GMPlace = Place;
+      window._GMSearchNearby = SearchNearbyRankPreference;
 
-    window.initMap = function() {
-      var map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 34.0522, lng: -118.2437 }, zoom: 12
+      var map = new Map(document.getElementById('map'), {
+        center: { lat: 34.0522, lng: -118.2437 },
+        zoom: 12,
+        mapId: 'DEMO_MAP_ID'
       });
       window._courtMap = map;
-      gService = new google.maps.places.PlacesService(map);
+
       document.getElementById('modalClose').addEventListener('click', closeModal);
       document.getElementById('courtModal').addEventListener('click', function(e) {
         if (e.target === document.getElementById('courtModal')) closeModal();
       });
       updateSavedCount();
+
       var searchBtn = document.getElementById('searchBtn');
       var cityInput = document.getElementById('cityInput');
       var resultsGrid = document.getElementById('resultsGrid');
-      searchBtn.addEventListener('click', function() {
+
+      searchBtn.addEventListener('click', async function() {
         var city = cityInput.value.trim();
         if (!city) { cityInput.style.border = '2px solid red'; return; }
         cityInput.style.border = 'none';
         saveSearchHistory(city);
         resultsGrid.innerHTML = '<div class="loading-msg">Searching for courts in <strong>' + city + '</strong>...</div>';
         document.getElementById('filterBar').style.display = 'none';
+
         var geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ address: city }, function(results, status) {
+        geocoder.geocode({ address: city }, async function(results, status) {
           if (status !== 'OK') { resultsGrid.innerHTML = '<div class="error-msg">City not found.</div>'; return; }
           var location = results[0].geometry.location;
           map.setCenter(location);
-          gService.nearbySearch({ location: location, radius: 5000, keyword: 'tennis court' }, function(places, status) {
-            if (status !== 'OK' || !places || !places.length) {
-              resultsGrid.innerHTML = '<div class="error-msg">No courts found near ' + city + '.</div>'; return;
-            }
-            allCourts = [];
-            var bounds = new google.maps.LatLngBounds();
-            places.forEach(function(court, index) {
-              var photos = court.photos
-                ? court.photos.slice(0, 3).map(function(p) { return p.getUrl({ maxWidth: 400 }); })
-                : ['https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400'];
-              var photo = photos[0];
-              var id = 'court_' + index;
-              var courtObj = {
-                id: id, name: court.name, address: court.vicinity, photo: photo, photos: photos,
-                rating: court.rating||0, reviews: court.user_ratings_total||0,
-                isOpen: court.opening_hours ? court.opening_hours.open_now : undefined,
-                lights: hasLights(court), placeId: court.place_id,
-                lat: court.geometry.location.lat(), lng: court.geometry.location.lng()
-              };
-              courtDataStore[id] = courtObj;
-              allCourts.push(courtObj);
-              addMarker(court, courtObj, map);
-              bounds.extend(court.geometry.location);
-            });
-            map.fitBounds(bounds);
-            document.getElementById('filterBar').style.display = 'flex';
-            currentFilter = 'all';
-            document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
-            document.getElementById('filterAll').classList.add('active');
-            renderCourts();
-          });
+          await searchNearbyCourts(location, map);
         });
       });
-    }
+    };
+    
   </script>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHq7QJIROeH2ZphtL07WQKLWK2Z9ELmZU&libraries=places&callback=initMap" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHq7QJIROeH2ZphtL07WQKLWK2Z9ELmZU&libraries=places,marker&v=beta&callback=initMap" async defer></script>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
