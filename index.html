@@ -17,7 +17,6 @@
       <a href="#" id="navSaved" onclick="showSaved()">Saved Courts <span id="savedCount" class="saved-count">0</span></a>
       <a href="#" id="navSearch" onclick="showSearch()">Search</a>
       <a href="#" id="navNearby" onclick="showNearby()">🎾 Players Near You</a>
-      <a href="#" id="navMessages" onclick="showMessaging()" style="position:relative">💬 Messages <span id="msgBadge" style="display:none;position:absolute;top:-6px;right:-10px;background:#e74c3c;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:999px;min-width:18px;text-align:center">0</span></a>
       <div id="authBtn" onclick="handleAuthClick()" style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#f0f0f0;border-radius:50px;padding:6px 14px 6px 6px;transition:all 0.2s" onmouseover="this.style.background='#e6f9ee'" onmouseout="this.style.background=window._currentUser?'#e6f9ee':'#f0f0f0'">
         <div id="authAvatar" style="width:28px;height:28px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;overflow:hidden">
           <span id="authAvatarText">?</span>
@@ -326,93 +325,7 @@
       <div id="followListContent" style="overflow-y:auto;padding:12px 20px"></div>
     </div>
   </div>
-<!-- MESSAGING PAGE -->
-  <div id="messagingPage" style="display:none;max-width:1000px;margin:0 auto;padding:0;height:calc(100vh - 64px)">
-    <div style="display:flex;height:100%;background:#fff;border-left:1px solid #e0e0e0;border-right:1px solid #e0e0e0">
-
-      <!-- LEFT SIDEBAR -->
-      <div style="width:360px;border-right:1px solid #e0e0e0;display:flex;flex-direction:column;flex-shrink:0;background:#fff">
-        <!-- Header -->
-        <div style="padding:20px 24px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f0f0f0">
-          <div style="font-size:22px;font-weight:800;color:#1a1a1a">Messages</div>
-          <button onclick="showNewMessageModal()" style="background:none;border:none;cursor:pointer;padding:8px;border-radius:50%;transition:background 0.2s" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'" title="New Message">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          </button>
-        </div>
-        <!-- Search -->
-        <div style="padding:12px 16px;border-bottom:1px solid #f0f0f0">
-          <div style="background:#f0f0f0;border-radius:20px;padding:8px 16px;display:flex;align-items:center;gap:8px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="convSearchInput" placeholder="Search messages" oninput="filterConversations()" style="background:none;border:none;outline:none;font-size:14px;color:#1a1a1a;font-family:'Plus Jakarta Sans',sans-serif;width:100%"/>
-          </div>
-        </div>
-        <!-- Conversations list -->
-        <div id="conversationsList" style="overflow-y:auto;flex:1">
-          <div style="font-size:14px;color:#aaa;padding:40px 20px;text-align:center">No conversations yet.<br/>Click the ✏️ icon to start one!</div>
-        </div>
-      </div>
-
-      <!-- RIGHT CHAT AREA -->
-      <div style="flex:1;display:flex;flex-direction:column;min-width:0;background:#fff">
-
-        <!-- Empty state -->
-        <div id="chatEmptyState" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#888">
-          <div style="width:80px;height:80px;border-radius:50%;border:2px solid #1a1a1a;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          </div>
-          <div style="font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:8px">Your Messages</div>
-          <div style="font-size:14px;color:#888;margin-bottom:20px;text-align:center">Send private messages to a friend.</div>
-          <button onclick="showNewMessageModal()" style="background:#1a6b3c;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">Send Message</button>
-        </div>
-
-        <!-- Chat header (hidden until convo selected) -->
-        <div id="chatHeader" style="display:none;padding:12px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;background:#fff">
-          <div style="display:flex;align-items:center;gap:12px">
-            <div id="chatHeaderAvatar"></div>
-            <div>
-              <div id="chatHeaderName" style="font-size:15px;font-weight:700;color:#1a1a1a"></div>
-              <div style="font-size:12px;color:#1a6b3c">👥 Mutual Friend</div>
-            </div>
-          </div>
-          <div style="display:flex;gap:8px">
-            <button onclick="viewProfile(window._currentChatUid)" style="background:none;border:none;cursor:pointer;padding:8px;border-radius:50%;transition:background 0.2s" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'" title="View Profile">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Messages -->
-        <div id="chatArea" style="flex:1;overflow-y:auto;padding:20px 16px;background:#fff;display:none"></div>
-
-        <!-- Input -->
-        <div id="chatInputArea" style="display:none;padding:12px 16px;border-top:1px solid #f0f0f0;align-items:flex-end;gap:10px;background:#fff">
-          <div style="flex:1;background:#f0f0f0;border-radius:22px;padding:10px 16px;display:flex;align-items:center;gap:8px">
-            <input type="text" id="chatMessageInput" placeholder="Message..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}" style="flex:1;background:none;border:none;outline:none;font-size:14px;color:#1a1a1a;font-family:'Plus Jakarta Sans',sans-serif;resize:none"/>
-          </div>
-          <button onclick="sendMessage()" id="sendMsgBtn" style="background:none;border:none;cursor:pointer;padding:8px;color:#1a6b3c;font-size:14px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;transition:opacity 0.2s" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="#1a6b3c"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z" fill="#1a6b3c"/></svg>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- New Message Modal -->
-    <div id="newMessageModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);z-index:9000;justify-content:center;align-items:center">
-      <div style="background:#fff;border-radius:16px;width:90%;max-width:420px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
-        <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:16px;font-weight:700;color:#1a1a1a">New Message</div>
-          <button onclick="closeNewMessageModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1">✕</button>
-        </div>
-        <div style="padding:12px 20px;border-bottom:1px solid #f0f0f0">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:14px;font-weight:600;color:#1a1a1a">To:</span>
-            <input type="text" id="newMsgSearchInput" placeholder="Search mutual friends..." oninput="filterNewMsgList()" style="flex:1;border:none;outline:none;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a1a1a"/>
-          </div>
-        </div>
-        <div id="newMessageList" style="max-height:320px;overflow-y:auto;padding:8px 0"></div>
-      </div>
-    </div>
-  </div>
+  
   <!-- MAP -->
   <div class="map-section">
     <div id="map"></div>
@@ -894,8 +807,6 @@
       document.getElementById('myProfilePage').style.display = 'block';
       document.getElementById('map').closest('.map-section').style.display = 'none';
       document.getElementById('navSearch').style.color = '#555';
-      document.getElementById('messagingPage').style.display = 'none';
-      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       var user = window._currentUser;
       document.getElementById('mpName').textContent = user.displayName || 'No name';
       document.getElementById('mpEmail').textContent = user.email || '';
@@ -942,8 +853,6 @@
       document.getElementById('navNearby').style.color = '#1a6b3c';
       document.getElementById('navSearch').style.color = '#555';
       document.getElementById('navSaved').style.color = '#555';
-      document.getElementById('messagingPage').style.display = 'none';
-      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       loadNearbySessions();
     };
     window.loadNearbySessions = async function() {
@@ -1042,8 +951,6 @@
       document.getElementById('vpInitials').style.display = 'block';
       document.getElementById('vpInitials').textContent = '?';
       document.getElementById('vpFollowBtn').innerHTML = '';
-      document.getElementById('messagingPage').style.display = 'none';
-      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       document.getElementById('vpSessions').innerHTML = '<p style="font-size:13px;color:#aaa">Loading sessions...</p>';
       try {
         var profileSnap = await window._fbGetDoc(window._fbDoc(window._db, 'profiles', uid));
@@ -1344,117 +1251,7 @@
     window.closeNewMessageModal = function() {
       document.getElementById('newMessageModal').style.display = 'none';
     };
-// ── NOTIFICATIONS ──
-    window.requestNotificationPermission = async function() {
-      if (!('Notification' in window)) return;
-      if (Notification.permission === 'default') {
-        await Notification.requestPermission();
-      }
-    };
 
-    function showBrowserNotification(senderName, senderPhoto, text) {
-      if (!('Notification' in window) || Notification.permission !== 'granted') return;
-      var messagingPage = document.getElementById('messagingPage');
-      var isOnMessaging = messagingPage && messagingPage.style.display !== 'none';
-      if (isOnMessaging) return; // don't notify if already on messages page
-      var notification = new Notification(senderName + ' sent you a message', {
-        body: text,
-        icon: senderPhoto || 'https://vinceyonesu.github.io/tennis-court-finder/icon.png',
-        badge: senderPhoto || '',
-        tag: 'message_' + senderName
-      });
-      notification.onclick = function() {
-        window.focus();
-        showMessaging();
-        notification.close();
-      };
-      setTimeout(function() { notification.close(); }, 5000);
-    }
-    window.openConversation = async function(uid) {
-      window._currentChatUid = uid;
-      document.querySelectorAll('.conv-item').forEach(function(el) { el.style.background = '#fff'; });
-      var activeConv = document.getElementById('conv_' + uid);
-      if (activeConv) activeConv.style.background = '#e6f9ee';
-      var chatEmptyState = document.getElementById('chatEmptyState');
-      var chatHeader = document.getElementById('chatHeader');
-      var chatArea = document.getElementById('chatArea');
-      var chatInput = document.getElementById('chatInputArea');
-      if (chatEmptyState) chatEmptyState.style.display = 'none';
-      if (chatHeader) { chatHeader.style.display = 'flex'; chatHeader.style.removeProperty('display'); chatHeader.style.display = 'flex'; }
-      if (chatArea) { chatArea.style.display = 'block'; chatArea.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa">Loading...</div>'; }
-      if (chatInput) { chatInput.style.display = 'flex'; }
-      try {
-        var profileSnap = await window._fbGetDoc(window._fbDoc(window._db, 'profiles', uid));
-        var p = profileSnap.exists() ? profileSnap.data() : {};
-        var avatarHtml = p.photo
-          ? '<img src="' + p.photo + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>'
-          : '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1a6b3c,#25a05a);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:700">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>';
-        if (document.getElementById('chatHeaderAvatar')) document.getElementById('chatHeaderAvatar').innerHTML = avatarHtml;
-        if (document.getElementById('chatHeaderName')) document.getElementById('chatHeaderName').textContent = p.name || 'Unknown';
-        var convId = [window._currentUser.uid, uid].sort().join('_');
-        if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
-        var q = window._fbQuery(
-          window._fbCollection(window._db, 'messages'),
-          window._fbWhere('convId', '==', convId),
-          window._fbOrderBy('createdAt', 'asc')
-        );
-        window._messageUnsubscribe = window._fbOnSnapshot(q, function(snapshot) {
-          console.log('snapshot received, size:', snapshot.size);
-          if (!chatArea) return;
-          chatArea.innerHTML = '';
-          if (snapshot.empty) {
-            var bigAvatar = p.photo
-              ? '<img src="' + p.photo + '" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:16px"/>'
-              : '<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#1a6b3c,#25a05a);display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;font-weight:700;margin:0 auto 16px">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>';
-            chatArea.innerHTML = '<div style="text-align:center;padding:40px 20px">' + bigAvatar + '<div style="font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:6px">' + (p.name || 'Unknown') + '</div><div style="font-size:13px;color:#aaa">👥 You are mutual friends — say hello!</div></div>';
-            return;
-          }
-          var lastDate = '';
-          snapshot.forEach(function(docSnap) {
-            var m = docSnap.data();
-            var isMe = m.senderId === window._currentUser.uid;
-            var msgDate = m.createdAt ? new Date(m.createdAt.toDate()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-            if (msgDate && msgDate !== lastDate) {
-              chatArea.innerHTML += '<div style="text-align:center;margin:12px 0"><span style="background:#f0f0f0;color:#888;font-size:11px;font-weight:600;padding:4px 12px;border-radius:999px">' + msgDate + '</span></div>';
-              lastDate = msgDate;
-            }
-            var timeStr = m.createdAt ? new Date(m.createdAt.toDate()).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
-            chatArea.innerHTML += '<div style="display:flex;justify-content:' + (isMe ? 'flex-end' : 'flex-start') + ';margin-bottom:4px;padding:0 16px;align-items:flex-end;gap:8px">' +
-              (!isMe ? '<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1a6b3c,#25a05a);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700;flex-shrink:0;margin-bottom:2px">' + (p.name ? p.name[0].toUpperCase() : '?') + '</div>' : '') +
-              '<div style="max-width:65%"><div style="background:' + (isMe ? '#1a6b3c' : '#f0f0f0') + ';color:' + (isMe ? '#fff' : '#1a1a1a') + ';border-radius:' + (isMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px') + ';padding:10px 14px;font-size:14px;line-height:1.5;word-break:break-word">' + m.text + '</div><div style="font-size:10px;color:#aaa;margin-top:3px;' + (isMe ? 'text-align:right;padding-right:4px' : 'padding-left:4px') + '">' + timeStr + '</div></div></div>';
-          });
-          chatArea.scrollTop = chatArea.scrollHeight;
-        }, function(err) {
-          console.log('onSnapshot error:', err);
-        });
-        if (document.getElementById('chatMessageInput')) document.getElementById('chatMessageInput').focus();
-      } catch(err) { console.log('Open conversation error:', err); }
-    };
-
-    window.sendMessage = async function() {
-      var input = document.getElementById('chatMessageInput');
-      var text = input ? input.value.trim() : '';
-      if (!text || !window._currentUser || !window._currentChatUid) return;
-      var convId = [window._currentUser.uid, window._currentChatUid].sort().join('_');
-      input.value = '';
-      try {
-        await window._fbAddDoc(window._fbCollection(window._db, 'messages'), {
-          convId: convId, text: text,
-          senderId: window._currentUser.uid,
-          receiverId: window._currentChatUid,
-          createdAt: window._fbTimestamp.now()
-        });
-      } catch(err) { console.log('Send message error:', err); alert('Could not send message.'); }
-    };
-
-    window.closeMessaging = function() {
-      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
-      document.getElementById('messagingPage').style.display = 'none';
-      document.getElementById('heroSection').style.display = 'block';
-      document.getElementById('resultsGrid').parentElement.style.display = 'block';
-      document.getElementById('map').closest('.map-section').style.display = 'block';
-      if (allCourts.length > 0) document.getElementById('filterBar').style.display = 'flex';
-    };
     async function loadUserSessionsForProfile(uid) {
       var sessionsDiv = document.getElementById('vpSessions');
       if (!sessionsDiv || !window._db) return;
@@ -1612,8 +1409,6 @@
       document.getElementById('myProfilePage').style.display = 'none';
       document.getElementById('navSaved').style.color = '#1a6b3c';
       document.getElementById('navSearch').style.color = '#555';
-      document.getElementById('messagingPage').style.display = 'none';
-      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       var savedGrid = document.getElementById('savedGrid');
       var keys = Object.keys(favorites);
       if (keys.length === 0) { savedGrid.innerHTML = '<div class="loading-msg" style="grid-column:1/-1">No saved courts yet. Search and click the heart to save courts!</div>'; return; }
@@ -1641,8 +1436,6 @@
       document.getElementById('navSaved').style.color = '#555';
       document.getElementById('navSearch').style.color = '#1a6b3c';
       document.getElementById('navNearby').style.color = '#555';
-      document.getElementById('messagingPage').style.display = 'none';
-      if (window._messageUnsubscribe) { window._messageUnsubscribe(); window._messageUnsubscribe = null; }
       if (allCourts.length > 0) document.getElementById('filterBar').style.display = 'flex';
     };
 
@@ -1945,7 +1738,7 @@
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, PhoneAuthProvider, RecaptchaVerifier, signInWithCredential } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
     import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, Timestamp, updateDoc, doc, arrayUnion, setDoc, getDoc, deleteDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-    window._fbOnSnapshot = onSnapshot;
+    
 
     const firebaseConfig = {
       apiKey: "AIzaSyDl3SuIIHtVijD0NenSIPBVZ5qgAtVSt3U",
