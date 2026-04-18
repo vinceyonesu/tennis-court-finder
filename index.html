@@ -381,7 +381,7 @@
   <div id="feedPage" style="display:none;max-width:680px;margin:40px auto;padding:0 24px 60px;position:relative;z-index:1">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
       <div>
-        <h2 style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--slam-text-1);letter-spacing:-0.5px">Activity Feed</h2>
+        <h2 style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;color:var(--slam-text-1);letter-spacing:-0.5px">Activity Feed</h2>
         <p style="font-size:13px;color:var(--slam-text-3);margin-top:4px">What your follows are up to</p>
       </div>
       <button onclick="loadActivityFeed()" style="background:var(--slam-surface);border:1.5px solid var(--slam-border);border-radius:999px;padding:7px 16px;font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;color:var(--slam-text-2)">🔄 Refresh</button>
@@ -394,7 +394,7 @@
   ═══════════════════════════════ -->
   <div id="playerCardPage" style="display:none;max-width:480px;margin:40px auto;padding:0 24px 60px;position:relative;z-index:1">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <h2 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--slam-text-1)">My Player Card</h2>
+      <h2 style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;color:var(--slam-text-1)">My Player Card</h2>
       <button onclick="downloadPlayerCard()" style="background:var(--slam-primary);color:#fff;border:none;border-radius:999px;padding:8px 18px;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">⬇️ Save Card</button>
     </div>
     <!-- The actual card -->
@@ -406,7 +406,7 @@
         <div style="position:relative;z-index:2;display:flex;align-items:center;gap:16px">
           <div id="cardAvatar" style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2);border:3px solid rgba(255,255,255,0.5);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;font-weight:800;flex-shrink:0"></div>
           <div>
-            <div id="cardName" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px"></div>
+            <div id="cardName" style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px"></div>
             <div id="cardSkill" style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:3px;font-weight:500"></div>
             <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
               <div id="cardUTRBadge" style="background:var(--slam-accent);color:#111;font-size:11px;font-weight:800;padding:3px 12px;border-radius:999px;display:none"></div>
@@ -421,14 +421,14 @@
         <div id="cardBio" style="font-size:13px;color:var(--slam-text-2);line-height:1.6;margin-bottom:16px;font-style:italic"></div>
         <div id="cardBadges" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
         <div style="display:flex;align-items:center;justify-content:space-between">
-          <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--slam-text-3);letter-spacing:2px;text-transform:uppercase">CourtSide</div>
+          <div style="font-family:Syne,sans-serif;font-size:11px;font-weight:700;color:var(--slam-text-3);letter-spacing:2px;text-transform:uppercase">CourtSide</div>
           <div id="cardSlamBadge" style="font-size:11px;font-weight:600;color:var(--slam-text-3)"></div>
         </div>
       </div>
     </div>
     <!-- Racket & String Log -->
     <div style="margin-top:28px">
-      <h3 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--slam-text-1);margin-bottom:16px">🎾 Racket & String Log</h3>
+      <h3 style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:var(--slam-text-1);margin-bottom:16px">🎾 Racket & String Log</h3>
       <div id="racketLogList"></div>
       <button onclick="showAddRacketModal()" style="width:100%;background:var(--slam-surface);border:2px dashed var(--slam-border);border-radius:14px;padding:14px;font-size:14px;font-weight:600;color:var(--slam-text-2);cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;margin-top:8px" onmouseover="this.style.borderColor='var(--slam-primary)';this.style.color='var(--slam-primary)'" onmouseout="this.style.borderColor='var(--slam-border)';this.style.color='var(--slam-text-2)'">+ Add Racket</button>
     </div>
@@ -438,7 +438,7 @@
   <div id="racketModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:8000;justify-content:center;align-items:center;padding:20px">
     <div style="background:var(--slam-surface);border-radius:20px;width:90%;max-width:400px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-        <h3 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--slam-text-1)">Add Racket</h3>
+        <h3 style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:var(--slam-text-1)">Add Racket</h3>
         <button onclick="closeRacketModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--slam-text-3)">✕</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
@@ -806,6 +806,16 @@
           console.log('Sign in error:', err); alert('Sign in failed. Please try again.');
         });
     };
+    // ── HIDE ALL PAGES HELPER ──
+    function hideAllPages() {
+      var ids = ['heroSection','savedSection','nearbyPage','profilePage','myProfilePage',
+                 'viewProfilePage','feedPage','playerCardPage'];
+      ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
+      var ms = document.getElementById('map'); if(ms) ms.closest('.map-section').style.display='none';
+      var rg = document.getElementById('resultsGrid'); if(rg) rg.parentElement.style.display='none';
+      var fb = document.getElementById('filterBar'); if(fb) fb.style.display='none';
+    }
+
     // ═══════════════════════════════════════════
     //  ACTIVITY FEED
     // ═══════════════════════════════════════════
@@ -870,7 +880,7 @@
             + avatar
             + '<div style="flex:1;min-width:0">'
             + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
-            + '<span style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--slam-text-1);cursor:pointer" onclick="viewProfile(''+s.uid+'')">'+s.name+'</span>'
+            + '<span style="font-family:Syne,sans-serif;font-size:14px;font-weight:700;color:var(--slam-text-1);cursor:pointer" onclick="viewProfile(\'' + s.uid + '\')">'+s.name+'</span>'
             + '<span style="font-size:11px;color:var(--slam-text-3)">'+timeAgo+'</span>'
             + '</div>'
             + '<div style="font-size:13px;color:var(--slam-text-2);margin-bottom:8px">📅 Posted a session at <strong>'+(s.courtName||'a court')+'</strong></div>'
@@ -970,9 +980,9 @@
         // Stats
         var stats = await getUserStats(uid);
         document.getElementById('cardStats').innerHTML =
-          '<div style="background:var(--slam-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--slam-primary)">'+stats.sessions+'</div><div style="font-size:10px;color:var(--slam-text-3);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Sessions</div></div>'
-          +'<div style="background:var(--slam-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--slam-primary)">'+stats.courts+'</div><div style="font-size:10px;color:var(--slam-text-3);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Courts</div></div>'
-          +'<div style="background:var(--slam-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--slam-primary)">'+stats.followers+'</div><div style="font-size:10px;color:var(--slam-text-3);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Followers</div></div>';
+          '<div style="background:var(--slam-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;color:var(--slam-primary)">'+stats.sessions+'</div><div style="font-size:10px;color:var(--slam-text-3);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Sessions</div></div>'
+          +'<div style="background:var(--slam-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;color:var(--slam-primary)">'+stats.courts+'</div><div style="font-size:10px;color:var(--slam-text-3);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Courts</div></div>'
+          +'<div style="background:var(--slam-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800;color:var(--slam-primary)">'+stats.followers+'</div><div style="font-size:10px;color:var(--slam-text-3);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Followers</div></div>';
         // Badges on card
         var earned = BADGES.filter(function(b){ return b.check(stats); });
         document.getElementById('cardBadges').innerHTML = earned.slice(0,6).map(function(b){ return '<span style="font-size:20px" title="'+b.name+'">'+b.icon+'</span>'; }).join('');
@@ -1008,7 +1018,7 @@
         var freshnessText = daysSince === null ? '' : daysSince < 30 ? '✅ Fresh' : daysSince < 90 ? '⚠️ ' + daysSince + 'd ago' : '❌ Overdue';
         return '<div style="background:var(--slam-surface);border:1px solid var(--slam-border);border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">'
           +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">'
-          +'<div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--slam-text-1)">🎾 '+r.brand+'</div>'
+          +'<div style="font-family:Syne,sans-serif;font-size:15px;font-weight:700;color:var(--slam-text-1)">🎾 '+r.brand+'</div>'
           +'<div style="display:flex;gap:6px"><button onclick="deleteRacket('+i+')" style="background:none;border:none;color:var(--slam-text-3);cursor:pointer;font-size:13px;padding:0">✕</button></div>'
           +'</div>'
           +(r.string ? '<div style="font-size:12px;color:var(--slam-text-2);margin-bottom:4px">🪡 '+r.string+(r.tension?' · '+r.tension+' lbs':'')+'</div>' : '')
@@ -1173,16 +1183,10 @@
     // ── MY PROFILE ──
     window.showMyProfile = async function() {
       if (!window._currentUser) { handleAuthClick(); return; }
-      document.getElementById('heroSection').style.display = 'none';
-      document.getElementById('filterBar').style.display = 'none';
-      document.getElementById('resultsGrid').parentElement.style.display = 'none';
-      document.getElementById('savedSection').style.display = 'none';
-      document.getElementById('nearbyPage').style.display = 'none';
-      document.getElementById('profilePage').style.display = 'none';
-      document.getElementById('viewProfilePage').style.display = 'none';
+      hideAllPages();
       document.getElementById('myProfilePage').style.display = 'block';
-      document.getElementById('map').closest('.map-section').style.display = 'none';
       document.getElementById('navSearch').style.color = '#555';
+      var nf=document.getElementById('navFeed');if(nf)nf.style.color='#555';
       var user = window._currentUser;
       document.getElementById('mpName').textContent = user.displayName || 'No name';
       document.getElementById('mpEmail').textContent = user.email || '';
@@ -1221,17 +1225,12 @@
 
     // ── NEARBY ──
     window.showNearby = function() {
-      document.getElementById('heroSection').style.display = 'none';
-      document.getElementById('filterBar').style.display = 'none';
-      document.getElementById('resultsGrid').parentElement.style.display = 'none';
-      document.getElementById('savedSection').style.display = 'none';
-      document.getElementById('profilePage').style.display = 'none';
-      document.getElementById('myProfilePage').style.display = 'none';
-      document.getElementById('viewProfilePage').style.display = 'none';
+      hideAllPages();
       document.getElementById('nearbyPage').style.display = 'block';
-      document.getElementById('navNearby').style.color = '#1a6b3c';
+      document.getElementById('navNearby').style.color = 'var(--slam-primary)';
       document.getElementById('navSearch').style.color = '#555';
       document.getElementById('navSaved').style.color = '#555';
+      var nf=document.getElementById('navFeed');if(nf)nf.style.color='#555';
       loadNearbySessions();
     };
     window.loadNearbySessions = async function() {
@@ -1317,13 +1316,7 @@
     window.viewProfile = async function(uid) {
       if (!uid || !window._db) return;
       currentViewProfileUid = uid;
-      document.getElementById('heroSection').style.display = 'none';
-      document.getElementById('filterBar').style.display = 'none';
-      document.getElementById('resultsGrid').parentElement.style.display = 'none';
-      document.getElementById('savedSection').style.display = 'none';
-      document.getElementById('profilePage').style.display = 'none';
-      document.getElementById('nearbyPage').style.display = 'none';
-      document.getElementById('myProfilePage').style.display = 'none';
+      hideAllPages();
       document.getElementById('viewProfilePage').style.display = 'block';
       document.getElementById('vpName').textContent = 'Loading...';
       document.getElementById('vpPhoto').style.display = 'none';
@@ -1422,11 +1415,7 @@
       }
     };
     window.closeViewProfile = function() {
-      document.getElementById('viewProfilePage').style.display = 'none';
-      document.getElementById('heroSection').style.display = 'block';
-      document.getElementById('resultsGrid').parentElement.style.display = 'block';
-      document.getElementById('map').closest('.map-section').style.display = 'block';
-      if (allCourts.length > 0) document.getElementById('filterBar').style.display = 'flex';
+      showSearch();
     };
     window.showFollowList = async function(type) {
       if (!currentViewProfileUid || !window._db) return;
@@ -1779,13 +1768,8 @@
 
     // ── SAVED ──
     window.showSaved = function() {
-      document.getElementById('heroSection').style.display = 'none';
-      document.getElementById('filterBar').style.display = 'none';
-      document.getElementById('resultsGrid').parentElement.style.display = 'none';
+      hideAllPages();
       document.getElementById('savedSection').style.display = 'block';
-      document.getElementById('profilePage').style.display = 'none';
-      document.getElementById('nearbyPage').style.display = 'none';
-      document.getElementById('myProfilePage').style.display = 'none';
       document.getElementById('navSaved').style.color = '#1a6b3c';
       document.getElementById('navSearch').style.color = '#555';
       var savedGrid = document.getElementById('savedGrid');
@@ -1802,18 +1786,35 @@
       });
     };
 
+    // ── HIDE ALL PAGES ──
+    function hideAllPages() {
+      var ids = ['heroSection','savedSection','nearbyPage','profilePage','myProfilePage',
+                 'viewProfilePage','feedPage','playerCardPage'];
+      ids.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      var rg = document.getElementById('resultsGrid');
+      if (rg) rg.parentElement.style.display = 'none';
+      var ms = document.getElementById('map');
+      if (ms) ms.closest('.map-section').style.display = 'none';
+      document.getElementById('filterBar').style.display = 'none';
+      // Reset all nav colors
+      ['navSaved','navSearch','navNearby','navFeed'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.color = '';
+      });
+    }
+
     // ── SHOW SEARCH ──
     window.showSearch = function() {
-      document.getElementById('map').closest('.map-section').style.display = 'block';
+      var ms = document.getElementById('map'); if(ms) ms.closest('.map-section').style.display='block';
       document.getElementById('heroSection').style.display = 'block';
       document.getElementById('resultsGrid').parentElement.style.display = 'block';
-      document.getElementById('savedSection').style.display = 'none';
-      document.getElementById('profilePage').style.display = 'none';
-      document.getElementById('nearbyPage').style.display = 'none';
-      document.getElementById('viewProfilePage').style.display = 'none';
-      document.getElementById('myProfilePage').style.display = 'none';
+      ['savedSection','profilePage','nearbyPage','viewProfilePage','myProfilePage','feedPage','playerCardPage']
+        .forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
       document.getElementById('navSaved').style.color = '#555';
-      document.getElementById('navSearch').style.color = '#1a6b3c';
+      document.getElementById('navSearch').style.color = 'var(--slam-primary)';
       document.getElementById('navNearby').style.color = '#555';
       var nf=document.getElementById('navFeed');if(nf)nf.style.color='#555';
       if (allCourts.length > 0) document.getElementById('filterBar').style.display = 'flex';
