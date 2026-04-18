@@ -1011,3 +1011,12 @@ body::before {
   .modal-overlay { align-items: flex-start; padding: 10px; }
   .modal-card { max-height: 95vh; overflow-y: auto; margin-bottom: 0; }
 }
+/* Hide mobile menu on desktop */
+.mobile-menu { display: none !important; }
+.mobile-menu-btn { display: none !important; }
+
+/* Only show on mobile */
+@media (max-width: 480px) {
+  .mobile-menu-btn { display: flex !important; }
+  .mobile-menu.open { display: block !important; }
+}
