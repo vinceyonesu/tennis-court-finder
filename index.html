@@ -1185,8 +1185,8 @@
       if (!window._currentUser) { handleAuthClick(); return; }
       hideAllPages();
       document.getElementById('myProfilePage').style.display = 'block';
-      document.getElementById('navSearch').style.color = '#555';
-      var nf=document.getElementById('navFeed');if(nf)nf.style.color='#555';
+      document.getElementById('navSearch').style.color = 'rgba(255,255,255,0.72)';
+      var nf=document.getElementById('navFeed');if(nf)nf.style.color='rgba(255,255,255,0.72)';
       var user = window._currentUser;
       document.getElementById('mpName').textContent = user.displayName || 'No name';
       document.getElementById('mpEmail').textContent = user.email || '';
@@ -1228,9 +1228,9 @@
       hideAllPages();
       document.getElementById('nearbyPage').style.display = 'block';
       document.getElementById('navNearby').style.color = 'var(--slam-primary)';
-      document.getElementById('navSearch').style.color = '#555';
-      document.getElementById('navSaved').style.color = '#555';
-      var nf=document.getElementById('navFeed');if(nf)nf.style.color='#555';
+      document.getElementById('navSearch').style.color = 'rgba(255,255,255,0.72)';
+      document.getElementById('navSaved').style.color = 'rgba(255,255,255,0.72)';
+      var nf=document.getElementById('navFeed');if(nf)nf.style.color='rgba(255,255,255,0.72)';
       loadNearbySessions();
     };
     window.loadNearbySessions = async function() {
@@ -1771,7 +1771,7 @@
       hideAllPages();
       document.getElementById('savedSection').style.display = 'block';
       document.getElementById('navSaved').style.color = '#1a6b3c';
-      document.getElementById('navSearch').style.color = '#555';
+      document.getElementById('navSearch').style.color = 'rgba(255,255,255,0.72)';
       var savedGrid = document.getElementById('savedGrid');
       var keys = Object.keys(favorites);
       if (keys.length === 0) { savedGrid.innerHTML = '<div class="loading-msg" style="grid-column:1/-1">No saved courts yet. Search and click the heart to save courts!</div>'; return; }
@@ -1813,10 +1813,10 @@
       document.getElementById('resultsGrid').parentElement.style.display = 'block';
       ['savedSection','profilePage','nearbyPage','viewProfilePage','myProfilePage','feedPage','playerCardPage']
         .forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
-      document.getElementById('navSaved').style.color = '#555';
+      document.getElementById('navSaved').style.color = 'rgba(255,255,255,0.72)';
       document.getElementById('navSearch').style.color = 'var(--slam-primary)';
-      document.getElementById('navNearby').style.color = '#555';
-      var nf=document.getElementById('navFeed');if(nf)nf.style.color='#555';
+      document.getElementById('navNearby').style.color = 'rgba(255,255,255,0.72)';
+      var nf=document.getElementById('navFeed');if(nf)nf.style.color='rgba(255,255,255,0.72)';
       if (allCourts.length > 0) document.getElementById('filterBar').style.display = 'flex';
     };
 

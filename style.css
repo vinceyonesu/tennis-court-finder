@@ -1054,3 +1054,16 @@ body::before {
    FEED NAV LINK
 ══════════════════════════════ */
 #navFeed { transition: color .2s; }
+/* ── NAV LINK ACTIVE STATE ── */
+.nav-links a {
+  color: rgba(255,255,255,0.72) !important;
+  transition: color .2s, background .2s !important;
+}
+.nav-links a:hover {
+  color: #ffffff !important;
+  background: rgba(255,255,255,0.12) !important;
+}
+/* Keep active link bright but still readable */
+#navSearch, #navSaved, #navNearby, #navFeed {
+  color: rgba(255,255,255,0.72);
+}
