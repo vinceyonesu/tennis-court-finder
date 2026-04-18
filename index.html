@@ -1860,16 +1860,42 @@ var activeSlam='wim';
 var quoteIndex={};
 
 function applySlam(key,skipQuote){
-  var theme=SLAMS[key];if(!theme)return;
+  var theme=SLAMS[key]; if(!theme)return;
   var root=document.documentElement;
-  // CSS variables
-  Object.keys(theme).forEach(function(p){if(p.startsWith('--'))root.style.setProperty(p,theme[p]);});
-  // Body bg
-  document.body.style.background=theme['--slam-bg-page'];
-  // Navbar
-  var nav=document.querySelector('.navbar');if(nav)nav.style.background=theme['--slam-nav'];
-  // Hero
-  var hero=document.querySelector('.hero');if(hero)hero.style.background=theme.heroGradient;
+  var p=theme['--slam-primary'];
+  var s=theme['--slam-secondary'];
+  var a=theme['--slam-accent'];
+  var bg=theme['--slam-bg-page'];
+  var surf=theme['--slam-surface'];
+  var surf2=theme['--slam-surface-2'];
+  var bdr=theme['--slam-border'];
+  var t1=theme['--slam-text-1'];
+  var t2=theme['--slam-text-2'];
+  var t3=theme['--slam-text-3'];
+
+  // ── 1. CSS VARIABLES (picked up by style.css) ──
+  Object.keys(theme).forEach(function(k){if(k.startsWith('--'))root.style.setProperty(k,theme[k]);});
+
+  // ── 2. BODY ──
+  document.body.style.background=bg;
+  document.body.style.color=t1;
+
+  // ── 3. NAVBAR ──
+  var nav=document.querySelector('.navbar');
+  if(nav){ nav.style.background=theme['--slam-nav']; nav.style.boxShadow='0 2px 24px rgba(0,0,0,0.2)'; }
+
+  // ── 4. SLAM TABS BAR ──
+  var selector=document.querySelector('.slam-selector');
+  if(selector){ selector.style.background=surf; selector.style.borderBottomColor=bdr; }
+  document.querySelectorAll('.slam-tab').forEach(function(t){
+    t.classList.remove('active'); t.style.borderBottomColor='transparent'; t.style.background='';
+  });
+  var aTab=document.querySelector('.slam-tab.'+key);
+  if(aTab){ aTab.classList.add('active'); aTab.style.borderBottomColor=p; aTab.style.background=theme['--slam-bg']; }
+
+  // ── 5. HERO ──
+  var hero=document.querySelector('.hero');
+  if(hero) hero.style.background=theme.heroGradient;
   // Court lines SVG
   var lines=document.querySelector('.hero-court-lines');
   if(lines){
@@ -1884,23 +1910,143 @@ function applySlam(key,skipQuote){
       '<line x1="1020" y1="40" x2="1020" y2="520" stroke="'+c+'" stroke-width="1.5"/>'+
       '</svg>';
   }
-  // Slam tabs
-  document.querySelectorAll('.slam-tab').forEach(function(t){
-    t.classList.remove('active');t.style.borderBottomColor='transparent';t.style.background='';
-  });
-  var aTab=document.querySelector('.slam-tab.'+key);
-  if(aTab){aTab.classList.add('active');aTab.style.borderBottomColor=theme['--slam-primary'];aTab.style.background=theme['--slam-bg'];}
-  // Active badge
+  // Active slam badge
   var badge=document.getElementById('slamActiveBadge');
-  if(badge)badge.textContent=theme.emoji+'  '+theme.name.toUpperCase()+'  ·  '+theme.surface;
-  // Search btn
-  var sb=document.querySelector('.search-bar button');if(sb)sb.style.background=theme['--slam-primary'];
-  // Filter active btn
-  document.querySelectorAll('.filter-btn.active').forEach(function(b){b.style.background=theme['--slam-primary'];b.style.borderColor=theme['--slam-primary'];});
-  // Cursor
-  var cur=document.getElementById('cf-cursor');if(cur)cur.style.background=theme['--slam-primary'];
-  // Quote
-  if(!skipQuote)rotateQuote(key);
+  if(badge){ badge.textContent=theme.emoji+'  '+theme.name.toUpperCase()+'  ·  '+theme.surface; badge.style.borderColor='rgba(255,255,255,0.25)'; }
+  // Highlight underline
+  var hl=document.querySelector('.highlight');
+  if(hl){ hl.style.color=theme['--slam-highlight']; }
+
+  // ── 6. FILTER BAR ──
+  var filterBar=document.querySelector('.filter-bar');
+  if(filterBar) filterBar.style.background='transparent';
+  document.querySelectorAll('.filter-btn').forEach(function(btn){
+    btn.style.background=surf; btn.style.borderColor=bdr; btn.style.color=t2;
+  });
+  document.querySelectorAll('.filter-btn.active').forEach(function(btn){
+    btn.style.background=p; btn.style.borderColor=p; btn.style.color='#fff';
+  });
+  document.querySelectorAll('.filter-select').forEach(function(sel){
+    sel.style.background=surf; sel.style.borderColor=bdr; sel.style.color=t2;
+  });
+
+  // ── 7. RESULTS GRID AREA ──
+  var resultsSection=document.querySelector('.results-section');
+  if(resultsSection) resultsSection.style.background='transparent';
+
+  // ── 8. COURT CARDS ──
+  document.querySelectorAll('.court-card').forEach(function(card){
+    card.style.background=surf;
+    card.style.borderColor=bdr;
+  });
+  document.querySelectorAll('.court-name').forEach(function(el){ el.style.color=t1; });
+  document.querySelectorAll('.court-address').forEach(function(el){ el.style.color=t3; });
+  document.querySelectorAll('.surface-tag').forEach(function(el){
+    el.style.background=theme['--slam-bg']; el.style.color=t3;
+  });
+  document.querySelectorAll('.badge-open').forEach(function(el){
+    el.style.background=theme['--slam-badge-open-bg']; el.style.color=theme['--slam-badge-open-color'];
+  });
+  document.querySelectorAll('.badge-free').forEach(function(el){
+    el.style.background=p; el.style.color='#fff';
+  });
+
+  // ── 9. SEARCH BAR ──
+  var sb=document.querySelector('.search-bar button');
+  if(sb){ sb.style.background=p; sb.style.color='#fff'; }
+  var searchBar=document.querySelector('.search-bar');
+  if(searchBar) searchBar.style.boxShadow='0 8px 40px rgba(0,0,0,0.25)';
+
+  // ── 10. MAP SECTION ──
+  var mapSec=document.querySelector('.map-section');
+  if(mapSec) mapSec.style.background='transparent';
+
+  // ── 11. MODAL ──
+  var modalCard=document.querySelector('.modal-card');
+  if(modalCard){ modalCard.style.background=surf; }
+  var modalHours=document.querySelector('.modal-hours');
+  if(modalHours){ modalHours.style.background=surf2; modalHours.style.borderColor=bdr; modalHours.style.color=t2; }
+  var dirBtn=document.querySelector('.directions-btn');
+  if(dirBtn){ dirBtn.style.background=p; dirBtn.style.color='#fff'; }
+
+  // ── 12. HITTING PARTNER SECTION ──
+  document.querySelectorAll('.hitting-section').forEach(function(el){
+    el.style.background=surf2; el.style.borderColor=bdr;
+  });
+  document.querySelectorAll('.hitting-title').forEach(function(el){ el.style.color=t1; });
+  document.querySelectorAll('.hitting-subtitle').forEach(function(el){ el.style.color=t3; });
+  document.querySelectorAll('.hitting-post-btn').forEach(function(el){
+    el.style.background=p; el.style.color='#fff';
+  });
+  document.querySelectorAll('.hitting-form input, .hitting-form select').forEach(function(el){
+    el.style.background=surf; el.style.borderColor=bdr; el.style.color=t1;
+  });
+
+  // ── 13. SESSION CARDS ──
+  document.querySelectorAll('.session-card').forEach(function(el){
+    el.style.background=surf; el.style.borderColor=bdr;
+  });
+  document.querySelectorAll('.session-name').forEach(function(el){ el.style.color=t1; });
+  document.querySelectorAll('.join-btn').forEach(function(el){
+    el.style.background=theme['--slam-badge-open-bg']; el.style.color=p; el.style.borderColor=p;
+  });
+
+  // ── 14. COURT NOTES ──
+  document.querySelectorAll('.notes-section').forEach(function(el){
+    el.style.background=surf2; el.style.borderColor=bdr;
+  });
+  document.querySelectorAll('.notes-title').forEach(function(el){ el.style.color=t1; });
+  document.querySelectorAll('.notes-save-btn').forEach(function(el){
+    el.style.background=a; el.style.color=key==='uso'||key==='rg'?'#111':'#fff';
+  });
+  document.querySelectorAll('.notes-textarea').forEach(function(el){
+    el.style.background=surf; el.style.borderColor=bdr; el.style.color=t1;
+  });
+
+  // ── 15. PROFILE & NEARBY PAGES (inline styles) ──
+  // Profile header gradient
+  document.querySelectorAll('[style*="linear-gradient(135deg,#1a6b3c"]').forEach(function(el){
+    el.style.background='linear-gradient(135deg,'+p+','+s+')';
+  });
+  // Profile name/email text
+  document.querySelectorAll('#mpName,#vpName').forEach(function(el){ if(el)el.style.color='#fff'; });
+
+  // ── 16. FOLLOW / NEARBY BUTTONS ──
+  document.querySelectorAll('button[style*="background:#1a6b3c"], button[style*="background: #1a6b3c"]').forEach(function(el){
+    el.style.background=p;
+  });
+  document.querySelectorAll('[style*="color:#1a6b3c"], [style*="color: #1a6b3c"]').forEach(function(el){
+    el.style.color=p;
+  });
+  document.querySelectorAll('[style*="background:#e6f9ee"], [style*="background: #e6f9ee"]').forEach(function(el){
+    el.style.background=theme['--slam-badge-open-bg'];
+  });
+  document.querySelectorAll('[style*="border-color:#1a6b3c"], [style*="borderColor:#1a6b3c"]').forEach(function(el){
+    el.style.borderColor=p;
+  });
+
+  // ── 17. PAGE BACKGROUNDS ──
+  ['savedSection','nearbyPage','profilePage','myProfilePage','viewProfilePage'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.style.background='transparent';
+  });
+
+  // ── 18. SEARCH HISTORY DROPDOWN ──
+  var shd=document.getElementById('searchHistoryDropdown');
+  if(shd){ shd.style.background=surf; }
+
+  // ── 19. FOLLOW LIST MODAL ──
+  var flm=document.querySelector('#followListModal > div');
+  if(flm){ flm.style.background=surf; }
+
+  // ── 20. CURSOR ──
+  var cur=document.getElementById('cf-cursor');
+  if(cur) cur.style.background=p;
+  var ring=document.getElementById('cf-ring');
+  if(ring) ring.style.borderColor='rgba(0,0,0,0.2)';
+
+  // ── QUOTE ──
+  if(!skipQuote) rotateQuote(key);
   activeSlam=key;
 }
 
