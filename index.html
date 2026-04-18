@@ -20,6 +20,7 @@
       <a href="#" id="navSaved" onclick="showSaved()">Saved Courts <span id="savedCount" class="saved-count">0</span></a>
       <a href="#" id="navSearch" onclick="showSearch()">Search</a>
       <a href="#" id="navNearby" onclick="showNearby()">🎾 Players Near You</a>
+      <a href="#" id="navFeed" onclick="showActivityFeed()">📰 Feed</a>
       <div id="authBtn" onclick="handleAuthClick()" style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#f0f0f0;border-radius:50px;padding:6px 14px 6px 6px;transition:all 0.2s" onmouseover="this.style.background='#e6f9ee'" onmouseout="this.style.background=window._currentUser?'#e6f9ee':'#f0f0f0'">
         <div id="authAvatar" style="width:28px;height:28px;border-radius:50%;background:#1a6b3c;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;overflow:hidden">
           <span id="authAvatarText">?</span>
@@ -193,7 +194,10 @@
         </div>
         <div style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">My Upcoming Sessions</div>
         <div id="mpSessions"></div>
+        <div style="font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;margin-top:20px">🏆 My Badges</div>
+        <div id="mpBadges"></div>
         <div style="margin-top:20px">
+          <button onclick="showPlayerCard()" style="width:100%;background:var(--slam-badge-open-bg);color:var(--slam-primary);border:1.5px solid var(--slam-primary);border-radius:10px;padding:12px;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;margin-bottom:8px">🎾 My Player Card</button>
           <button onclick="showEditProfile()" style="width:100%;background:#f8f9fa;color:#1a1a1a;border:1.5px solid #e0e0e0;border-radius:10px;padding:12px;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;margin-bottom:8px">✏️ Edit Profile</button>
           <button onclick="signOutUser()" style="width:100%;background:#fdecea;color:#c0392b;border:1px solid #f5c6c6;border-radius:10px;padding:12px;font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer">Sign Out</button>
         </div>
@@ -370,6 +374,84 @@
     </div>
   </div>
   
+
+  <!-- ═══════════════════════════════
+       ACTIVITY FEED PAGE
+  ═══════════════════════════════ -->
+  <div id="feedPage" style="display:none;max-width:680px;margin:40px auto;padding:0 24px 60px;position:relative;z-index:1">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+      <div>
+        <h2 style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--slam-text-1);letter-spacing:-0.5px">Activity Feed</h2>
+        <p style="font-size:13px;color:var(--slam-text-3);margin-top:4px">What your follows are up to</p>
+      </div>
+      <button onclick="loadActivityFeed()" style="background:var(--slam-surface);border:1.5px solid var(--slam-border);border-radius:999px;padding:7px 16px;font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;color:var(--slam-text-2)">🔄 Refresh</button>
+    </div>
+    <div id="feedList"></div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       PLAYER CARD PAGE
+  ═══════════════════════════════ -->
+  <div id="playerCardPage" style="display:none;max-width:480px;margin:40px auto;padding:0 24px 60px;position:relative;z-index:1">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h2 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--slam-text-1)">My Player Card</h2>
+      <button onclick="downloadPlayerCard()" style="background:var(--slam-primary);color:#fff;border:none;border-radius:999px;padding:8px 18px;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer">⬇️ Save Card</button>
+    </div>
+    <!-- The actual card -->
+    <div id="playerCard" style="border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.18);position:relative">
+      <!-- Card header -->
+      <div id="cardHeader" style="background:linear-gradient(135deg,var(--slam-nav),var(--slam-primary));padding:28px 24px 20px;position:relative;overflow:hidden">
+        <!-- Court line decoration -->
+        <div style="position:absolute;inset:0;opacity:0.12;background:linear-gradient(transparent 49%,rgba(255,255,255,0.8) 49%,rgba(255,255,255,0.8) 51%,transparent 51%),linear-gradient(90deg,transparent 49%,rgba(255,255,255,0.8) 49%,rgba(255,255,255,0.8) 51%,transparent 51%)"></div>
+        <div style="position:relative;z-index:2;display:flex;align-items:center;gap:16px">
+          <div id="cardAvatar" style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.2);border:3px solid rgba(255,255,255,0.5);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;font-weight:800;flex-shrink:0"></div>
+          <div>
+            <div id="cardName" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px"></div>
+            <div id="cardSkill" style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:3px;font-weight:500"></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+              <div id="cardUTRBadge" style="background:var(--slam-accent);color:#111;font-size:11px;font-weight:800;padding:3px 12px;border-radius:999px;display:none"></div>
+              <div id="cardVerified" style="background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:600;padding:3px 10px;border-radius:999px;display:none">✅ Verified</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Card stats -->
+      <div id="cardBody" style="background:var(--slam-surface);padding:20px 24px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px" id="cardStats"></div>
+        <div id="cardBio" style="font-size:13px;color:var(--slam-text-2);line-height:1.6;margin-bottom:16px;font-style:italic"></div>
+        <div id="cardBadges" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--slam-text-3);letter-spacing:2px;text-transform:uppercase">CourtSide</div>
+          <div id="cardSlamBadge" style="font-size:11px;font-weight:600;color:var(--slam-text-3)"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Racket & String Log -->
+    <div style="margin-top:28px">
+      <h3 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--slam-text-1);margin-bottom:16px">🎾 Racket & String Log</h3>
+      <div id="racketLogList"></div>
+      <button onclick="showAddRacketModal()" style="width:100%;background:var(--slam-surface);border:2px dashed var(--slam-border);border-radius:14px;padding:14px;font-size:14px;font-weight:600;color:var(--slam-text-2);cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;margin-top:8px" onmouseover="this.style.borderColor='var(--slam-primary)';this.style.color='var(--slam-primary)'" onmouseout="this.style.borderColor='var(--slam-border)';this.style.color='var(--slam-text-2)'">+ Add Racket</button>
+    </div>
+  </div>
+
+  <!-- Add Racket Modal -->
+  <div id="racketModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:8000;justify-content:center;align-items:center;padding:20px">
+    <div style="background:var(--slam-surface);border-radius:20px;width:90%;max-width:400px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h3 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--slam-text-1)">Add Racket</h3>
+        <button onclick="closeRacketModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--slam-text-3)">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input type="text" id="racketBrand" placeholder="Brand & Model (e.g. Wilson Pro Staff 97)" style="border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:'Inter',sans-serif;outline:none;color:var(--slam-text-1);background:var(--slam-surface)"/>
+        <input type="text" id="racketString" placeholder="String (e.g. Luxilon ALU Power 125)" style="border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:'Inter',sans-serif;outline:none;color:var(--slam-text-1);background:var(--slam-surface)"/>
+        <input type="number" id="racketTension" placeholder="Tension (lbs, e.g. 52)" style="border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:'Inter',sans-serif;outline:none;color:var(--slam-text-1);background:var(--slam-surface)"/>
+        <input type="date" id="racketDate" style="border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:'Inter',sans-serif;outline:none;color:var(--slam-text-1);background:var(--slam-surface)"/>
+        <input type="text" id="racketNotes" placeholder="Notes (e.g. main racket, backup)" style="border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:'Inter',sans-serif;outline:none;color:var(--slam-text-1);background:var(--slam-surface)"/>
+        <button onclick="saveRacket()" style="background:var(--slam-primary);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-top:4px">Save Racket</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MAP -->
   <div class="map-section">
     <div id="map"></div>
@@ -724,7 +806,257 @@
           console.log('Sign in error:', err); alert('Sign in failed. Please try again.');
         });
     };
-    window.signOutUser = function() { window._signOut(window._auth).then(function() { showSearch(); }); };
+    // ═══════════════════════════════════════════
+    //  ACTIVITY FEED
+    // ═══════════════════════════════════════════
+    window.showActivityFeed = function() {
+      if (!window._currentUser) { handleAuthClick(); return; }
+      hideAllPages();
+      document.getElementById('feedPage').style.display = 'block';
+      document.getElementById('navFeed').style.color = 'var(--slam-primary)';
+      loadActivityFeed();
+    };
+
+    window.loadActivityFeed = async function() {
+      var list = document.getElementById('feedList');
+      if (!list || !window._db || !window._currentUser) return;
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--slam-text-3);font-size:14px">Loading feed...</div>';
+      try {
+        // Get who current user follows
+        var followingSnap = await window._fbGetDocs(window._fbQuery(window._fbCollection(window._db, 'follows'), window._fbWhere('followerId', '==', window._currentUser.uid)));
+        var followingIds = [];
+        followingSnap.forEach(function(d) { followingIds.push(d.data().followingId); });
+        if (followingIds.length === 0) {
+          list.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:16px">🎾</div><div style="font-size:16px;font-weight:700;color:var(--slam-text-1);margin-bottom:8px">No activity yet</div><div style="font-size:13px;color:var(--slam-text-3)">Follow some players to see their activity here!</div></div>';
+          return;
+        }
+        // Get recent sessions from follows (last 20)
+        var today = new Date(); today.setDate(today.getDate() - 14);
+        var cutoff = today.toISOString().split('T')[0];
+        var sessionsSnap = await window._fbGetDocs(window._fbQuery(window._fbCollection(window._db, 'sessions'), window._fbWhere('date', '>=', cutoff), window._fbOrderBy('date', 'desc')));
+        var activities = [];
+        sessionsSnap.forEach(function(d) {
+          var s = d.data();
+          if (s.deleted) return;
+          if (followingIds.indexOf(s.uid) === -1) return;
+          activities.push({ type: 'session', data: s, id: d.id, ts: s.createdAt });
+        });
+        // Sort by createdAt desc
+        activities.sort(function(a, b) {
+          var ta = a.ts ? a.ts.toMillis() : 0;
+          var tb = b.ts ? b.ts.toMillis() : 0;
+          return tb - ta;
+        });
+        if (activities.length === 0) {
+          list.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:16px">🎾</div><div style="font-size:16px;font-weight:700;color:var(--slam-text-1);margin-bottom:8px">All quiet</div><div style="font-size:13px;color:var(--slam-text-3)">None of the people you follow have posted sessions recently.</div></div>';
+          return;
+        }
+        list.innerHTML = '';
+        activities.forEach(function(act) {
+          var s = act.data;
+          var dateStr = new Date(s.date + 'T00:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+          var timeStr = new Date('2000-01-01T' + s.time).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+          var timeAgo = '';
+          if (act.ts) {
+            var diff = Date.now() - act.ts.toMillis();
+            var mins = Math.floor(diff/60000);
+            if (mins < 60) timeAgo = mins + 'm ago';
+            else if (mins < 1440) timeAgo = Math.floor(mins/60) + 'h ago';
+            else timeAgo = Math.floor(mins/1440) + 'd ago';
+          }
+          var avatar = s.photo ? '<img src="'+s.photo+'" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0"/>'
+            : '<div style="width:44px;height:44px;border-radius:50%;background:var(--slam-primary);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:800;flex-shrink:0">'+(s.name?s.name[0].toUpperCase():'?')+'</div>';
+          list.innerHTML += '<div style="background:var(--slam-surface);border:1px solid var(--slam-border);border-radius:16px;padding:16px 18px;margin-bottom:12px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 2px 8px rgba(0,0,0,0.05);transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'">'
+            + avatar
+            + '<div style="flex:1;min-width:0">'
+            + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+            + '<span style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--slam-text-1);cursor:pointer" onclick="viewProfile(''+s.uid+'')">'+s.name+'</span>'
+            + '<span style="font-size:11px;color:var(--slam-text-3)">'+timeAgo+'</span>'
+            + '</div>'
+            + '<div style="font-size:13px;color:var(--slam-text-2);margin-bottom:8px">📅 Posted a session at <strong>'+(s.courtName||'a court')+'</strong></div>'
+            + '<div style="display:flex;gap:6px;flex-wrap:wrap">'
+            + '<span style="background:var(--slam-badge-open-bg);color:var(--slam-badge-open-color);font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px">'+dateStr+' · '+timeStr+'</span>'
+            + '<span style="background:var(--slam-bg);color:var(--slam-text-3);font-size:11px;padding:3px 10px;border-radius:999px">'+s.type+'</span>'
+            + '<span style="background:var(--slam-bg);color:var(--slam-text-3);font-size:11px;padding:3px 10px;border-radius:999px">'+s.skill+'</span>'
+            + '</div></div></div>';
+        });
+      } catch(err) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:#c0392b;font-size:13px">Could not load feed.</div>';
+      }
+    };
+
+    // ═══════════════════════════════════════════
+    //  BADGES & ACHIEVEMENTS
+    // ═══════════════════════════════════════════
+    var BADGES = [
+      { id:'first_session', icon:'🎾', name:'First Rally', desc:'Posted your first session', check: function(stats){ return stats.sessions >= 1; } },
+      { id:'sessions_5',    icon:'🏓', name:'Warm Up',    desc:'Posted 5 sessions',           check: function(stats){ return stats.sessions >= 5; } },
+      { id:'sessions_10',   icon:'🔥', name:'On Fire',    desc:'Posted 10 sessions',          check: function(stats){ return stats.sessions >= 10; } },
+      { id:'sessions_50',   icon:'👑', name:'Rally King', desc:'Posted 50 sessions',          check: function(stats){ return stats.sessions >= 50; } },
+      { id:'courts_1',      icon:'📍', name:'Court Found',desc:'Visited your first court',    check: function(stats){ return stats.courts >= 1; } },
+      { id:'courts_5',      icon:'🗺️', name:'Court Hopper',desc:'Visited 5 different courts', check: function(stats){ return stats.courts >= 5; } },
+      { id:'courts_10',     icon:'🌍', name:'Court Explorer',desc:'Visited 10 courts',        check: function(stats){ return stats.courts >= 10; } },
+      { id:'followers_1',   icon:'👥', name:'First Fan',  desc:'Got your first follower',     check: function(stats){ return stats.followers >= 1; } },
+      { id:'followers_10',  icon:'⭐', name:'Rising Star',desc:'10 followers',                check: function(stats){ return stats.followers >= 10; } },
+      { id:'utr_set',       icon:'📊', name:'Rated Player',desc:'Set your UTR rating',        check: function(stats){ return stats.hasUTR; } },
+      { id:'verified',      icon:'✅', name:'Verified Pro',desc:'Phone verified your account',check: function(stats){ return stats.verified; } },
+      { id:'photo',         icon:'📸', name:'Camera Ready',desc:'Uploaded a profile photo',   check: function(stats){ return stats.hasPhoto; } },
+    ];
+
+    async function getUserStats(uid) {
+      var stats = { sessions:0, courts:0, followers:0, hasUTR:false, verified:false, hasPhoto:false };
+      try {
+        var sessSnap = await window._fbGetDocs(window._fbQuery(window._fbCollection(window._db,'sessions'), window._fbWhere('uid','==',uid)));
+        var courtIds = new Set();
+        sessSnap.forEach(function(d){ if(!d.data().deleted){ stats.sessions++; if(d.data().placeId) courtIds.add(d.data().placeId); } });
+        stats.courts = courtIds.size;
+        var follSnap = await window._fbGetDocs(window._fbQuery(window._fbCollection(window._db,'follows'), window._fbWhere('followingId','==',uid)));
+        stats.followers = follSnap.size;
+        var profSnap = await window._fbGetDoc(window._fbDoc(window._db,'profiles',uid));
+        if (profSnap.exists()) {
+          var p = profSnap.data();
+          stats.hasUTR = !!(p.utr);
+          stats.verified = !!(p.phoneVerified);
+          stats.hasPhoto = !!(p.photo);
+        }
+      } catch(e) {}
+      return stats;
+    }
+
+    function renderBadges(stats, containerId) {
+      var el = document.getElementById(containerId); if (!el) return;
+      var html = '';
+      BADGES.forEach(function(b) {
+        var earned = b.check(stats);
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:'+(earned?'var(--slam-badge-open-bg)':'var(--slam-bg)')+';border:1.5px solid '+(earned?'var(--slam-badge-open-color)':'var(--slam-border)')+';border-radius:12px;margin-bottom:8px;opacity:'+(earned?'1':'0.45')+';transition:all .2s">'
+          + '<div style="font-size:24px;flex-shrink:0">'+b.icon+'</div>'
+          + '<div><div style="font-size:13px;font-weight:700;color:var(--slam-text-1)">'+b.name+'</div><div style="font-size:11px;color:var(--slam-text-3)">'+b.desc+'</div></div>'
+          + (earned ? '<div style="margin-left:auto;font-size:11px;font-weight:700;color:var(--slam-badge-open-color)">Earned ✓</div>' : '<div style="margin-left:auto;font-size:11px;color:var(--slam-text-3)">Locked</div>')
+          + '</div>';
+      });
+      el.innerHTML = html;
+    }
+
+    // ═══════════════════════════════════════════
+    //  PLAYER CARD
+    // ═══════════════════════════════════════════
+    window.showPlayerCard = async function() {
+      if (!window._currentUser) { handleAuthClick(); return; }
+      hideAllPages();
+      document.getElementById('playerCardPage').style.display = 'block';
+      await buildPlayerCard(window._currentUser.uid);
+      loadRacketLog();
+    };
+
+    async function buildPlayerCard(uid) {
+      try {
+        var profSnap = await window._fbGetDoc(window._fbDoc(window._db,'profiles',uid));
+        var p = profSnap.exists() ? profSnap.data() : {};
+        var user = window._currentUser;
+        var name = p.name || user.displayName || 'Player';
+        var photo = p.photo || user.photoURL || '';
+        // Avatar
+        var avatarEl = document.getElementById('cardAvatar');
+        if (photo) avatarEl.innerHTML = '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover"/>';
+        else avatarEl.textContent = name[0].toUpperCase();
+        document.getElementById('cardName').textContent = name;
+        document.getElementById('cardSkill').textContent = p.skill || 'Tennis Player';
+        // UTR badge
+        if (p.utr) { var utrBadge=document.getElementById('cardUTRBadge'); utrBadge.textContent='UTR '+p.utr; utrBadge.style.display='inline-block'; }
+        // Verified
+        if (p.phoneVerified) document.getElementById('cardVerified').style.display='inline-block';
+        // Bio
+        document.getElementById('cardBio').textContent = p.bio ? '"'+p.bio+'"' : '';
+        // Stats
+        var stats = await getUserStats(uid);
+        document.getElementById('cardStats').innerHTML =
+          '<div style="background:var(--slam-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--slam-primary)">'+stats.sessions+'</div><div style="font-size:10px;color:var(--slam-text-3);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Sessions</div></div>'
+          +'<div style="background:var(--slam-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--slam-primary)">'+stats.courts+'</div><div style="font-size:10px;color:var(--slam-text-3);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Courts</div></div>'
+          +'<div style="background:var(--slam-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--slam-primary)">'+stats.followers+'</div><div style="font-size:10px;color:var(--slam-text-3);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Followers</div></div>';
+        // Badges on card
+        var earned = BADGES.filter(function(b){ return b.check(stats); });
+        document.getElementById('cardBadges').innerHTML = earned.slice(0,6).map(function(b){ return '<span style="font-size:20px" title="'+b.name+'">'+b.icon+'</span>'; }).join('');
+        // Slam badge
+        document.getElementById('cardSlamBadge').textContent = '🎾 ' + (window.activeSlam ? window.SLAMS[window.activeSlam].name : 'Wimbledon');
+      } catch(e) { console.log('Card error:', e); }
+    }
+
+    window.downloadPlayerCard = function() {
+      var card = document.getElementById('playerCard');
+      if (!card) return;
+      // Use html2canvas if available, else just notify
+      if (window.html2canvas) {
+        window.html2canvas(card, { scale:2, useCORS:true }).then(function(canvas){
+          var a=document.createElement('a'); a.download='my-courtside-card.png'; a.href=canvas.toDataURL('image/png'); a.click();
+        });
+      } else {
+        alert('Take a screenshot to save your player card! 📸');
+      }
+    };
+
+    // ═══════════════════════════════════════════
+    //  RACKET & STRING LOG
+    // ═══════════════════════════════════════════
+    function loadRacketLog() {
+      var rackets = JSON.parse(localStorage.getItem('racketLog') || '[]');
+      var list = document.getElementById('racketLogList'); if (!list) return;
+      if (rackets.length === 0) { list.innerHTML = '<div style="text-align:center;padding:20px;font-size:13px;color:var(--slam-text-3)">No rackets added yet.</div>'; return; }
+      list.innerHTML = rackets.map(function(r, i) {
+        var dateStr = r.date ? new Date(r.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+        var daysSince = r.date ? Math.floor((Date.now()-new Date(r.date+'T00:00:00'))/(1000*60*60*24)) : null;
+        var freshnessColor = daysSince === null ? 'var(--slam-text-3)' : daysSince < 30 ? '#1a6b3c' : daysSince < 90 ? '#f0a500' : '#c0392b';
+        var freshnessText = daysSince === null ? '' : daysSince < 30 ? '✅ Fresh' : daysSince < 90 ? '⚠️ ' + daysSince + 'd ago' : '❌ Overdue';
+        return '<div style="background:var(--slam-surface);border:1px solid var(--slam-border);border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">'
+          +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">'
+          +'<div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--slam-text-1)">🎾 '+r.brand+'</div>'
+          +'<div style="display:flex;gap:6px"><button onclick="deleteRacket('+i+')" style="background:none;border:none;color:var(--slam-text-3);cursor:pointer;font-size:13px;padding:0">✕</button></div>'
+          +'</div>'
+          +(r.string ? '<div style="font-size:12px;color:var(--slam-text-2);margin-bottom:4px">🪡 '+r.string+(r.tension?' · '+r.tension+' lbs':'')+'</div>' : '')
+          +(dateStr ? '<div style="font-size:12px;color:var(--slam-text-3);margin-bottom:4px">📅 Restrung '+dateStr+'</div>' : '')
+          +(r.notes ? '<div style="font-size:12px;color:var(--slam-text-3);margin-bottom:6px">📝 '+r.notes+'</div>' : '')
+          +(freshnessText ? '<div style="font-size:11px;font-weight:700;color:'+freshnessColor+'">'+freshnessText+'</div>' : '')
+          +'</div>';
+      }).join('');
+    }
+
+    window.showAddRacketModal = function() {
+      var m = document.getElementById('racketModal');
+      if (m) { m.style.display='flex'; document.body.style.overflow='hidden'; }
+      var today = new Date().toISOString().split('T')[0];
+      document.getElementById('racketDate').value = today;
+    };
+    window.closeRacketModal = function() {
+      var m = document.getElementById('racketModal');
+      if (m) { m.style.display='none'; document.body.style.overflow=''; }
+    };
+    window.saveRacket = function() {
+      var brand = document.getElementById('racketBrand').value.trim();
+      if (!brand) { alert('Please enter a racket brand/model.'); return; }
+      var rackets = JSON.parse(localStorage.getItem('racketLog') || '[]');
+      rackets.unshift({
+        brand: brand,
+        string: document.getElementById('racketString').value.trim(),
+        tension: document.getElementById('racketTension').value.trim(),
+        date: document.getElementById('racketDate').value,
+        notes: document.getElementById('racketNotes').value.trim()
+      });
+      localStorage.setItem('racketLog', JSON.stringify(rackets));
+      closeRacketModal();
+      document.getElementById('racketBrand').value='';
+      document.getElementById('racketString').value='';
+      document.getElementById('racketTension').value='';
+      document.getElementById('racketNotes').value='';
+      loadRacketLog();
+    };
+    window.deleteRacket = function(index) {
+      if (!confirm('Delete this racket?')) return;
+      var rackets = JSON.parse(localStorage.getItem('racketLog') || '[]');
+      rackets.splice(index, 1);
+      localStorage.setItem('racketLog', JSON.stringify(rackets));
+      loadRacketLog();
+    };
+
+        window.signOutUser = function() { window._signOut(window._auth).then(function() { showSearch(); }); };
 
     // ── PROFILE PHOTO UPLOADS ──
     window.uploadMyProfilePhoto = async function(input) {
@@ -880,6 +1212,9 @@
       document.getElementById('mpFollowingCount').textContent = followingSnap.size;
       document.getElementById('mpMutualCount').textContent = followerIds.filter(function(id) { return followingIds.includes(id); }).length;
       await loadUserSessionsForMyProfile(user.uid);
+      // Load badges
+      var stats = await getUserStats(user.uid);
+      renderBadges(stats, 'mpBadges');
     };
     window.showEditProfile = function() { document.getElementById('myProfilePage').style.display = 'none'; document.getElementById('profilePage').style.display = 'block'; };
     window.showProfile = window.showMyProfile;
@@ -1480,6 +1815,7 @@
       document.getElementById('navSaved').style.color = '#555';
       document.getElementById('navSearch').style.color = '#1a6b3c';
       document.getElementById('navNearby').style.color = '#555';
+      var nf=document.getElementById('navFeed');if(nf)nf.style.color='#555';
       if (allCourts.length > 0) document.getElementById('filterBar').style.display = 'flex';
     };
 
@@ -1775,6 +2111,7 @@
     };
   </script>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHq7QJIROeH2ZphtL07WQKLWK2Z9ELmZU&libraries=places,marker&v=beta&callback=initMap" async defer></script>
 
 <script>

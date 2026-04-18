@@ -1020,3 +1020,37 @@ body::before {
   .mobile-menu-btn { display: flex !important; }
   .mobile-menu.open { display: block !important; }
 }
+/* ══════════════════════════════
+   ACTIVITY FEED
+══════════════════════════════ */
+#feedPage {
+  animation: fadeUp .4s var(--ease-out) both;
+}
+#feedList .feed-item {
+  transition: transform .2s var(--ease), box-shadow .2s;
+}
+
+/* ══════════════════════════════
+   PLAYER CARD
+══════════════════════════════ */
+#playerCardPage {
+  animation: fadeUp .4s var(--ease-out) both;
+}
+#playerCard {
+  transition: box-shadow .3s;
+}
+#playerCard:hover {
+  box-shadow: 0 28px 70px rgba(0,0,0,0.22) !important;
+}
+
+/* ══════════════════════════════
+   RACKET LOG
+══════════════════════════════ */
+#racketModal > div {
+  animation: modalUp .3s var(--ease-spring) both;
+}
+
+/* ══════════════════════════════
+   FEED NAV LINK
+══════════════════════════════ */
+#navFeed { transition: color .2s; }
