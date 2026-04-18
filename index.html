@@ -33,13 +33,15 @@
   <!-- HERO -->
   <section class="hero" id="heroSection">
     <div class="hero-content">
-      <!-- Grand Slam badges -->
-<div class="slam-badges">
-  <div class="slam-badge wim">🌿 Wimbledon</div>
-  <div class="slam-badge uso">🌆 US Open</div>
-  <div class="slam-badge rg">🏺 Roland Garros</div>
-  <div class="slam-badge ao">🌏 Australian Open</div>
-</div>
+      <!-- Court lines -->
+      <div class="hero-court-lines"></div>
+      <!-- Active slam badge -->
+      <div id="slamActiveBadge" class="slam-active-badge">🌿  WIMBLEDON  ·  Grass Court</div>
+      <!-- Rotating quote -->
+      <div class="slam-quote-wrap">
+        <div id="slamQuote" class="slam-quote"></div>
+        <div id="slamQuoteAttr" class="slam-quote-attr"></div>
+      </div>
       <h1>Find Tennis Courts and Hitting Partners <span class="highlight">Near You</span></h1>
       <p class="hero-sub">Search tennis courts near you, check live weather, find hitting partners, and connect with players in your area.</p>
       <div style="position:relative;width:100%;max-width:560px;margin:0 auto">
@@ -1766,161 +1768,180 @@
 
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHq7QJIROeH2ZphtL07WQKLWK2Z9ELmZU&libraries=places,marker&v=beta&callback=initMap" async defer></script>
 
-</script>   ← this closes your main JS block that already exists
-
 <script>
-  // ── GRAND SLAM THEME SWITCHER ──
-  var slamThemes = {
-    wim: {
-      '--slam-primary':   '#1a5c32',
-      '--slam-secondary': '#6b1f7a',
-      '--slam-accent':    '#6b1f7a',
-      '--slam-bg':        '#e8f5ee',
-      '--slam-surface':   '#f0faf4',
-      '--slam-card-top':  'linear-gradient(135deg,#1a5c32,#6b1f7a)',
-      '--slam-btn':       '#1a5c32',
-      '--slam-hero-from': '#0b2e16',
-      '--slam-hero-to':   '#1a5c32',
-      '--slam-nav':       '#1a5c32',
-      '--slam-highlight': '#f5c518',
-      heroLines: 'rgba(255,255,255,0.15)',
-      name: 'Wimbledon',
-      emoji: '🌿'
-    },
-    uso: {
-      '--slam-primary':   '#0a1628',
-      '--slam-secondary': '#f5c518',
-      '--slam-accent':    '#f5c518',
-      '--slam-bg':        '#f0f4ff',
-      '--slam-surface':   '#f5f8ff',
-      '--slam-card-top':  'linear-gradient(135deg,#0a1628,#f5c518)',
-      '--slam-btn':       '#0a1628',
-      '--slam-hero-from': '#050d1a',
-      '--slam-hero-to':   '#0a1e3d',
-      '--slam-nav':       '#0a1628',
-      '--slam-highlight': '#f5c518',
-      heroLines: 'rgba(245,197,24,0.2)',
-      name: 'US Open',
-      emoji: '🌆'
-    },
-    rg: {
-      '--slam-primary':   '#c0421a',
-      '--slam-secondary': '#8b2500',
-      '--slam-accent':    '#f5a050',
-      '--slam-bg':        '#fdf3ec',
-      '--slam-surface':   '#fff8f3',
-      '--slam-card-top':  'linear-gradient(135deg,#c0421a,#f5a050)',
-      '--slam-btn':       '#c0421a',
-      '--slam-hero-from': '#5a1a08',
-      '--slam-hero-to':   '#a03010',
-      '--slam-nav':       '#8b2500',
-      '--slam-highlight': '#ffd166',
-      heroLines: 'rgba(255,200,150,0.2)',
-      name: 'Roland Garros',
-      emoji: '🏺'
-    },
-    ao: {
-      '--slam-primary':   '#0052a5',
-      '--slam-secondary': '#76c442',
-      '--slam-accent':    '#76c442',
-      '--slam-bg':        '#e8f4ff',
-      '--slam-surface':   '#f0f8ff',
-      '--slam-card-top':  'linear-gradient(135deg,#0052a5,#76c442)',
-      '--slam-btn':       '#0052a5',
-      '--slam-hero-from': '#001a40',
-      '--slam-hero-to':   '#003580',
-      '--slam-nav':       '#003580',
-      '--slam-highlight': '#76c442',
-      heroLines: 'rgba(118,196,66,0.2)',
-      name: 'Australian Open',
-      emoji: '🌏'
-    }
-  };
-
-  var activeSlam = 'wim';
-
-  function applySlam(key) {
-    var theme = slamThemes[key];
-    var root = document.documentElement;
-
-    // Apply CSS variables
-    Object.keys(theme).forEach(function(prop) {
-      if (prop.startsWith('--')) root.style.setProperty(prop, theme[prop]);
-    });
-
-    // Navbar color
-    var navbar = document.querySelector('.navbar');
-    if (navbar) navbar.style.background = theme['--slam-nav'];
-
-    // Hero background
-    var hero = document.querySelector('.hero');
-    if (hero) {
-      hero.style.background = 'linear-gradient(170deg,' + theme['--slam-hero-from'] + ' 0%,' + theme['--slam-hero-to'] + ' 100%)';
-    }
-
-    // Filter active button
-    var filterBtns = document.querySelectorAll('.filter-btn.active');
-    filterBtns.forEach(function(btn) {
-      btn.style.background = theme['--slam-primary'];
-      btn.style.borderColor = theme['--slam-primary'];
-    });
-
-    // Search button
-    var searchBtn = document.querySelector('.search-bar button');
-    if (searchBtn) searchBtn.style.background = theme['--slam-primary'];
-
-    // Hitting post button
-    var postBtn = document.querySelector('.hitting-post-btn');
-    if (postBtn) postBtn.style.background = theme['--slam-primary'];
-
-    // Directions btn
-    var dirBtn = document.querySelector('.directions-btn');
-    if (dirBtn) dirBtn.style.background = theme['--slam-primary'];
-
-    // Active slam tab highlight
-    document.querySelectorAll('.slam-tab').forEach(function(tab) {
-      tab.classList.remove('active');
-      tab.style.borderBottomColor = 'transparent';
-      tab.style.background = '';
-    });
-    var activeTab = document.querySelector('.slam-tab.' + key);
-    if (activeTab) {
-      activeTab.classList.add('active');
-      activeTab.style.borderBottomColor = theme['--slam-primary'];
-      activeTab.style.background = theme['--slam-bg'];
-    }
-
-    // Active slam badge
-    document.querySelectorAll('.slam-badge').forEach(function(b) {
-      b.style.transform = '';
-      b.style.boxShadow = '';
-    });
-    var activeBadge = document.querySelector('.slam-badge.' + key);
-    if (activeBadge) {
-      activeBadge.style.transform = 'scale(1.1)';
-      activeBadge.style.boxShadow = '0 8px 24px rgba(0,0,0,0.25)';
-    }
-
-    activeSlam = key;
+/* ═══════════════════════════════════════════════════
+   GRAND SLAM FULL THEME SWITCHER
+   Switches: colors, hero, navbar, court lines, quotes
+═══════════════════════════════════════════════════ */
+var SLAMS = {
+  wim: {
+    name:'Wimbledon', location:'London, England', emoji:'🌿', surface:'Grass Court',
+    '--slam-primary':'#1a5c32','--slam-secondary':'#6b1f7a','--slam-accent':'#f5c518',
+    '--slam-bg':'#f0faf4','--slam-bg-page':'#f4f2ee','--slam-surface':'#ffffff',
+    '--slam-surface-2':'#f0faf4','--slam-nav':'#1a5c32',
+    '--slam-hero-from':'#0b2e16','--slam-hero-to':'#1a5c32',
+    '--slam-text-1':'#111410','--slam-text-2':'#3a4a38','--slam-text-3':'#8a9f85',
+    '--slam-border':'rgba(26,92,50,0.12)','--slam-filter-hover':'#e8f5ee',
+    '--slam-badge-open-bg':'#e8f5ee','--slam-badge-open-color':'#1a5c32',
+    '--slam-highlight':'#f5c518','--slam-btn-text':'#ffffff',
+    heroGradient:'linear-gradient(170deg,#0b2e16 0%,#1a5c32 100%)',
+    courtLineColor:'rgba(255,255,255,0.15)',
+    quotes:[
+      {text:"Winning Wimbledon is just the best feeling in the world. There's nothing like it.",attr:"Pete Sampras"},
+      {text:"Wimbledon is the greatest stage in tennis. It's where legends are made.",attr:"Roger Federer"},
+      {text:"The grass at Wimbledon is sacred. Every blade of it.",attr:"John McEnroe"},
+      {text:"There is no better feeling than walking onto Centre Court at Wimbledon.",attr:"Andy Murray"},
+      {text:"Wimbledon is not just a tournament, it's an institution.",attr:"Martina Navratilova"}
+    ]
+  },
+  uso: {
+    name:'US Open', location:'New York, USA', emoji:'🌆', surface:'Hard Court',
+    '--slam-primary':'#0a1628','--slam-secondary':'#f5c518','--slam-accent':'#f5c518',
+    '--slam-bg':'#f0f4ff','--slam-bg-page':'#eef2f8','--slam-surface':'#ffffff',
+    '--slam-surface-2':'#f0f4ff','--slam-nav':'#0a1628',
+    '--slam-hero-from':'#050d1a','--slam-hero-to':'#0a2040',
+    '--slam-text-1':'#0a1222','--slam-text-2':'#2a3a5a','--slam-text-3':'#7a8aaa',
+    '--slam-border':'rgba(10,22,40,0.10)','--slam-filter-hover':'#e8eeff',
+    '--slam-badge-open-bg':'#fff8e0','--slam-badge-open-color':'#8a6000',
+    '--slam-highlight':'#f5c518','--slam-btn-text':'#ffffff',
+    heroGradient:'linear-gradient(170deg,#050d1a 0%,#0a2040 60%,#1a3060 100%)',
+    courtLineColor:'rgba(245,197,24,0.18)',
+    quotes:[
+      {text:"New York gives you energy like nowhere else. The crowd pushes you to another level.",attr:"Serena Williams"},
+      {text:"The US Open crowd is the loudest, most passionate in tennis. They make you feel alive.",attr:"Andre Agassi"},
+      {text:"Playing under the lights at Arthur Ashe Stadium is pure electricity.",attr:"Rafael Nadal"},
+      {text:"New York doesn't let you be tired. The city just keeps giving you energy.",attr:"Novak Djokovic"},
+      {text:"The US Open is where champions are forged under pressure.",attr:"Jimmy Connors"}
+    ]
+  },
+  rg: {
+    name:'Roland Garros', location:'Paris, France', emoji:'🏺', surface:'Clay Court',
+    '--slam-primary':'#b03a18','--slam-secondary':'#e8743a','--slam-accent':'#ffd166',
+    '--slam-bg':'#fdf3ec','--slam-bg-page':'#faf0e6','--slam-surface':'#fffcf9',
+    '--slam-surface-2':'#fdf3ec','--slam-nav':'#8b2500',
+    '--slam-hero-from':'#4a1808','--slam-hero-to':'#9a3010',
+    '--slam-text-1':'#2a1008','--slam-text-2':'#5a3020','--slam-text-3':'#b08060',
+    '--slam-border':'rgba(176,58,24,0.12)','--slam-filter-hover':'#fdeede',
+    '--slam-badge-open-bg':'#fde8d8','--slam-badge-open-color':'#8b2500',
+    '--slam-highlight':'#ffd166','--slam-btn-text':'#ffffff',
+    heroGradient:'linear-gradient(170deg,#4a1808 0%,#9a3010 60%,#c04820 100%)',
+    courtLineColor:'rgba(255,200,140,0.16)',
+    quotes:[
+      {text:"On clay, patience is not a virtue. It's the only weapon that matters.",attr:"Rafael Nadal"},
+      {text:"Paris in May is the most beautiful place in tennis. Clay gets in your blood.",attr:"Chris Evert"},
+      {text:"Roland Garros tests your soul, not just your tennis. It finds out who you really are.",attr:"Gustavo Kuerten"},
+      {text:"Clay is alive. It breathes. You have to feel it before you can master it.",attr:"Bjorn Borg"},
+      {text:"Winning here means you've conquered the most brutal, beautiful surface in sport.",attr:"Arantxa Sanchez Vicario"}
+    ]
+  },
+  ao: {
+    name:'Australian Open', location:'Melbourne, AUS', emoji:'🌏', surface:'Hard Court',
+    '--slam-primary':'#0052a5','--slam-secondary':'#76c442','--slam-accent':'#76c442',
+    '--slam-bg':'#e8f4ff','--slam-bg-page':'#eaf3ff','--slam-surface':'#ffffff',
+    '--slam-surface-2':'#e8f4ff','--slam-nav':'#003580',
+    '--slam-hero-from':'#001a40','--slam-hero-to':'#003580',
+    '--slam-text-1':'#001828','--slam-text-2':'#1a3a5a','--slam-text-3':'#5a80a0',
+    '--slam-border':'rgba(0,82,165,0.10)','--slam-filter-hover':'#dceeff',
+    '--slam-badge-open-bg':'#e0f0ff','--slam-badge-open-color':'#003580',
+    '--slam-highlight':'#76c442','--slam-btn-text':'#ffffff',
+    heroGradient:'linear-gradient(170deg,#001a40 0%,#003580 60%,#0052a5 100%)',
+    courtLineColor:'rgba(118,196,66,0.18)',
+    quotes:[
+      {text:"Melbourne is where the year begins for real. Winning here sets the tone for everything.",attr:"Novak Djokovic"},
+      {text:"The Australian Open crowd is the warmest in the world. They make you feel at home.",attr:"Roger Federer"},
+      {text:"Melbourne Park has given me so many memories. I'll always love this place.",attr:"Serena Williams"},
+      {text:"January in Melbourne — the heat, the crowd, the blue courts. It's unlike anything else.",attr:"Andy Murray"},
+      {text:"The Australian Open is the party slam. Everyone is happy to be there.",attr:"Nick Kyrgios"}
+    ]
   }
+};
 
-  // Hook up slam tabs
-  document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.slam-tab').forEach(function(tab) {
-      tab.addEventListener('click', function() {
-        var key = Array.from(tab.classList).find(function(c) { return slamThemes[c]; });
-        if (key) applySlam(key);
-      });
-    });
-    document.querySelectorAll('.slam-badge').forEach(function(badge) {
-      badge.addEventListener('click', function() {
-        var key = Array.from(badge.classList).find(function(c) { return slamThemes[c]; });
-        if (key) applySlam(key);
-      });
-    });
-    // Start on Wimbledon
-    applySlam('wim');
+var activeSlam='wim';
+var quoteIndex={};
+
+function applySlam(key,skipQuote){
+  var theme=SLAMS[key];if(!theme)return;
+  var root=document.documentElement;
+  // CSS variables
+  Object.keys(theme).forEach(function(p){if(p.startsWith('--'))root.style.setProperty(p,theme[p]);});
+  // Body bg
+  document.body.style.background=theme['--slam-bg-page'];
+  // Navbar
+  var nav=document.querySelector('.navbar');if(nav)nav.style.background=theme['--slam-nav'];
+  // Hero
+  var hero=document.querySelector('.hero');if(hero)hero.style.background=theme.heroGradient;
+  // Court lines SVG
+  var lines=document.querySelector('.hero-court-lines');
+  if(lines){
+    var c=theme.courtLineColor;
+    lines.innerHTML='<svg width="100%" height="100%" viewBox="0 0 1200 560" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">'+
+      '<rect x="60" y="40" width="1080" height="480" fill="none" stroke="'+c+'" stroke-width="2"/>'+
+      '<line x1="60" y1="280" x2="1140" y2="280" stroke="'+c+'" stroke-width="3"/>'+
+      '<line x1="600" y1="130" x2="600" y2="430" stroke="'+c+'" stroke-width="1.5"/>'+
+      '<line x1="60" y1="130" x2="1140" y2="130" stroke="'+c+'" stroke-width="1.5"/>'+
+      '<line x1="60" y1="430" x2="1140" y2="430" stroke="'+c+'" stroke-width="1.5"/>'+
+      '<line x1="180" y1="40" x2="180" y2="520" stroke="'+c+'" stroke-width="1.5"/>'+
+      '<line x1="1020" y1="40" x2="1020" y2="520" stroke="'+c+'" stroke-width="1.5"/>'+
+      '</svg>';
+  }
+  // Slam tabs
+  document.querySelectorAll('.slam-tab').forEach(function(t){
+    t.classList.remove('active');t.style.borderBottomColor='transparent';t.style.background='';
   });
+  var aTab=document.querySelector('.slam-tab.'+key);
+  if(aTab){aTab.classList.add('active');aTab.style.borderBottomColor=theme['--slam-primary'];aTab.style.background=theme['--slam-bg'];}
+  // Active badge
+  var badge=document.getElementById('slamActiveBadge');
+  if(badge)badge.textContent=theme.emoji+'  '+theme.name.toUpperCase()+'  ·  '+theme.surface;
+  // Search btn
+  var sb=document.querySelector('.search-bar button');if(sb)sb.style.background=theme['--slam-primary'];
+  // Filter active btn
+  document.querySelectorAll('.filter-btn.active').forEach(function(b){b.style.background=theme['--slam-primary'];b.style.borderColor=theme['--slam-primary'];});
+  // Cursor
+  var cur=document.getElementById('cf-cursor');if(cur)cur.style.background=theme['--slam-primary'];
+  // Quote
+  if(!skipQuote)rotateQuote(key);
+  activeSlam=key;
+}
+
+function rotateQuote(key){
+  var theme=SLAMS[key];
+  if(!quoteIndex[key])quoteIndex[key]=0;
+  var q=theme.quotes[quoteIndex[key]%theme.quotes.length];
+  quoteIndex[key]++;
+  var qEl=document.getElementById('slamQuote');
+  var aEl=document.getElementById('slamQuoteAttr');
+  if(!qEl||!aEl)return;
+  qEl.classList.add('fading');aEl.classList.add('fading');
+  setTimeout(function(){
+    qEl.textContent='"'+q.text+'"';
+    aEl.textContent='— '+q.attr+'  ·  '+theme.name;
+    aEl.style.color=theme['--slam-accent'];
+    qEl.classList.remove('fading');aEl.classList.remove('fading');
+  },350);
+}
+
+// Auto-rotate quote every 8s
+setInterval(function(){rotateQuote(activeSlam);},8000);
+
+document.addEventListener('DOMContentLoaded',function(){
+  // Wire tabs
+  document.querySelectorAll('.slam-tab').forEach(function(tab){
+    tab.addEventListener('click',function(){
+      var key=Array.from(tab.classList).find(function(c){return SLAMS[c];});
+      if(key)applySlam(key);
+    });
+  });
+  // Apply Wimbledon on load
+  applySlam('wim',true);
+  // Set first quote
+  var q=SLAMS.wim.quotes[0];
+  var qEl=document.getElementById('slamQuote');
+  var aEl=document.getElementById('slamQuoteAttr');
+  if(qEl)qEl.textContent='"'+q.text+'"';
+  if(aEl){aEl.textContent='— '+q.attr+'  ·  Wimbledon';aEl.style.color=SLAMS.wim['--slam-accent'];}
+  quoteIndex['wim']=1;
+});
 </script>
 
   <script>
