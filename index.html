@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
+<!-- CURSOR -->
+  <div id="cf-cursor"></div>
+  <div id="cf-ring"></div>
 
   <!-- NAV -->
   <nav class="navbar">
@@ -1732,6 +1735,29 @@
   </script>
 
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDHq7QJIROeH2ZphtL07WQKLWK2Z9ELmZU&libraries=places,marker&v=beta&callback=initMap" async defer></script>
+
+</script>   ← this closes your main JS block that already exists
+
+  <script>
+    var cur=document.getElementById('cf-cursor');
+    var ring=document.getElementById('cf-ring');
+    var rx=0,ry=0,mx=0,my=0;
+    document.addEventListener('mousemove',function(e){
+      mx=e.clientX;my=e.clientY;
+      cur.style.left=mx+'px';cur.style.top=my+'px';
+    });
+    (function lerp(){
+      rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;
+      ring.style.left=rx+'px';ring.style.top=ry+'px';
+      requestAnimationFrame(lerp);
+    })();
+    document.addEventListener('mousedown',function(){cur.classList.add('clicking');ring.classList.add('hovering');});
+    document.addEventListener('mouseup',function(){cur.classList.remove('clicking');ring.classList.remove('hovering');});
+    document.querySelectorAll('a,button,[onclick]').forEach(function(el){
+      el.addEventListener('mouseenter',function(){ring.classList.add('hovering');});
+      el.addEventListener('mouseleave',function(){ring.classList.remove('hovering');});
+    });
+  </script>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
