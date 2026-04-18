@@ -1768,6 +1768,161 @@
 
 </script>   ← this closes your main JS block that already exists
 
+<script>
+  // ── GRAND SLAM THEME SWITCHER ──
+  var slamThemes = {
+    wim: {
+      '--slam-primary':   '#1a5c32',
+      '--slam-secondary': '#6b1f7a',
+      '--slam-accent':    '#6b1f7a',
+      '--slam-bg':        '#e8f5ee',
+      '--slam-surface':   '#f0faf4',
+      '--slam-card-top':  'linear-gradient(135deg,#1a5c32,#6b1f7a)',
+      '--slam-btn':       '#1a5c32',
+      '--slam-hero-from': '#0b2e16',
+      '--slam-hero-to':   '#1a5c32',
+      '--slam-nav':       '#1a5c32',
+      '--slam-highlight': '#f5c518',
+      heroLines: 'rgba(255,255,255,0.15)',
+      name: 'Wimbledon',
+      emoji: '🌿'
+    },
+    uso: {
+      '--slam-primary':   '#0a1628',
+      '--slam-secondary': '#f5c518',
+      '--slam-accent':    '#f5c518',
+      '--slam-bg':        '#f0f4ff',
+      '--slam-surface':   '#f5f8ff',
+      '--slam-card-top':  'linear-gradient(135deg,#0a1628,#f5c518)',
+      '--slam-btn':       '#0a1628',
+      '--slam-hero-from': '#050d1a',
+      '--slam-hero-to':   '#0a1e3d',
+      '--slam-nav':       '#0a1628',
+      '--slam-highlight': '#f5c518',
+      heroLines: 'rgba(245,197,24,0.2)',
+      name: 'US Open',
+      emoji: '🌆'
+    },
+    rg: {
+      '--slam-primary':   '#c0421a',
+      '--slam-secondary': '#8b2500',
+      '--slam-accent':    '#f5a050',
+      '--slam-bg':        '#fdf3ec',
+      '--slam-surface':   '#fff8f3',
+      '--slam-card-top':  'linear-gradient(135deg,#c0421a,#f5a050)',
+      '--slam-btn':       '#c0421a',
+      '--slam-hero-from': '#5a1a08',
+      '--slam-hero-to':   '#a03010',
+      '--slam-nav':       '#8b2500',
+      '--slam-highlight': '#ffd166',
+      heroLines: 'rgba(255,200,150,0.2)',
+      name: 'Roland Garros',
+      emoji: '🏺'
+    },
+    ao: {
+      '--slam-primary':   '#0052a5',
+      '--slam-secondary': '#76c442',
+      '--slam-accent':    '#76c442',
+      '--slam-bg':        '#e8f4ff',
+      '--slam-surface':   '#f0f8ff',
+      '--slam-card-top':  'linear-gradient(135deg,#0052a5,#76c442)',
+      '--slam-btn':       '#0052a5',
+      '--slam-hero-from': '#001a40',
+      '--slam-hero-to':   '#003580',
+      '--slam-nav':       '#003580',
+      '--slam-highlight': '#76c442',
+      heroLines: 'rgba(118,196,66,0.2)',
+      name: 'Australian Open',
+      emoji: '🌏'
+    }
+  };
+
+  var activeSlam = 'wim';
+
+  function applySlam(key) {
+    var theme = slamThemes[key];
+    var root = document.documentElement;
+
+    // Apply CSS variables
+    Object.keys(theme).forEach(function(prop) {
+      if (prop.startsWith('--')) root.style.setProperty(prop, theme[prop]);
+    });
+
+    // Navbar color
+    var navbar = document.querySelector('.navbar');
+    if (navbar) navbar.style.background = theme['--slam-nav'];
+
+    // Hero background
+    var hero = document.querySelector('.hero');
+    if (hero) {
+      hero.style.background = 'linear-gradient(170deg,' + theme['--slam-hero-from'] + ' 0%,' + theme['--slam-hero-to'] + ' 100%)';
+    }
+
+    // Filter active button
+    var filterBtns = document.querySelectorAll('.filter-btn.active');
+    filterBtns.forEach(function(btn) {
+      btn.style.background = theme['--slam-primary'];
+      btn.style.borderColor = theme['--slam-primary'];
+    });
+
+    // Search button
+    var searchBtn = document.querySelector('.search-bar button');
+    if (searchBtn) searchBtn.style.background = theme['--slam-primary'];
+
+    // Hitting post button
+    var postBtn = document.querySelector('.hitting-post-btn');
+    if (postBtn) postBtn.style.background = theme['--slam-primary'];
+
+    // Directions btn
+    var dirBtn = document.querySelector('.directions-btn');
+    if (dirBtn) dirBtn.style.background = theme['--slam-primary'];
+
+    // Active slam tab highlight
+    document.querySelectorAll('.slam-tab').forEach(function(tab) {
+      tab.classList.remove('active');
+      tab.style.borderBottomColor = 'transparent';
+      tab.style.background = '';
+    });
+    var activeTab = document.querySelector('.slam-tab.' + key);
+    if (activeTab) {
+      activeTab.classList.add('active');
+      activeTab.style.borderBottomColor = theme['--slam-primary'];
+      activeTab.style.background = theme['--slam-bg'];
+    }
+
+    // Active slam badge
+    document.querySelectorAll('.slam-badge').forEach(function(b) {
+      b.style.transform = '';
+      b.style.boxShadow = '';
+    });
+    var activeBadge = document.querySelector('.slam-badge.' + key);
+    if (activeBadge) {
+      activeBadge.style.transform = 'scale(1.1)';
+      activeBadge.style.boxShadow = '0 8px 24px rgba(0,0,0,0.25)';
+    }
+
+    activeSlam = key;
+  }
+
+  // Hook up slam tabs
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.slam-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var key = Array.from(tab.classList).find(function(c) { return slamThemes[c]; });
+        if (key) applySlam(key);
+      });
+    });
+    document.querySelectorAll('.slam-badge').forEach(function(badge) {
+      badge.addEventListener('click', function() {
+        var key = Array.from(badge.classList).find(function(c) { return slamThemes[c]; });
+        if (key) applySlam(key);
+      });
+    });
+    // Start on Wimbledon
+    applySlam('wim');
+  });
+</script>
+
   <script>
     var cur=document.getElementById('cf-cursor');
     var ring=document.getElementById('cf-ring');
