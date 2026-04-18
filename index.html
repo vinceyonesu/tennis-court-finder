@@ -27,8 +27,17 @@
         </div>
         <span id="authBtnText" style="font-size:13px;font-weight:600;color:#333">Sign In</span>
       </div>
+      <!-- Hamburger - mobile only -->
+      <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()" style="display:none">☰</button>
     </div>
   </nav>
+  <!-- Mobile drawer -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#" onclick="showSearch();closeMobileMenu()">🔍 Search Courts</a>
+    <a href="#" onclick="showSaved();closeMobileMenu()">❤️ Saved Courts</a>
+    <a href="#" onclick="showNearby();closeMobileMenu()">🎾 Players Near You</a>
+    <a href="#" onclick="handleAuthClick();closeMobileMenu()">👤 My Profile</a>
+  </div>
 
   <!-- HERO -->
   <section class="hero" id="heroSection">
@@ -2089,6 +2098,38 @@ document.addEventListener('DOMContentLoaded',function(){
   quoteIndex['wim']=1;
 });
 </script>
+
+  <script>
+    // ── MOBILE MENU ──
+    function toggleMobileMenu(){
+      var menu=document.getElementById('mobileMenu');
+      menu.classList.toggle('open');
+    }
+    function closeMobileMenu(){
+      document.getElementById('mobileMenu').classList.remove('open');
+    }
+    // Show hamburger on mobile, hide nav links
+    function checkMobile(){
+      var isMobile=window.innerWidth<=480;
+      var btn=document.getElementById('mobileMenuBtn');
+      var navLinks=document.querySelector('.nav-links');
+      if(btn) btn.style.display=isMobile?'flex':'none';
+      // Hide nav link text items on mobile (keep auth btn)
+      document.querySelectorAll('.nav-links a').forEach(function(a){
+        a.style.display=isMobile?'none':'';
+      });
+    }
+    window.addEventListener('resize', checkMobile);
+    document.addEventListener('DOMContentLoaded', checkMobile);
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(e){
+      var menu=document.getElementById('mobileMenu');
+      var btn=document.getElementById('mobileMenuBtn');
+      if(menu && !menu.contains(e.target) && btn && !btn.contains(e.target)){
+        menu.classList.remove('open');
+      }
+    });
+  </script>
 
   <script>
     var cur=document.getElementById('cf-cursor');

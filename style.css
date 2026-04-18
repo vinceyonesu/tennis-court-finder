@@ -748,3 +748,266 @@ body::before {
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); }
 ::selection { background: rgba(0,0,0,0.1); color: var(--slam-text-1); }
+/* ══════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Full breakpoint system
+   Breakpoints:
+   768px  = tablet and below
+   480px  = phone
+   360px  = small phone
+══════════════════════════════════════════════════════ */
+
+/* ── TABLET (≤ 768px) ── */
+@media (max-width: 768px) {
+
+  /* Hide cursor ring on touch */
+  #cf-cursor, #cf-ring { display: none; }
+  * { cursor: auto !important; }
+
+  /* NAVBAR */
+  .navbar {
+    padding: 0 20px;
+    height: 60px;
+  }
+  .nav-logo { font-size: 18px; letter-spacing: -0.3px; }
+  .nav-links {
+    gap: 2px;
+  }
+  .nav-links a {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  /* Hide less important nav links on tablet */
+  .nav-links a[id="navSaved"] { display: none; }
+
+  /* SLAM SELECTOR TABS */
+  .slam-selector { top: 60px; }
+  .slam-tab { min-width: 100px; padding: 10px 8px 9px; }
+  .slam-tab-icon { font-size: 18px; margin-bottom: 3px; }
+  .slam-tab-name { font-size: 11px; }
+  .slam-tab-loc { display: none; }
+
+  /* HERO */
+  .hero { min-height: 480px; }
+  .hero-content { padding: 80px 24px 100px; }
+  .hero h1 { font-size: 44px; letter-spacing: -1px; }
+  .hero-sub { font-size: 15px; margin-bottom: 32px; }
+  .slam-active-badge { font-size: 10px; padding: 5px 16px; letter-spacing: 1.5px; }
+  .slam-quote { font-size: 13px; }
+
+  /* SEARCH BAR */
+  .search-bar {
+    max-width: 100%;
+    padding: 5px 5px 5px 18px;
+  }
+  .search-bar input { font-size: 14px; }
+  .search-bar button { padding: 10px 20px; font-size: 12px; }
+
+  /* RESULTS */
+  .results-section { margin: 32px auto; padding: 0 16px; }
+  .results-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  /* FILTER BAR */
+  .filter-bar { padding: 0 16px; gap: 6px; margin-bottom: 20px; }
+  .filter-btn { padding: 7px 14px; font-size: 12px; }
+  .filter-select { padding: 7px 12px; font-size: 12px; }
+
+  /* MAP */
+  .map-section { padding: 0 16px 48px; }
+  #map { height: 320px; border-radius: var(--r-md); }
+
+  /* MODAL */
+  .modal-overlay { padding: 16px 12px 40px; }
+  .modal-card { width: 100%; border-radius: var(--r-lg); }
+  .modal-image img { height: 220px; }
+  .modal-body { padding: 16px 18px 24px; }
+  .modal-body h2 { font-size: 18px; }
+
+  /* HITTING */
+  .hitting-form-row { grid-template-columns: 1fr; }
+  .hitting-section { padding: 16px 16px; }
+
+  /* NOTES */
+  .notes-section { padding: 14px 14px; }
+}
+
+/* ── PHONE (≤ 480px) ── */
+@media (max-width: 480px) {
+
+  /* NAVBAR — hamburger-style compact */
+  .navbar { padding: 0 16px; height: 56px; }
+  .nav-logo { font-size: 17px; }
+
+  /* Hide ALL nav links, keep only auth btn */
+  .nav-links a { display: none; }
+  .nav-links #authBtn { display: flex !important; }
+
+  /* Hamburger menu button — shown on mobile */
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 8px;
+    width: 36px; height: 36px;
+    font-size: 18px; color: #fff;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .mobile-menu-btn:hover { background: rgba(255,255,255,0.2); }
+
+  /* Mobile drawer menu */
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    top: 56px; left: 0; right: 0;
+    background: var(--slam-nav);
+    z-index: 490;
+    padding: 12px 0;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .mobile-menu.open { display: block; animation: slideDown .2s var(--ease-out); }
+  @keyframes slideDown {
+    from { opacity:0; transform:translateY(-8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .mobile-menu a {
+    display: block;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    font-size: 14px; font-weight: 500;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    transition: background .15s, color .15s;
+  }
+  .mobile-menu a:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .mobile-menu a:last-child { border-bottom: none; }
+
+  /* SLAM SELECTOR */
+  .slam-selector { top: 56px; }
+  .slam-tab { min-width: 80px; padding: 9px 6px 8px; }
+  .slam-tab-icon { font-size: 16px; margin-bottom: 2px; }
+  .slam-tab-name { font-size: 10px; letter-spacing: 0; }
+
+  /* HERO */
+  .hero { min-height: 420px; }
+  .hero-content { padding: 60px 20px 80px; }
+  .hero h1 { font-size: 34px; letter-spacing: -0.5px; line-height: 1.1; margin-bottom: 14px; }
+  .hero-sub { font-size: 14px; margin-bottom: 28px; line-height: 1.6; }
+  .slam-active-badge { font-size: 9px; padding: 5px 14px; letter-spacing: 1px; margin-bottom: 14px; }
+  .slam-quote { font-size: 13px; }
+  .slam-quote-wrap { margin-bottom: 18px; min-height: 50px; }
+
+  /* SEARCH BAR */
+  .search-bar {
+    flex-direction: row;
+    padding: 5px 5px 5px 16px;
+    border-radius: 12px;
+  }
+  .search-bar input { font-size: 14px; }
+  .search-bar button {
+    padding: 10px 16px; font-size: 12px;
+    border-radius: 8px;
+  }
+
+  /* Near me button */
+  #nearMeBtn {
+    font-size: 12px !important;
+    padding: 8px 18px !important;
+    margin-top: 10px !important;
+  }
+
+  /* RESULTS */
+  .results-section { margin: 24px auto; padding: 0 14px; }
+  .results-grid { grid-template-columns: 1fr; gap: 14px; }
+
+  /* COURT CARD */
+  .card-image { height: 180px; }
+  .card-body { padding: 14px 14px 16px; gap: 6px; }
+  .court-name { font-size: 15px; }
+
+  /* FILTER BAR */
+  .filter-bar {
+    padding: 0 14px; gap: 6px;
+    overflow-x: auto; flex-wrap: nowrap;
+    scrollbar-width: none; margin-bottom: 16px;
+    padding-bottom: 4px;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-btn { flex-shrink: 0; padding: 6px 14px; font-size: 12px; }
+  .filter-select { flex-shrink: 0; padding: 6px 10px; font-size: 11px; }
+  .filter-divider { display: none; }
+
+  /* MAP */
+  .map-section { padding: 0 14px 40px; }
+  .map-section::before { font-size: 10px; letter-spacing: 2px; }
+  #map { height: 260px; }
+
+  /* MODAL */
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .modal-card {
+    width: 100%; border-radius: var(--r-xl) var(--r-xl) 0 0;
+    max-height: 92vh; overflow-y: auto;
+    margin-bottom: 0;
+  }
+  .modal-image img { height: 200px; }
+  .modal-body { padding: 14px 16px 32px; }
+  .modal-body h2 { font-size: 17px; }
+  .modal-address { font-size: 12px; }
+  .directions-btn { padding: 12px 24px; font-size: 13px; width: 100%; justify-content: center; }
+
+  /* HITTING PARTNER */
+  .hitting-section { padding: 14px 14px; }
+  .hitting-title { font-size: 14px; }
+  .hitting-form-row { grid-template-columns: 1fr; }
+  .hitting-post-btn { font-size: 13px; padding: 11px; }
+
+  /* SESSION CARDS */
+  .session-card { padding: 12px 13px; }
+  .session-name { font-size: 13px; }
+
+  /* NOTES */
+  .notes-section { padding: 12px 13px; }
+  .notes-save-btn { width: 100%; text-align: center; }
+
+  /* SAVED SECTION */
+  #savedSection { padding: 0 14px; }
+
+  /* NEARBY PAGE */
+  #nearbyPage { padding: 0 14px 60px; }
+
+  /* PROFILE PAGES */
+  #myProfilePage, #profilePage, #viewProfilePage {
+    padding: 0 14px 60px;
+    margin: 20px auto;
+  }
+
+  /* LOADING MSG */
+  .loading-msg { padding: 60px 20px; font-size: 14px; }
+}
+
+/* ── SMALL PHONE (≤ 360px) ── */
+@media (max-width: 360px) {
+  .hero h1 { font-size: 28px; }
+  .hero-sub { font-size: 13px; }
+  .slam-tab-name { font-size: 9px; }
+  .slam-tab { min-width: 72px; }
+  .navbar { padding: 0 12px; }
+  .nav-logo { font-size: 15px; }
+  .results-section { padding: 0 10px; }
+  #map { height: 220px; }
+}
+
+/* ── LANDSCAPE PHONE ── */
+@media (max-width: 768px) and (orientation: landscape) {
+  .hero { min-height: 320px; }
+  .hero-content { padding: 50px 24px 60px; }
+  .hero h1 { font-size: 36px; }
+  .slam-quote-wrap { display: none; }
+  #map { height: 240px; }
+  .modal-overlay { align-items: flex-start; padding: 10px; }
+  .modal-card { max-height: 95vh; overflow-y: auto; margin-bottom: 0; }
+}
