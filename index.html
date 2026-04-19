@@ -454,6 +454,20 @@
 
   <!-- MAP -->
   <div class="map-section">
+    <!-- Heatmap controls -->
+    <div id="mapControls" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <button id="heatmapToggleBtn" onclick="toggleHeatmap()" style="display:flex;align-items:center;gap:8px;background:var(--slam-surface);border:1.5px solid var(--slam-border);border-radius:999px;padding:8px 18px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;color:var(--slam-text-2);transition:all .2s">
+          🔥 Show Activity Heatmap
+        </button>
+        <div id="heatmapLegend" style="display:none;align-items:center;gap:6px;font-size:11px;color:var(--slam-text-3)">
+          <div style="display:flex;align-items:center;gap:3px"><div style="width:12px;height:12px;border-radius:50%;background:#22c55e"></div> Quiet</div>
+          <div style="display:flex;align-items:center;gap:3px"><div style="width:12px;height:12px;border-radius:50%;background:#f59e0b"></div> Active</div>
+          <div style="display:flex;align-items:center;gap:3px"><div style="width:12px;height:12px;border-radius:50%;background:#ef4444"></div> Buzzing</div>
+        </div>
+      </div>
+      <div id="heatmapStatus" style="font-size:12px;color:var(--slam-text-3);font-style:italic"></div>
+    </div>
     <div id="map"></div>
   </div>
 
@@ -1726,24 +1740,133 @@
     window.toggleFavoriteFromModal = function() { if (currentModalId) toggleFavorite(currentModalId); };
 
     // ── MARKERS ──
+    // Store markers for heatmap
+    var courtMarkers = {};
+    var heatmapActive = false;
+    var courtActivityCache = {};
+
     function addMarker(place, courtObj, map) {
       google.maps.importLibrary('marker').then(function(markerLib) {
         var AdvancedMarkerElement = markerLib.AdvancedMarkerElement;
         var marker = new AdvancedMarkerElement({ position: { lat: courtObj.lat, lng: courtObj.lng }, map: map, title: courtObj.name });
+        courtMarkers[courtObj.id] = { marker: marker, courtObj: courtObj };
         var isOpen = courtObj.isOpen;
         var statusText = isOpen === true ? '<span style="color:#1a6b3c;font-weight:600;font-size:12px">● Open Now</span>' : isOpen === false ? '<span style="color:#c0392b;font-weight:600;font-size:12px">● Closed</span>' : '<span style="color:#888;font-size:12px">● Hours N/A</span>';
         var stars = courtObj.rating ? '★'.repeat(Math.round(courtObj.rating)) + '☆'.repeat(5 - Math.round(courtObj.rating)) : '☆☆☆☆☆';
-        var infoContent = '<div style="width:220px;font-family:sans-serif;cursor:pointer" onclick="openModal(\'' + courtObj.id + '\')"><img src="' + (courtObj.photo || 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400') + '" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px"/><div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:4px">' + courtObj.name + '</div><div style="font-size:11px;color:#888;margin-bottom:6px">' + courtObj.address + '</div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="color:#f4a800;font-size:13px">' + stars + '</span>' + statusText + '</div><div style="background:#1a6b3c;color:#fff;text-align:center;padding:7px;border-radius:8px;font-size:12px;font-weight:600">View Details</div></div>';
+        var infoContent = '<div style="width:220px;font-family:sans-serif;cursor:pointer" onclick="openModal(\'' + courtObj.id + '\')"><img src="' + (courtObj.photo || 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400') + '" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px"/><div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:4px">' + courtObj.name + '</div><div style="font-size:11px;color:#888;margin-bottom:6px">' + courtObj.address + '</div><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="color:#f4a800;font-size:13px">' + stars + '</span>' + statusText + '</div><div id="heatmap_activity_' + courtObj.id + '" style="margin-bottom:8px"></div><div style="background:#1a6b3c;color:#fff;text-align:center;padding:7px;border-radius:8px;font-size:12px;font-weight:600">View Details</div></div>';
         var infoWindow = new google.maps.InfoWindow({ content: infoContent });
         marker.addListener('gmp-click', function() {
           if (activeInfoWindow) activeInfoWindow.close();
           infoWindow.open(map, marker);
           activeInfoWindow = infoWindow;
           var cardEl = document.getElementById('court_card_' + courtObj.id);
-          if (cardEl) { cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); cardEl.style.outline = '3px solid #1a6b3c'; setTimeout(function() { cardEl.style.outline = 'none'; }, 2000); }
+          if (cardEl) { cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); cardEl.style.outline = '3px solid var(--slam-primary)'; setTimeout(function() { cardEl.style.outline = 'none'; }, 2000); }
         });
       });
     }
+
+    // ── HEATMAP SYSTEM ──
+    window.toggleHeatmap = async function() {
+      heatmapActive = !heatmapActive;
+      var btn = document.getElementById('heatmapToggleBtn');
+      var legend = document.getElementById('heatmapLegend');
+      var status = document.getElementById('heatmapStatus');
+      if (!heatmapActive) {
+        // Reset all markers to default
+        Object.keys(courtMarkers).forEach(function(id) { resetMarker(id); });
+        btn.innerHTML = '🔥 Show Activity Heatmap';
+        btn.style.background = 'var(--slam-surface)';
+        btn.style.color = 'var(--slam-text-2)';
+        btn.style.borderColor = 'var(--slam-border)';
+        legend.style.display = 'none';
+        status.textContent = '';
+        return;
+      }
+      btn.innerHTML = '⏳ Loading activity...';
+      btn.style.background = 'var(--slam-primary)';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'var(--slam-primary)';
+      legend.style.display = 'flex';
+      status.textContent = 'Fetching session data...';
+      await loadCourtActivity();
+      btn.innerHTML = '🔥 Hide Heatmap';
+      status.textContent = 'Showing live activity for ' + Object.keys(courtMarkers).length + ' courts';
+    };
+
+    async function loadCourtActivity() {
+      if (!window._db) return;
+      try {
+        var today = new Date().toISOString().split('T')[0];
+        var snap = await window._fbGetDocs(window._fbQuery(
+          window._fbCollection(window._db, 'sessions'),
+          window._fbWhere('date', '>=', today),
+          window._fbOrderBy('date', 'asc')
+        ));
+        // Count active sessions per court
+        var courtSessions = {};
+        snap.forEach(function(d) {
+          var s = d.data();
+          if (s.deleted) return;
+          var key = s.placeId || s.courtName;
+          if (!key) return;
+          if (!courtSessions[key]) courtSessions[key] = { count: 0, players: 0, sessions: [] };
+          courtSessions[key].count++;
+          courtSessions[key].players += (s.players ? s.players.length : 1);
+          courtSessions[key].sessions.push(s);
+        });
+        courtActivityCache = courtSessions;
+        // Apply heatmap to each marker
+        Object.keys(courtMarkers).forEach(function(id) {
+          var courtObj = courtMarkers[id].courtObj;
+          var key = courtObj.placeId;
+          var activity = courtSessions[key] || { count: 0, players: 0 };
+          applyHeatmapToMarker(id, activity);
+        });
+      } catch(e) { console.log('Heatmap error:', e); }
+    }
+
+    function applyHeatmapToMarker(id, activity) {
+      var markerData = courtMarkers[id]; if (!markerData) return;
+      var marker = markerData.marker;
+      var count = activity.count || 0;
+      var players = activity.players || 0;
+      // Determine heat level
+      var level, color, pulse, label;
+      if (count === 0) {
+        level = 'quiet'; color = '#22c55e'; pulse = false;
+        label = '😴 Quiet — no sessions today';
+      } else if (count <= 2) {
+        level = 'active'; color = '#f59e0b'; pulse = true;
+        label = '🎾 ' + count + ' session' + (count > 1 ? 's' : '') + ' · ' + players + ' player' + (players > 1 ? 's' : '');
+      } else {
+        level = 'buzzing'; color = '#ef4444'; pulse = true;
+        label = '🔥 Buzzing! ' + count + ' sessions · ' + players + ' players';
+      }
+      // Create custom marker element
+      var el = document.createElement('div');
+      el.style.cssText = 'width:' + (count === 0 ? '18px' : count <= 2 ? '26px' : '34px') + ';height:' + (count === 0 ? '18px' : count <= 2 ? '26px' : '34px') + ';border-radius:50%;background:' + color + ';border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:' + (count === 0 ? '8px' : count <= 2 ? '11px' : '13px') + ';font-weight:800;color:#fff;cursor:pointer;transition:all .3s;position:relative;';
+      el.textContent = count === 0 ? '' : count.toString();
+      if (pulse) {
+        el.style.animation = 'heatPulse 1.5s ease-in-out infinite';
+      }
+      // Add ripple for buzzing courts
+      if (level === 'buzzing') {
+        var ripple = document.createElement('div');
+        ripple.style.cssText = 'position:absolute;inset:-8px;border-radius:50%;border:2px solid ' + color + ';opacity:0.4;animation:heatRipple 1.5s ease-out infinite;';
+        el.appendChild(ripple);
+      }
+      marker.content = el;
+    }
+
+    function resetMarker(id) {
+      var markerData = courtMarkers[id]; if (!markerData) return;
+      markerData.marker.content = null; // Reset to default pin
+    }
+
+    // Refresh heatmap every 60 seconds if active
+    setInterval(function() {
+      if (heatmapActive && window._db) loadCourtActivity();
+    }, 60000);
 
     // ── FAVORITES ──
     function saveFavorites() { localStorage.setItem('courtFavorites', JSON.stringify(favorites)); updateSavedCount(); }

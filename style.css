@@ -1021,49 +1021,45 @@ body::before {
   .mobile-menu.open { display: block !important; }
 }
 /* ══════════════════════════════
-   ACTIVITY FEED
+   HEATMAP
 ══════════════════════════════ */
-#feedPage {
-  animation: fadeUp .4s var(--ease-out) both;
+@keyframes heatPulse {
+  0%,100% { transform: scale(1); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  50%      { transform: scale(1.15); box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
 }
-#feedList .feed-item {
-  transition: transform .2s var(--ease), box-shadow .2s;
+@keyframes heatRipple {
+  0%   { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(2); opacity: 0; }
 }
 
-/* ══════════════════════════════
-   PLAYER CARD
-══════════════════════════════ */
-#playerCardPage {
-  animation: fadeUp .4s var(--ease-out) both;
-}
-#playerCard {
-  transition: box-shadow .3s;
-}
-#playerCard:hover {
-  box-shadow: 0 28px 70px rgba(0,0,0,0.22) !important;
+#mapControls {
+  position: relative; z-index: 1;
 }
 
-/* ══════════════════════════════
-   RACKET LOG
-══════════════════════════════ */
-#racketModal > div {
-  animation: modalUp .3s var(--ease-spring) both;
+#heatmapToggleBtn {
+  transition: all .25s var(--ease) !important;
+}
+#heatmapToggleBtn:hover {
+  border-color: var(--slam-primary) !important;
+  color: var(--slam-primary) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
-/* ══════════════════════════════
-   FEED NAV LINK
-══════════════════════════════ */
-#navFeed { transition: color .2s; }
-/* ── NAV LINK ACTIVE STATE ── */
-.nav-links a {
-  color: rgba(255,255,255,0.72) !important;
-  transition: color .2s, background .2s !important;
+#heatmapLegend {
+  animation: fadeUp .3s var(--ease-out) both;
 }
-.nav-links a:hover {
-  color: #ffffff !important;
-  background: rgba(255,255,255,0.12) !important;
+
+/* Court card activity badge */
+.activity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
 }
-/* Keep active link bright but still readable */
-#navSearch, #navSaved, #navNearby, #navFeed {
-  color: rgba(255,255,255,0.72);
-}
+.activity-quiet   { background: #dcfce7; color: #15803d; }
+.activity-active  { background: #fef3c7; color: #92400e; }
+.activity-buzzing { background: #fee2e2; color: #991b1b; }
