@@ -149,7 +149,6 @@
           <span id="modalStatus"></span>
           <span id="modalRating"></span>
         </div>
-        <div id="aiSummarySection"></div>
         <div id="checkInSection"></div>
         <div id="weatherSection"></div>
         <div id="modalHours" class="modal-hours"></div>
@@ -462,6 +461,97 @@
 
 
 
+  <!-- ═══════════════════════════════
+       AI COACH PAGE
+  ═══════════════════════════════ -->
+  <div id="aiCoachPage" style="display:none;max-width:720px;margin:40px auto;padding:0 24px 60px;position:relative;z-index:1">
+
+    <!-- Tab bar -->
+    <div style="display:flex;gap:0;background:var(--slam-surface);border-radius:16px;padding:6px;margin-bottom:24px;box-shadow:var(--shadow-sm);overflow-x:auto;scrollbar-width:none">
+      <button onclick="showAITab('coach')" id="tabCoach" class="ai-tab active">🎾 Coach Chat</button>
+      <button onclick="showAITab('match')" id="tabMatch" class="ai-tab">📊 Match Analyser</button>
+      <button onclick="showAITab('partner')" id="tabPartner" class="ai-tab">👥 Partner Matcher</button>
+      <button onclick="showAITab('training')" id="tabTraining" class="ai-tab">📋 Training Plan</button>
+      <button onclick="showAITab('court')" id="tabCourt" class="ai-tab">🗺️ Court Recommender</button>
+    </div>
+
+    <!-- COACH CHAT -->
+    <div id="aiPanelCoach">
+      <div style="background:var(--slam-surface);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-md);border:1px solid var(--slam-border)">
+        <div style="background:linear-gradient(135deg,var(--slam-nav),var(--slam-primary));padding:20px 24px;display:flex;align-items:center;gap:14px">
+          <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🤖</div>
+          <div><div style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:#fff">AI Tennis Coach</div><div style="font-size:12px;color:rgba(255,255,255,0.7)">Powered by Gemini · Ask me anything about tennis</div></div>
+        </div>
+        <div id="coachMessages" style="height:380px;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;background:var(--slam-bg)">
+          <div class="ai-msg ai-msg-bot">Hi! I am your AI tennis coach powered by Gemini. Ask me anything — technique, tactics, training, equipment, rules or how to improve your game. 🎾</div>
+        </div>
+        <div style="padding:14px 16px;border-top:1px solid var(--slam-border);display:flex;gap:10px;background:var(--slam-surface)">
+          <input type="text" id="coachInput" placeholder="Ask your coach... e.g. How do I improve my serve?" style="flex:1;border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:Inter,sans-serif;outline:none;background:var(--slam-bg);color:var(--slam-text-1)" onkeydown="if(event.key==='Enter')sendCoachMessage()" onfocus="this.style.borderColor='var(--slam-primary)'" onblur="this.style.borderColor='var(--slam-border)'"/>
+          <button onclick="sendCoachMessage()" style="background:var(--slam-primary);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;flex-shrink:0;transition:all .2s" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">Send</button>
+        </div>
+      </div>
+      <!-- Quick prompts -->
+      <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px">
+        <button onclick="quickPrompt('How do I improve my serve?')" class="ai-quick-btn">💪 Improve serve</button>
+        <button onclick="quickPrompt('What drills should I do to get better at volleys?')" class="ai-quick-btn">🎯 Volley drills</button>
+        <button onclick="quickPrompt('How do I deal with a heavy topspin player?')" class="ai-quick-btn">🔄 Beat topspin</button>
+        <button onclick="quickPrompt('What is the best warm up routine before a match?')" class="ai-quick-btn">🏃 Warm up routine</button>
+        <button onclick="quickPrompt('How do I improve my mental game in tennis?')" class="ai-quick-btn">🧠 Mental game</button>
+      </div>
+    </div>
+
+    <!-- MATCH ANALYSER -->
+    <div id="aiPanelMatch" style="display:none">
+      <div style="background:var(--slam-surface);border-radius:20px;padding:24px;box-shadow:var(--shadow-md);border:1px solid var(--slam-border)">
+        <div style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:var(--slam-text-1);margin-bottom:6px">📊 AI Match Analyser</div>
+        <div style="font-size:13px;color:var(--slam-text-3);margin-bottom:20px">Describe your match and get a professional coaching breakdown</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div><label style="font-size:12px;font-weight:600;color:var(--slam-text-2);display:block;margin-bottom:6px">Score</label><input type="text" id="matchScore" placeholder="e.g. Lost 6-3, 6-4" style="width:100%;border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:Inter,sans-serif;outline:none;background:var(--slam-bg);color:var(--slam-text-1);box-sizing:border-box" onfocus="this.style.borderColor='var(--slam-primary)'" onblur="this.style.borderColor='var(--slam-border)'"/></div>
+          <div><label style="font-size:12px;font-weight:600;color:var(--slam-text-2);display:block;margin-bottom:6px">Your skill level</label><select id="matchSkill" style="width:100%;border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:Inter,sans-serif;outline:none;background:var(--slam-bg);color:var(--slam-text-1);box-sizing:border-box"><option>Beginner</option><option>Intermediate</option><option selected>Advanced</option></select></div>
+        </div>
+        <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:var(--slam-text-2);display:block;margin-bottom:6px">What happened in the match?</label><textarea id="matchDesc" placeholder="e.g. I kept missing forehands under pressure, my serve was inconsistent, struggled with their heavy topspin to my backhand..." style="width:100%;border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:Inter,sans-serif;outline:none;background:var(--slam-bg);color:var(--slam-text-1);resize:none;height:100px;box-sizing:border-box" onfocus="this.style.borderColor='var(--slam-primary)'" onblur="this.style.borderColor='var(--slam-border)'"></textarea></div>
+        <button onclick="analyseMatch()" style="width:100%;background:var(--slam-primary);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;transition:all .2s" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">🔍 Analyse My Match</button>
+        <div id="matchResult" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <!-- PARTNER MATCHER -->
+    <div id="aiPanelPartner" style="display:none">
+      <div style="background:var(--slam-surface);border-radius:20px;padding:24px;box-shadow:var(--shadow-md);border:1px solid var(--slam-border)">
+        <div style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:var(--slam-text-1);margin-bottom:6px">👥 AI Partner Matcher</div>
+        <div style="font-size:13px;color:var(--slam-text-3);margin-bottom:20px">AI analyses all players and finds your perfect hitting partner</div>
+        <button onclick="findAIPartner()" id="partnerBtn" style="width:100%;background:var(--slam-primary);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;transition:all .2s;margin-bottom:16px" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">🎾 Find My Perfect Partner</button>
+        <div id="partnerResult"></div>
+      </div>
+    </div>
+
+    <!-- TRAINING PLAN -->
+    <div id="aiPanelTraining" style="display:none">
+      <div style="background:var(--slam-surface);border-radius:20px;padding:24px;box-shadow:var(--shadow-md);border:1px solid var(--slam-border)">
+        <div style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:var(--slam-text-1);margin-bottom:6px">📋 AI Training Plan</div>
+        <div style="font-size:13px;color:var(--slam-text-3);margin-bottom:20px">Get a personalised weekly training plan based on your level</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div><label style="font-size:12px;font-weight:600;color:var(--slam-text-2);display:block;margin-bottom:6px">Days per week</label><select id="trainingDays" style="width:100%;border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:Inter,sans-serif;outline:none;background:var(--slam-bg);color:var(--slam-text-1);box-sizing:border-box"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option></select></div>
+          <div><label style="font-size:12px;font-weight:600;color:var(--slam-text-2);display:block;margin-bottom:6px">Goal</label><select id="trainingGoal" style="width:100%;border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:Inter,sans-serif;outline:none;background:var(--slam-bg);color:var(--slam-text-1);box-sizing:border-box"><option>Improve overall game</option><option>Win more matches</option><option>Improve fitness</option><option>Master serve</option><option>Better consistency</option></select></div>
+        </div>
+        <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:var(--slam-text-2);display:block;margin-bottom:6px">Biggest weakness</label><input type="text" id="trainingWeakness" placeholder="e.g. backhand, serve, net game, fitness..." style="width:100%;border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:Inter,sans-serif;outline:none;background:var(--slam-bg);color:var(--slam-text-1);box-sizing:border-box" onfocus="this.style.borderColor='var(--slam-primary)'" onblur="this.style.borderColor='var(--slam-border)'"/></div>
+        <button onclick="generateTrainingPlan()" style="width:100%;background:var(--slam-primary);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;transition:all .2s" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">📋 Generate My Training Plan</button>
+        <div id="trainingResult" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+    <!-- COURT RECOMMENDER -->
+    <div id="aiPanelCourt" style="display:none">
+      <div style="background:var(--slam-surface);border-radius:20px;padding:24px;box-shadow:var(--shadow-md);border:1px solid var(--slam-border)">
+        <div style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:var(--slam-text-1);margin-bottom:6px">🗺️ AI Court Recommender</div>
+        <div style="font-size:13px;color:var(--slam-text-3);margin-bottom:20px">Tell AI what you want and it picks the best court from your search results</div>
+        <div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:var(--slam-text-2);display:block;margin-bottom:6px">What are you looking for?</label><textarea id="courtRequest" placeholder="e.g. quiet court for a beginner in the morning, good lighting for evening play, high rated court with parking..." style="width:100%;border:1.5px solid var(--slam-border);border-radius:10px;padding:10px 14px;font-size:13px;font-family:Inter,sans-serif;outline:none;background:var(--slam-bg);color:var(--slam-text-1);resize:none;height:90px;box-sizing:border-box" onfocus="this.style.borderColor='var(--slam-primary)'" onblur="this.style.borderColor='var(--slam-border)'"></textarea></div>
+        <button onclick="recommendCourt()" style="width:100%;background:var(--slam-primary);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;transition:all .2s" onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter=''">🔍 Find Best Court for Me</button>
+        <div id="courtRecommendResult" style="margin-top:16px"></div>
+      </div>
+    </div>
+
+  </div>
 
   <!-- MAP -->
   <div class="map-section">
@@ -656,7 +746,6 @@
       else if (data.isOpen === false) { statusEl.innerHTML = '<span class="badge-closed">Closed</span>'; }
       else { statusEl.innerHTML = '<span class="surface-tag">Hours N/A</span>'; }
       document.getElementById('modalHours').innerHTML = '<p style="color:#888;font-size:13px">Loading hours...</p>';
-      document.getElementById('aiSummarySection').innerHTML = '';
       document.getElementById('checkInSection').innerHTML = '';
       document.getElementById('weatherSection').innerHTML = '';
       document.getElementById('hittingPartnerSection').innerHTML = '';
@@ -674,7 +763,6 @@
       document.getElementById('courtModal').classList.add('active');
       document.body.style.overflow = 'hidden';
       getCourtWeather(data);
-      loadAICourtSummary(data);
       loadCheckInSection(data);
       var fbWait = setInterval(function() { if (window._db) { clearInterval(fbWait); loadHittingPartnerSection(data.placeId); } }, 200);
       setTimeout(function() { clearInterval(fbWait); }, 5000);
@@ -840,7 +928,7 @@
     // ── HIDE ALL PAGES HELPER ──
     function hideAllPages() {
       var ids = ['heroSection','savedSection','nearbyPage','profilePage','myProfilePage',
-                 'viewProfilePage','feedPage','playerCardPage','leaderboardPage'];
+                 'viewProfilePage','feedPage','playerCardPage','leaderboardPage','aiCoachPage'];
       ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
       var ms = document.getElementById('map'); if(ms) ms.closest('.map-section').style.display='none';
       var rg = document.getElementById('resultsGrid'); if(rg) rg.parentElement.style.display='none';
@@ -1100,39 +1188,6 @@
         // ══════════════════════════════════════════════
     //  1. AI COURT SUMMARY (Gemini)
     // ══════════════════════════════════════════════
-    async function loadAICourtSummary(courtData) {
-      var section = document.getElementById('aiSummarySection');
-      if (!section) return;
-      section.innerHTML = '<div style="background:linear-gradient(135deg,var(--slam-surface-2),var(--slam-bg));border:1px solid var(--slam-border);border-radius:14px;padding:16px 18px;margin-bottom:16px">'
-        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
-        + '<span style="font-size:20px">🤖</span>'
-        + '<span style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:var(--slam-text-1)">AI Court Summary</span>'
-        + '<span style="margin-left:auto;font-size:11px;color:var(--slam-text-3)">Analysing...</span>'
-        + '</div>'
-        + '<div style="height:6px;background:var(--slam-border);border-radius:3px;overflow:hidden">'
-        + '<div style="height:100%;width:60%;background:linear-gradient(90deg,var(--slam-primary),var(--slam-accent));border-radius:3px;animation:shimmer 1.5s ease-in-out infinite"></div>'
-        + '</div></div>';
-      try {
-        var prompt = 'You are a tennis expert. Court: "' + courtData.name + '", Location: "' + courtData.address + '", Rating: ' + (courtData.rating||'N/A') + '/5 (' + (courtData.reviews||0) + ' reviews). Write 2-3 sentences: court quality, best time to visit, who it suits. Max 55 words. Be specific.';
-        var res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'meta-llama/llama-3.3-8b-instruct:free', messages: [{ role:'user', content: prompt }] })
-        });
-        var data = await res.json();
-        var summary = data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : null;
-        if (summary) {
-          section.innerHTML = '<div style="background:linear-gradient(135deg,var(--slam-surface-2),var(--slam-bg));border:1px solid var(--slam-border);border-radius:14px;padding:16px 18px;margin-bottom:16px">'
-            + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
-            + '<span style="font-size:20px">🤖</span>'
-            + '<span style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:var(--slam-text-1)">AI Court Summary</span>'
-            + '<span style="margin-left:auto;background:var(--slam-badge-open-bg);color:var(--slam-badge-open-color);font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px">Gemini AI</span>'
-            + '</div>'
-            + '<p style="font-size:13px;color:var(--slam-text-2);line-height:1.7;margin:0">' + summary + '</p>'
-            + '</div>';
-        } else { section.innerHTML = ''; }
-      } catch(e) { section.innerHTML = ''; }
-    }
 
     // ══════════════════════════════════════════════
     //  2. COURT CHECK-IN
@@ -1379,7 +1434,8 @@
       hideAllPages();
       document.getElementById('myProfilePage').style.display = 'block';
       document.getElementById('navSearch').style.color = 'rgba(255,255,255,0.72)';
-      var nf=document.getElementById('navFeed');if(nf)nf.style.color='rgba(255,255,255,0.72)';if(na)na.style.color='rgba(255,255,255,0.72)';
+      var nf=document.getElementById('navFeed');if(nf)nf.style.color='rgba(255,255,255,0.72)';
+
       var user = window._currentUser;
       document.getElementById('mpName').textContent = user.displayName || 'No name';
       document.getElementById('mpEmail').textContent = user.email || '';
@@ -2091,7 +2147,7 @@
     // ── HIDE ALL PAGES ──
     function hideAllPages() {
       var ids = ['heroSection','savedSection','nearbyPage','profilePage','myProfilePage',
-                 'viewProfilePage','feedPage','playerCardPage','leaderboardPage'];
+                 'viewProfilePage','feedPage','playerCardPage','leaderboardPage','aiCoachPage'];
       ids.forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
