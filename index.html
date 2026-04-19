@@ -7,6 +7,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css"/>
+  <style>
+    @keyframes shimmer {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+  </style>
 </head>
 <body>
 <!-- CURSOR -->
@@ -143,6 +149,8 @@
           <span id="modalStatus"></span>
           <span id="modalRating"></span>
         </div>
+        <div id="aiSummarySection"></div>
+        <div id="checkInSection"></div>
         <div id="weatherSection"></div>
         <div id="modalHours" class="modal-hours"></div>
         <div id="hittingPartnerSection"></div>
@@ -452,6 +460,7 @@
     </div>
   </div>
 
+
   <!-- MAP -->
   <div class="map-section">
     <!-- Heatmap controls -->
@@ -645,6 +654,8 @@
       else if (data.isOpen === false) { statusEl.innerHTML = '<span class="badge-closed">Closed</span>'; }
       else { statusEl.innerHTML = '<span class="surface-tag">Hours N/A</span>'; }
       document.getElementById('modalHours').innerHTML = '<p style="color:#888;font-size:13px">Loading hours...</p>';
+      document.getElementById('aiSummarySection').innerHTML = '';
+      document.getElementById('checkInSection').innerHTML = '';
       document.getElementById('weatherSection').innerHTML = '';
       document.getElementById('hittingPartnerSection').innerHTML = '';
       document.getElementById('courtNotesSection').innerHTML = '';
@@ -661,6 +672,8 @@
       document.getElementById('courtModal').classList.add('active');
       document.body.style.overflow = 'hidden';
       getCourtWeather(data);
+      loadAICourtSummary(data);
+      loadCheckInSection(data);
       var fbWait = setInterval(function() { if (window._db) { clearInterval(fbWait); loadHittingPartnerSection(data.placeId); } }, 200);
       setTimeout(function() { clearInterval(fbWait); }, 5000);
       var reviewWait = setInterval(function() { if (window._db) { clearInterval(reviewWait); loadUserReviews(data.placeId); } }, 200);
@@ -825,7 +838,7 @@
     // ── HIDE ALL PAGES HELPER ──
     function hideAllPages() {
       var ids = ['heroSection','savedSection','nearbyPage','profilePage','myProfilePage',
-                 'viewProfilePage','feedPage','playerCardPage'];
+                 'viewProfilePage','feedPage','playerCardPage','leaderboardPage'];
       ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
       var ms = document.getElementById('map'); if(ms) ms.closest('.map-section').style.display='none';
       var rg = document.getElementById('resultsGrid'); if(rg) rg.parentElement.style.display='none';
@@ -1080,6 +1093,169 @@
       rackets.splice(index, 1);
       localStorage.setItem('racketLog', JSON.stringify(rackets));
       loadRacketLog();
+    };
+
+        // ══════════════════════════════════════════════
+    //  1. AI COURT SUMMARY (Gemini)
+    // ══════════════════════════════════════════════
+    async function loadAICourtSummary(courtData) {
+      var section = document.getElementById('aiSummarySection');
+      if (!section) return;
+      section.innerHTML = '<div style="background:linear-gradient(135deg,var(--slam-surface-2),var(--slam-bg));border:1px solid var(--slam-border);border-radius:14px;padding:16px 18px;margin-bottom:16px">'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+        + '<span style="font-size:20px">🤖</span>'
+        + '<span style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:var(--slam-text-1)">AI Court Summary</span>'
+        + '<span style="margin-left:auto;font-size:11px;color:var(--slam-text-3)">Analysing...</span>'
+        + '</div>'
+        + '<div style="height:6px;background:var(--slam-border);border-radius:3px;overflow:hidden">'
+        + '<div style="height:100%;width:60%;background:linear-gradient(90deg,var(--slam-primary),var(--slam-accent));border-radius:3px;animation:shimmer 1.5s ease-in-out infinite"></div>'
+        + '</div></div>';
+      try {
+        var prompt = 'You are a tennis expert. Court: "' + courtData.name + '", Location: "' + courtData.address + '", Rating: ' + (courtData.rating||'N/A') + '/5 (' + (courtData.reviews||0) + ' reviews). Write 2-3 sentences: court quality, best time to visit, who it suits. Max 55 words. Be specific.';
+        var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDHq7QJIROeH2ZphtL07WQKLWK2Z9ELmZU', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        var data = await res.json();
+        var summary = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]
+          ? data.candidates[0].content.parts[0].text : null;
+        if (summary) {
+          section.innerHTML = '<div style="background:linear-gradient(135deg,var(--slam-surface-2),var(--slam-bg));border:1px solid var(--slam-border);border-radius:14px;padding:16px 18px;margin-bottom:16px">'
+            + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+            + '<span style="font-size:20px">🤖</span>'
+            + '<span style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:var(--slam-text-1)">AI Court Summary</span>'
+            + '<span style="margin-left:auto;background:var(--slam-badge-open-bg);color:var(--slam-badge-open-color);font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px">Gemini AI</span>'
+            + '</div>'
+            + '<p style="font-size:13px;color:var(--slam-text-2);line-height:1.7;margin:0">' + summary + '</p>'
+            + '</div>';
+        } else { section.innerHTML = ''; }
+      } catch(e) { section.innerHTML = ''; }
+    }
+
+    // ══════════════════════════════════════════════
+    //  2. COURT CHECK-IN
+    // ══════════════════════════════════════════════
+    async function loadCheckInSection(courtData) {
+      var section = document.getElementById('checkInSection');
+      if (!section || !window._db) return;
+      var placeId = courtData.placeId;
+      var cutoffTime = new Date(Date.now() - 2*60*60*1000);
+      try {
+        var snap = await window._fbGetDocs(window._fbQuery(
+          window._fbCollection(window._db,'checkins'),
+          window._fbWhere('placeId','==',placeId),
+          window._fbWhere('checkedInAt','>=',window._fbTimestamp.fromDate(cutoffTime))
+        ));
+        var checkins = []; snap.forEach(function(d){ checkins.push(Object.assign({id:d.id},d.data())); });
+        var isCheckedIn = window._currentUser && checkins.some(function(c){ return c.uid===window._currentUser.uid; });
+        var count = checkins.length;
+        var avatars = checkins.slice(0,5).map(function(c){
+          return c.photo
+            ? '<img src="'+c.photo+'" title="'+(c.name||'Player')+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-right:-6px">'
+            : '<div style="width:28px;height:28px;border-radius:50%;background:var(--slam-primary);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700;border:2px solid #fff;margin-right:-6px">'+(c.name?c.name[0].toUpperCase():'?')+'</div>';
+        }).join('');
+        section.innerHTML = '<div style="background:var(--slam-surface);border:1.5px solid var(--slam-border);border-radius:14px;padding:14px 18px;margin-bottom:16px">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between">'
+          + '<div><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:var(--slam-text-1);margin-bottom:4px">🎾 Playing Right Now</div>'
+          + (count>0
+            ? '<div style="display:flex;align-items:center;gap:8px">'+avatars+'<span style="margin-left:10px;font-size:12px;color:var(--slam-text-2)">'+count+' player'+(count>1?'s':'')+' here</span></div>'
+            : '<div style="font-size:12px;color:var(--slam-text-3)">No one checked in yet</div>')
+          + '</div>'
+          + '<button onclick="toggleCheckIn(\'' + placeId + '\')" id="checkInBtn" style="background:'+(isCheckedIn?'var(--slam-badge-open-bg)':'var(--slam-primary)')+';color:'+(isCheckedIn?'var(--slam-primary)':'#fff')+';border:'+(isCheckedIn?'1.5px solid var(--slam-primary)':'none')+';border-radius:10px;padding:9px 16px;font-size:12px;font-weight:700;font-family:Inter,sans-serif;cursor:pointer;transition:all .2s">'
+          + (isCheckedIn ? '✓ Checked In' : '+ Check In')
+          + '</button>'
+          + '</div></div>';
+      } catch(e) { section.innerHTML = ''; }
+    }
+
+    window.toggleCheckIn = async function(placeId) {
+      if (!window._currentUser) { handleAuthClick(); return; }
+      var btn = document.getElementById('checkInBtn');
+      if (btn) { btn.textContent = '...'; btn.disabled = true; }
+      try {
+        var uid = window._currentUser.uid;
+        var cutoffTime = new Date(Date.now() - 2*60*60*1000);
+        var snap = await window._fbGetDocs(window._fbQuery(
+          window._fbCollection(window._db,'checkins'),
+          window._fbWhere('placeId','==',placeId),
+          window._fbWhere('uid','==',uid),
+          window._fbWhere('checkedInAt','>=',window._fbTimestamp.fromDate(cutoffTime))
+        ));
+        if (!snap.empty) {
+          // Check out
+          var delPromises = [];
+          snap.forEach(function(d){ delPromises.push(window._fbDeleteDoc(window._fbDoc(window._db,'checkins',d.id))); });
+          await Promise.all(delPromises);
+        } else {
+          // Check in
+          var profSnap = await window._fbGetDoc(window._fbDoc(window._db,'profiles',uid));
+          var p = profSnap.exists() ? profSnap.data() : {};
+          await window._fbAddDoc(window._fbCollection(window._db,'checkins'), {
+            placeId: placeId,
+            uid: uid,
+            name: window._currentUser.displayName || p.name || 'Player',
+            photo: p.photo || window._currentUser.photoURL || '',
+            checkedInAt: window._fbTimestamp.now()
+          });
+        }
+        // Reload check-in section
+        var courtData = courtDataStore[currentModalId] || {};
+        await loadCheckInSection(courtData);
+      } catch(e) { console.log('Check-in error:', e); if(btn){btn.textContent='Check In';btn.disabled=false;} }
+    };
+
+    // ══════════════════════════════════════════════
+    //  3. PUSH NOTIFICATIONS for followed players
+    // ══════════════════════════════════════════════
+    window.requestNotificationPermission = async function() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+    };
+
+    function showPlayerNotification(playerName, playerPhoto, courtName, sessionTime) {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      try {
+        var n = new Notification('🎾 ' + playerName + ' is playing!', {
+          body: courtName ? 'At ' + courtName + ' · ' + sessionTime : sessionTime,
+          icon: playerPhoto || '',
+          tag: 'session_' + playerName,
+          badge: playerPhoto || ''
+        });
+        n.onclick = function() { window.focus(); showNearby(); n.close(); };
+        setTimeout(function(){ n.close(); }, 8000);
+      } catch(e) {}
+    }
+
+    // Listen for new sessions from followed players
+    window.startSessionListener = function(followingIds) {
+      if (window._sessionUnsubscribe) { window._sessionUnsubscribe(); window._sessionUnsubscribe = null; }
+      if (!window._currentUser || !followingIds || followingIds.length === 0) return;
+      if (!window._fbOnSnapshot) return;
+      var today = new Date().toISOString().split('T')[0];
+      var isFirstLoad = true;
+      var q = window._fbQuery(
+        window._fbCollection(window._db,'sessions'),
+        window._fbWhere('date','>=',today),
+        window._fbOrderBy('date','asc')
+      );
+      window._sessionUnsubscribe = window._fbOnSnapshot(q, function(snapshot) {
+        if (isFirstLoad) { isFirstLoad = false; return; }
+        snapshot.docChanges().forEach(function(change) {
+          if (change.type !== 'added') return;
+          var s = change.doc.data();
+          if (s.deleted) return;
+          if (followingIds.indexOf(s.uid) === -1) return;
+          if (s.uid === window._currentUser.uid) return;
+          // Check notify preference
+          var notifyKey = 'notify_' + window._currentUser.uid + '_' + s.uid;
+          if (localStorage.getItem(notifyKey) !== 'true') return;
+          var timeStr = s.time ? new Date('2000-01-01T'+s.time).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : '';
+          showPlayerNotification(s.name||'A player', s.photo||'', s.courtName||'', timeStr);
+        });
+      }, function(err){ console.log('Session listener error:', err); });
     };
 
         window.signOutUser = function() { window._signOut(window._auth).then(function() { showSearch(); }); };
@@ -1914,7 +2090,7 @@
     // ── HIDE ALL PAGES ──
     function hideAllPages() {
       var ids = ['heroSection','savedSection','nearbyPage','profilePage','myProfilePage',
-                 'viewProfilePage','feedPage','playerCardPage'];
+                 'viewProfilePage','feedPage','playerCardPage','leaderboardPage'];
       ids.forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -2643,13 +2819,20 @@ document.addEventListener('DOMContentLoaded',function(){
     window._fbTimestamp = Timestamp; window._fbUpdateDoc = updateDoc; window._fbDoc = doc;
     window._fbArrayUnion = arrayUnion; window._fbSetDoc = setDoc; window._fbGetDoc = getDoc;
     window._fbDeleteDoc = deleteDoc;
+    window._fbOnSnapshot = onSnapshot;
     window._GoogleAuthProvider = GoogleAuthProvider; window._signInWithPopup = signInWithPopup;
     window._signOut = signOut; window._PhoneAuthProvider = PhoneAuthProvider;
     window._RecaptchaVerifier = RecaptchaVerifier; window._signInWithCredential = signInWithCredential;
 
     onAuthStateChanged(auth, async function(user) {
       window._currentUser = user;
-      if (user) { window.requestNotificationPermission && window.requestNotificationPermission(); }
+      if (user) { window.requestNotificationPermission && window.requestNotificationPermission();
+          // Start session listener for push notifications
+          window._fbGetDocs(window._fbQuery(window._fbCollection(db,'follows'),window._fbWhere('followerId','==',user.uid))).then(function(snap){
+            var ids=[]; snap.forEach(function(d){ids.push(d.data().followingId);});
+            window.startSessionListener && window.startSessionListener(ids);
+          }).catch(function(){});
+        }
       if (user) {
         document.getElementById('authAvatarText').style.display = 'none';
         var img = document.getElementById('authAvatarImg');
